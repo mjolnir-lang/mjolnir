@@ -1,0 +1,89 @@
+
+
+/// Set ACPI Power State Command
+///
+/// This command is provided to allow system software to tell a controller the
+/// present ACPI power state of the system. The Set ACPI Power State command
+/// can also be used as a mechanism for setting elements of the platform
+/// management subsystem to a particular power state. This is an independent
+/// setting that may not necessarily match the actual power state of the
+/// system. This command is used to enable the reporting of the power state, it
+/// does not control or change the power state.
+///
+/// There is corresponding information in sensor data record for the controller
+/// that tells system software which controllers require this notification. The
+/// BMC does not automatically inform controllers of changes in the system
+/// power state.
+///
+/// Since system management software does not run when the system is in a sleep
+/// state, the impact of sleep state on the platform management subsystem is
+/// mainly one of changes in the automatic handling of sensor scanning and
+/// events. For example, the system may shut down fans when in a particular
+/// power state. If the fans were monitored, shutting down the fans without
+/// notifying the platform management subsystem could cause a false failure
+/// event to be generated. Here are two possible ways to handle this:
+///
+/// a. Have the management controller perform the fan shut down operation after
+/// receiving the Set ACPI Power State command. In this case, the controller
+/// needs an SDR entry indicating that the controller needs to receive
+/// notification via the Set ACPI Power State command.
+///
+/// b. Have the controller monitor the system power state by proprietary means,
+/// such as a signal line directly from the power control hardware to the
+/// management controller. The management controller uses the signal to
+/// directly control the fans without receiving an Set ACPI Power State
+/// command. Note that that controller should still report the power state
+/// using the Set ACPI Power State command. This is to aid out-of-band
+/// applications that may directly access the controller to get sensor
+/// information.
+///
+/// Out-of-band applications should be prepared to find sensors or controllers
+/// that may have become disabled because of a sleep state. Ideally, all
+/// management controllers should remain enabled while the system is in a
+/// sleep state so that the sleep state information can be retrieved.
+/// Information in the SDR can be used to determine whether a controller gets
+/// disabled in a particular sleep state. A system will normally power up to a
+/// Legacy On state prior to the initialization of ACPI, at which time the
+/// system power state is known to be ACPI S0/G0.
+class SetAcpiPowerStateCommand {
+    struct Request request {
+
+        /// ACPI System Power State to set
+        ///
+        /// Power states are mutually exclusive. Only one state can be set at a time.
+        bitfield<u8> acpi_system_power_state {
+
+            /// `1` - set system power state
+            /// `0` - dont change system power state
+            [7] bool set_system_power_state;
+
+            /// System Power State enumeration
+            ///
+            /// `0x00` - set S0 / G0 working
+            /// `0x01` - set S1 hardware context maintained, typically equates to processor/chip set clocks stopped
+            /// `0x02` - set S2 typically equates to stopped clocks with processor/cache context lost
+            /// `0x03` - set S3 typically equates to "suspend-to-RAM"
+            /// `0x04` - set S4 typically equates to "suspend-to-disk"
+            /// `0x05` - set S5 / G2 soft off
+            /// `0x06` - set S4/S5 sent when message source cannot differentiate between S4 and S5
+            /// `0x07` - set G3 mechanical off
+            /// `0x08` - sleeping sleeping - cannot differentiate between S1-S3.
+            /// `0x09` - G1 sleeping sleeping - cannot differentiate between S1-S4
+            /// `0x0A` - set override S5 entered by override
+            /// `0x20` - set Legacy On Legacy On (indicates On for system that don't support ACPI or have ACPI capabilities disabled)
+            /// `0x21` - set Legacy Off Legacy Soft-Off
+            /// `0x2A` - set unknown system power state unknown
+            /// `0x7F` - no change Use this value when communicating a change the device power state without indicating a change to the system power state.
+            [6:0] system_power_state;
+        }
+    }
+    struct Response response {
+
+        /// Completion Code
+        ///
+        /// The BMC is allowed to return an error completion code if an attempt
+        /// is made to set states it knows the system doesn't support.
+        CompletionCode completion_code;
+    }
+}
+

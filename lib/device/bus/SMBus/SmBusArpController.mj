@@ -1,0 +1,418 @@
+
+
+/// Power-on reset
+/// Power-on reset is described in section 4.3.5.2. In the case of ARP-capable
+/// devices, ‘operational state’ implies the ability to respond to ARP commands as
+/// required in this section.
+/// Each target device must fit into only one of these categories and must obey the
+/// power on reset state:
+///
+/// Internal state of ARP-capable devices on Power-On Reset
+/// Device Type AR Flag AV Flag SMB Address UDID
+///
+/// PTA (Persistent Target Address)
+/// CLEAR Read from
+/// NVR
+/// Read from NVR;
+/// undefined if AV
+/// Flag is CLEAR
+/// NO CHANGE
+/// Non-PTA / Non-Random
+/// Number CLEAR CLEAR undefined NO CHANGE
+/// Non-PTA / Random Number CLEAR CLEAR undefined Generate
+/// Random Number
+/// DTA
+/// (Default Target Address)
+/// CLEAR SET Default, read
+/// from ROM
+/// NO CHANGE
+
+
+
+/// The ARP Controller can issue general commands and directed commands. A
+/// general command is targeted at all devices and is required for the address
+/// resolution process. A directed command is targeted at a single device. All packets
+/// originated by the ARP Controller use Packet Error Checking (See Section 6.4) and
+/// begin with the basic format:
+///
+/// <SMBus Device Default Address> <command>
+///
+/// # General (`0x00` through `0x1F`)
+///
+/// `0x00` - Reserved
+/// `0x01` - Prepare to ARP
+/// `0x02` - Reset Device (general)
+/// `0x03` - Get UDID (general)
+/// `0x04` - Assign Address
+/// `0x05` - Reserved
+/// ...
+/// `0x1F` - Reserved
+///
+/// # Directed
+///
+/// - Odd numbered commands denote Get UDID from a specific
+/// target and are of the form yyyy yyy1b where yyyy yyyb is the
+/// 7-bit address of the targeted device. For example, a
+/// command of `0x21` is a directed Get UDID to target address
+/// `0b0010'000`.
+///
+/// - Even numbered commands denote Reset Device to a specific
+/// target and are of the form yyyy yyy0b where yyyy yyyb is the
+/// 7-bit address of the targeted device. For example, a
+/// command of 5Ch is a directed Reset Device to target
+/// address `0b0101'110`.
+/// - Values of `0xFE` and `0xFF` are reserved
+///
+/// An ARP Enumerator is allowed to issue the “Prepare to ARP”, “Get UDID” (general
+/// and directed), and “Assign Address” commands; it is not allowed to issue the
+/// Reset Device commands. It must execute the “Assign Address” command for each
+/// device in the general “Get UDID” command using the same address that is
+/// returned by the “Get UDID” command. A SMBus Enumerator is not allowed to re-
+/// assign addresses and it is not allowed to assign an address to a device with an
+/// invalid/uninitialized address.
+/// Devices can optionally support the “Notify ARP Controller” command that is used to
+/// notify the ARP Controller that the device requires address resolution. If the ARP
+/// Controller supports this command, it must respond as a target to this command and
+/// provide a software indication that the ARP needs to be executed.
+enum<u8> SmBusArpCommand {
+
+    /// Prepare to ARP
+    PREPARE_TO_ARP = 0x01;
+
+    /// Reset Device (general)
+    RESET_DEVICE = 0x02;
+
+    /// Get UDID (general)
+    GET_UDID = 0x03;
+
+    /// Assign Address
+    ASSIGN_ADDRESS = 0x04;
+}
+
+
+/// SMBus device characterizations
+enum<u8> SmBusDeviceCharacterization {
+
+    /// ARP-capable
+    ///
+    /// Device supports all ARP commands with the exception of
+    /// the optional Host Notify command. Target address is
+    /// assignable. Device supports both Reset commands.
+    ARP_CAPABLE;
+
+    /// Fixed and Discoverable
+    ///
+    /// Device supports the Prepare to ARP, directed Get UDID,
+    /// general Get UDID and Assign Address commands. Target
+    /// address is fixed; device will accept the Assign Address
+    /// command but will not allow address reassignment. Device
+    /// supports both Reset commands.
+    FIXED_AND_DISCOVERABLE;
+
+    /// Fixed, not Discoverable
+    ///
+    /// Device supports the directed Get UDID command. Target address is fixed.
+    FIXED_NOT_DISCOVERABLE;
+
+    /// Non-ARP-capable
+    ///
+    /// Device does not support any ARP commands. Target address is fixed.
+    NON_ARP_CAPABLE;
+}
+
+
+
+
+
+
+
+@api(1.0)
+class SmBusArpController {
+    SmBusController &smbus_controller;
+
+
+    /// The list of target addresses known by the ARP Controller that are either:
+    ///
+    /// - Reserved
+    /// - Used by non-ARP-capable devices (Fixed Target Addresses)
+    /// - Already assigned to ARP-capable devices
+    ///
+    /// The ARP Controller must not assign addresses from the first two
+    /// categories to ARP-capable devices.
+    List<SmBusUdid> used_address_pool;
+
+    /// Address Resolved flag (AR)
+    ///
+    /// A flag bit or state internal to a device that indicates whether or not
+    /// the device's target address has been resolved by the ARP
+    /// Controller.
+    bool ar;
+
+    /// Address Valid flag (AV)
+    ///
+    /// A flag bit or state internal to a device that indicates whether or not
+    /// the device's target address is valid. This bit must be non-volatile for
+    /// devices that support the Persistent Target Address.
+    bool av;
+
+    /// Alert Response Address (ARA)
+    ///
+    /// A broadcast address used by the system controller or Host as
+    /// part of the Alert Response Protocol initiated when a device
+    /// asserts the SMBALERT# signal.
+
+
+    /// Prepare to ARP
+    ///
+    /// Action: always ACK/PROCESS
+    /// AR Flag: CLEAR
+    /// AV Flag: NO CHANGE
+    ///
+    /// This command informs all devices that the ARP Controller is starting the ARP
+    /// process. All ARP-capable devices must acknowledge all bytes in this SMBus packet
+    /// and clear their Address Resolved (AR) flag. They must also cancel any pending
+    /// “Notify ARP Controller” commands. If the ARP Controller detects that any of the
+    /// bytes have not been acknowledged then it can assume that there are no ARP-
+    /// capable devices present on the bus. Retries are recommended in case bus noise
+    /// causes an erroneous NACK.
+    ///
+    /// This command utilizes the standard SMBus Send Byte Protocol with PEC as
+    /// illustrated below.
+    Task<u32> prepare_to_arp() =>
+        controller.send_byte_with_pec(SMBUS_DEVICE_DEFAULT_ADDRESS, PREPARE_TO_ARP);
+
+
+    /// Reset device (general)
+    ///
+    /// Action: always ACK/PROCESS
+    /// AR Flag: CLEAR
+    /// AV Flag: if (non-PTA) then CLEAR; if (DTA) then SET; else NO CHANGE
+    ///
+    /// This command forces all non-PTA, ARP-capable devices to return to their initial
+    /// state. That is, they must clear their AR (Address Resolved) and AV (Address Valid)
+    /// flags; those devices that support the Persistent Target Address must clear their AR
+    /// flag. The DTA devices must assume their Default Target Addresses and clear their
+    /// AR flag. An ARP-capable device that implements a random number as part of its
+    /// UDID must regenerate its random number upon receipt of this command. All ARP-
+    /// capable devices must acknowledge all bytes in this SMBus packet. If the ARP
+    /// Controller detects that any of the bytes have not been acknowledged then it can
+    /// assume that there are no ARP-capable devices present on the bus.
+    /// This reset is just for the ARP functions, and is not intended as a general device
+    /// reset.
+    /// This command utilizes the standard SMBus Send Byte Protocol with PEC as
+    /// illustrated below.
+    Task<u32> reset_device() =>
+        controller.send_byte_with_pec(SMBUS_DEVICE_DEFAULT_ADDRESS, RESET_DEVICE);
+
+
+    /// Get UDID (general)
+    ///
+    /// Action: if (AR = 0) then ACK/PROCESS; else NACK/REJECT.
+    /// AR Flag: NO CHANGE
+    /// AV Flag: NO CHANGE
+    ///
+    /// This command requests ARP-capable and/or Discoverable devices to return their
+    /// target address along with their UDID. If the ARP Controller detects that any of the
+    /// first three bytes have not been acknowledged then it can assume that there are no
+    /// ARP-capable or Discoverable devices present on the bus or all ARP-capable devices
+    /// have valid assigned target addresses.
+    /// This command utilizes the standard SMBus Block Read Protocol with PEC as
+    /// illustrated below.
+    /// NOTE:
+    /// - Bit 0 (LSB) in the Data17 field must be returned as `1`.
+    /// - If a device has its AV flag clear then it must return `0b1111'111` for the remaining bits in the Data17 field.
+    Task<u32> get_udid(SmBusUdid &address) =>
+        controller.block_read_with_pec(SMBUS_DEVICE_DEFAULT_ADDRESS, GET_UDID, );
+
+
+    /// Assign address
+    ///
+    /// Action: always ACK; if (UDID match) then PROCESS.
+    /// AR Flag: SET if UDID matches.
+    /// AV Flag: SET if UDID matches.
+    ///
+    /// The ARP Controller assigns an address to a specific device with this command.
+    /// Since this command utilizes a particular device’s UDID only that device will adopt
+    /// the new address. All ARP-capable devices must monitor the UDID bytes in this
+    /// packet (all bytes except the assigned address byte). Once a device determines
+    /// that it is not the target of the command (due to a UDID bit or byte mismatch) it must
+    /// NACK the current byte, if possible, or the next byte. A target device matching all but
+    /// the last UDID byte has the choice to NACK the last UDID byte or the subsequent
+    /// assigned address byte. If the ARP Controller detects a NACK for any byte then it
+    /// must assume that the target device is no longer present. It is suggested that the
+    /// ARP Controller consider retrying the command in order to guard against noise
+    /// causing a present device to be ignored.
+    /// A target device that matches the entire UDID must immediately adopt the new
+    /// target address. It must reprogram its Persistent Target Address, if applicable. Bit 0
+    /// (LSB) of the Assigned Address field must be ignored.
+    /// NOTES:
+    /// 7. A target device must respond to this command even if its AR flag is SET.
+    /// 8. The target device only ACKs the PEC byte if it matches the value calculated on
+    /// data it received, if not it must NACK the PEC byte AND ignore the “Assign
+    /// Address” command. This behavior allows the ARP Controller to determine that
+    /// the target device successfully accepted the address without any further bus
+    /// activity.
+    /// This command utilizes the standard SMBus Block Write Protocol with PEC as
+    /// illustrated below.
+    Task<u32> assign_address(const SmBusUdid &address) =>
+        controller.send_byte_with_pec(SMBUS_DEVICE_DEFAULT_ADDRESS, ASSIGN_ADDRESS);
+
+
+    /// Reset device ARP (directed)
+    ///
+    /// Action: if (AV = 1) then ACK/PROCESS; else NACK/REJECT.
+    /// AR Flag: CLEAR
+    /// AV Flag: if (non-PTA) then CLEAR; if (DTA) then SET; else NO CHANGE
+    ///
+    /// This command forces a specific non-PTA, ARP-capable device to return to its initial
+    /// state. That is, it must clear its AR and AV flags; if the device supports the
+    /// Persistent Target Address it must clear its AR flag. The DTA device must
+    /// assume its Default Target Address and clear its AR flag. An ARP-capable device
+    /// that implements a random number as part of its UDID must regenerate its random
+    /// number upon receipt of this command. If the ARP Controller detects that any of the
+    /// bytes have not been acknowledged then it can assume that no ARP-capable
+    /// device is present at the targeted device address.
+    ///
+    /// This reset is just for the ARP functions, and is not intended as a general device
+    /// reset.
+    ///
+    /// This command utilizes the standard SMBus Send Byte Protocol with PEC as
+    /// illustrated below.
+    Task<u32> reset_device(const SmBusAddress &target_address);
+
+
+    /// Notify ARP Controller
+    /// A device may use this command to notify the ARP Controller that the device
+    /// requires address resolution. The device may execute this command under the
+    /// following circumstances:
+    ///
+    /// • Device power up
+    /// • When the device senses a bus collision during a read operation directed to
+    /// its Assigned Target Address.
+    ///
+    /// This command utilizes the standard SMBus Host Notify protocol to communicate with
+    /// the Host (at the SMBus Host Address as defined in Table 17 in Appendix C) as
+    /// illustrated below).
+    ///
+    /// Note: The value of 0000h in the data field means that the device wishes to be
+    /// ARPed. All other values are reserved for future use.
+    Task<u32> notify_arp_controller(...);
+
+
+
+    void initialize_used_address_pool() {
+        used_address_pool.clear();
+
+        used_address_pool.append();
+    }
+
+
+    Task<u32> process() {
+
+        // 1. Upon starting, the ARP Controller will initialize its Used Address Pool. Initially
+        // this will consist of the target addresses of fixed SMBus devices known to the
+        // ARP Controller and reserved addresses (as defined in Appendix C).
+        initialize_used_address_pool();
+
+        // 2. Send the “Prepare To ARP” command.
+        Task<u32> task = prepare_to_arp();
+
+        try (task.wait()) {
+        
+        }
+
+        // 3. Check for an acknowledgement for all bytes in the previous packet. If any
+        // bytes were not acknowledged then the ARP Controller can assume that no
+        // ARP-capable devices are present and may therefore consider the ARP process
+        // complete and proceed to step 4. If all bytes were acknowledged then go to step
+        // 6.
+        ;
+
+        // 4. The ARP Controller found no response to the “Prepare To ARP” command so it can
+        // assume that no ARP-capable devices are present in the system at this time.
+        // The ARP Controller may periodically re-issue the “Prepare To ARP”
+        // command to discover any ARP-capable devices added. Proceed to step 5.
+
+        do {
+
+            // 6. Send the “Get UDID” command.
+            SmBusUdid udid;
+            Task<u32> task = get_udid(udid);
+
+            // 7. Check for an acknowledgement for the first three bytes and verify that the
+            // byte count value received is 11h. If not, then the ARP Controller can assume
+            // that an ARP-capable device(s) is no longer present and may therefore consider
+            // the ARP process complete and Proceed to step 4. Otherwise proceed to step
+            // 8.
+
+            match (task.error()) {
+                DATA_NAK => ;
+
+            }
+
+            if (task.result() == 11) {
+                break;
+            }
+
+
+            // 8. Check the value of the Device Target Address received. If FFh then proceed
+            // to step 11 since this device does not possess a valid target address.
+            // Otherwise proceed to step 9.
+
+            if (task.data() == 0xFFu8) {
+                udid = get_random_address();
+                goto 11;
+            }
+
+            // 9. Determine if this device has a fixed target address. If bits 127 and 126 of the
+            // UDID are 00b than it has a fixed address, so proceed to step 12. Otherwise
+            // proceed to step 10.
+            if (udid.has_fixed_address()) {
+                goto 12;
+            }
+
+            // 10. The device possesses a valid target address. However, the ARP Controller
+            // must check this address against the Used Address Pool to insure that no other
+            // device has already been assigned the same address. If the received Device
+            // Target Address is found in the Used Address Pool then proceed to step 11. If
+            // not, then the device can keep its current target address but needs
+            // acknowledgement from the ARP Controller so proceed to step 12.
+            if (used_address_pool.contains(udid)) {
+                udid = get_random_address();
+                goto 11;
+            }
+
+            // 11. Select a target address that is not in the Used Address Pool and proceed to
+            // step 12.
+
+            // 12. Send the "Assign Address" command with the UDID returned by the device in
+            // the "Get UDID" command packet.
+            Task<u32> task = assign_address(udid);
+
+            // 13. Check for acknowledgement of all bytes in the “Assign Address” command
+            // packet. If any byte was not acknowledged then the ARP Controller assumes
+            // the device is no longer present; proceed to step 6 to determine if there are
+            // more devices requiring address resolution. If all bytes were acknowledged then
+            // the ARP Controller assumes that the device has accepted the address
+            // assignment; proceed to step 14.
+            if (task.wait()) {
+                // 14. The device now has a valid target address. The ARP Controller must add this
+                // address to the Used Address Pool. Proceed to step 6 to determine if there are
+                // more devices requiring address resolution.
+                used_address_pool.append(udid);
+            }
+        }
+
+
+        // 5. Wait for a SMBus packet. If a packet is received proceed to step 15.
+
+
+        // 15. The ARP Controller checks to see if the received packet was the “Notify ARP
+        // Controller” command. If so, then it must execute the ARP to resolve the
+        // address for the newly added device(s); proceed to step 6. If not, then
+        // proceed to step 16.
+
+        // 16. The ARP Controller received a non-ARP related packet. Process it
+        // accordingly and proceed to step 5.
+    }
+}

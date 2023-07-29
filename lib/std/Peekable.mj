@@ -1,0 +1,21 @@
+
+
+class Peekable<type T> {
+    implements Readable<T>
+
+
+    // Read a series of bytes.
+    void peek(safe; T *data, u32 size)
+
+
+    // Read 1 byte.
+    void peek(safe; T &data) {
+        peek(&data, 1)
+    }
+
+
+    // Read a series of bytes into a string.
+    void peek(safe; String &string, u32 size) {
+        peek(string.data(), size)
+    }
+}

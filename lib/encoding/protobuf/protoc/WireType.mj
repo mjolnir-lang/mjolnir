@@ -1,0 +1,22 @@
+
+
+enum<u8> WireType {
+
+    /// int32, int64, uint32, uint64, sint32, sint64, bool, enum
+    VARINT = 0
+
+    /// fixed64, sfixed64, double
+    I64 = 1
+
+    /// string, bytes, embedded messages, packed repeated fields
+    LEN = 2
+
+    /// group start (deprecated)
+    SGROUP = 3
+
+    /// group end (deprecated)
+    EGROUP = 4
+
+    /// fixed32, sfixed32, float
+    I32 = 5
+}

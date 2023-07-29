@@ -1,0 +1,42 @@
+
+
+
+/// This command is used to retrieve entries from the SEL. The record data
+/// field in the response returns the 16 bytes of data from the SEL Event
+/// Record.
+class GetSelEntryCommand {
+    struct RequestRecord request {
+
+        /// Reservation ID, LS Byte first. Only required for partial Get. Use `0x0000` otherwise.
+        /// The reservation ID should be set to `0x0000` for implementations that don't implement the Reserve SEL command.
+        u16 reservation_id;
+
+        /// SEL Record ID, LS Byte first.
+        ///
+        /// `0x0000` - GET FIRST ENTRY
+        /// `0xFFFF` - GET LAST ENTRY
+        u16 sel_record_id;
+
+        /// Offset into record
+        u8 offset_into_record;
+
+        /// Bytes to read. `0xFF` means read entire record.
+        u8 size;
+    }
+    struct ResponseRecord response {
+
+        /// Completion Code
+        /// Return an error completion code if the SEL is empty.
+        /// `0x81` cannot execute command, SEL erase in progress.
+        u8 completion_code;
+
+        /// Next SEL Record ID, LS Byte first (return `0xFFFF` if the record just
+        /// returned is the last record.) Note: `0xFFFF` is not allowed as the
+        /// record ID for an actual record. I.e. the Record ID in the Record Data
+        /// for the last record should not be `0xFFFF`.
+        u16 next_sel_record_id;
+
+        /// Record Data, 16 bytes for entire record
+        u8[16] record_data;
+    }
+}

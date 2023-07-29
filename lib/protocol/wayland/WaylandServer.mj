@@ -1,0 +1,52 @@
+///  Include the server API, deprecations and protocol C API.
+///
+///  \warning Use of this header file is discouraged. Prefer including
+///  wayland-server-core.h instead, which does not include the
+///  server protocol header and as such only defines the library
+///  API, excluding the deprecated API below.
+import wayland-server-core;
+import wayland-server-protocol;
+
+
+/// The user can set this macro to hide the wl_object, wl_resource and wl_buffer
+/// objects alongside the associated API.
+///
+/// The structs were meant to be opaque, although we missed that in the early days.
+///
+/// NOTE: the list of structs, functions, etc in this section MUST NEVER GROW.
+/// Otherwise we will break forward compatibility and applications that used to
+/// build fine will no longer be able to do so.
+#ifndef WL_HIDE_DEPRECATED
+
+
+class WlObject {
+    const WlInterface &interface;
+    const void *implementation;
+    u32 id;
+};
+
+
+class wl_resource {
+    WlObject object;
+    Wl_ResourceDestroyFunc destroy;
+    WlList link;
+    WlSignal destroy_signal;
+    WlClient &client;
+    void *data;
+};
+
+
+@deprecated
+u32 wl_client_add_resource(WlResource &resource);
+
+@deprecated
+WlResource &wl_client_add_object(const WlInterface &interface, const void *implementation, u32 id, void *data);
+
+@deprecated
+WlResource &wl_client_new_object(const WlInterface *interface, const void *implementation, void *data);
+
+@deprecated
+WlGlobal &wl_display_add_global(const WlInterface *interface, void *data, WlGlobalBindFunc bind);
+
+@deprecated
+void wl_display_remove_global(WlGlobal &global);

@@ -1,0 +1,8 @@
+
+
+class Buffer<type T> {
+}
+
+
+impl<Readable<T>> Buffer<type T> {
+}

@@ -1,0 +1,50 @@
+
+
+interface Opcode {
+
+
+    /// The Mnemonic
+    StringView mnemonic(safe) =>
+        MNEMONIC;
+
+
+    /// Return the flags which may be clobbered.
+    Flag clobberd_flags(safe) => {
+        .s = false;
+        .z = false;
+        .h = false;
+        .pv = false;
+        .n = false;
+        .c = false;
+    };
+
+
+    /// Return the flags which may be clobbered.
+    Flag used_flags(safe) => {
+        .s = false;
+        .z = false;
+        .h = false;
+        .pv = false;
+        .n = false;
+        .c = false;
+    };
+
+
+    /// Return the flags which may be clobbered.
+    Flag used_registers(safe) => {
+        .s = false;
+        .z = false;
+        .h = false;
+        .pv = false;
+        .n = false;
+        .c = false;
+    };
+
+
+    /// M Cycles
+    u8 m_cycles(safe);
+
+
+    /// T States
+    u8 t_states(safe);
+}

@@ -1,0 +1,18 @@
+
+
+/// ADR [A1]
+bitfield<u32> AdrA1 {
+    [31:28] Cond cond;
+    [27:16] = 0b001010001111u;
+    [15:12] u8 rd;
+    [11:0] u16 imm12;
+}
+
+
+/// ADR [A2]
+bitfield<u32> AdrA2 {
+    [31:28] Cond cond;
+    [27:16] = 0b001001001111u;
+    [15:12] u8 rd;
+    [11:0] u16 imm12;
+}

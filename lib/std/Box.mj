@@ -1,0 +1,29 @@
+
+
+/// Manages a heap allocated object by reference.
+class Box<type T> {
+    T *ptr
+
+
+    /// Create a box for a heap allocated object.
+    Box(T *ptr) {
+        this.ptr = ptr
+    }
+
+
+    /// Call the boxed object's destructor and free the allocated memory.
+    ~Box() {
+        ptr->~T()
+        Memory::free(ptr)
+    }
+
+
+    safe T &{*}(safe) {
+        return *ptr
+    }
+
+
+    safe T *{->}(safe) {
+        return ptr
+    }
+}

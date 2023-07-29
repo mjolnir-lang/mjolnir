@@ -1,0 +1,94 @@
+
+/// Genral-Purpose Input/Output
+///
+/// This interface is not for async I/O GPIOs (I2C GPIO expanders)
+interface GpioPinGroup {
+
+
+    /// Return the `GpioPinGroup` capabilities.
+    GpioPinCapabilities capabilities(safe);
+
+
+    /// Configure the pin.
+    ///
+    /// It is important that the transition to the new configuration does not introduce hazards.
+    /// For example the transition from input-pull-up to output push-pull with output driven high
+    /// may momentarily drive the output low.
+    void? config(u32 pin_mask, GpioPinConfig config);
+
+
+    void? config(u32 pin_mask, PinMode pin_mode);
+
+
+    void set_callback(u32 pin_mask, IrqMode event, Callable<void(GpioPin)> callback);
+    void enable_callback(u32 pin_mask);
+    void disable_callback(u32 pin_mask);
+    void has_callback(u32 pin_mask);
+    void is_callback_enabled(safe; u32 pin_mask);
+
+
+    // Exclusive access
+    // Delayed operation
+    // Failible
+    // polled/interrupt driven
+    // grouped
+    // 
+
+
+    /// Set the output logic to high.
+    void set(u32 pin_mask);
+
+
+    /// 
+    void set(u32 pin_mask, bool value);
+
+
+    /// Set the driven logic value of the pin.
+    void set(u32 pin_mask, DigitalLogic value);
+
+
+    /// Get the logic value of the pin.
+    void get(safe; u32 pin_mask);
+
+
+    /// Get the driven value of the pin.
+    void get_driven(safe; u32 pin_mask);
+
+
+    /// Return true if the value on the pin does not match the value being driven.
+    bool is_overdriven(safe; u32 pin_mask);
+
+
+    /// Drive logic low on the pin.
+    /// This does not configure the pin as an output, but may configure interal state which will be apparent when the pin is changed to an output.
+    void clear(u32 pin_mask);
+
+
+    /// Set the output to be the opposite of the currently driven output.
+    /// This is also used for asserted/negated toggling.
+    void toggle(u32 pin_mask);
+
+
+    /// Set the signal state pf the pin.
+    void set_signal_state(u32 pin_mask, SignalState signal_state);
+
+
+    /// Return the configured signal state of the pin.
+    SignalState set_signal_state(safe; u32 pin_mask);
+
+
+    /// Drive the pin to the active logic state.
+    void assert(u32 pin_mask);
+
+
+    /// Return true if the pin value matches the signal state.
+    bool is_asserted(safe; u32 pin_mask);
+
+
+    /// Drive the pin to the inactive logic state.
+    void negate(u32 pin_mask);
+
+
+    /// Return true if the pin does not value match the signal state.
+    bool is_negated(safe; u32 pin_mask);
+}

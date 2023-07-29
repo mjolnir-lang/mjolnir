@@ -1,0 +1,10 @@
+
+
+/// Intelligent Platform Management device. This represents the 'basic' intelligent device that responds to the platform sensor and event interface messages. All Intelligent Platform Management devices on the IPMB are expected to respond to the mandatory 'IPM Device' commands. These are also referred to as the 'global' commands. Management Controllers that communicate via compatible messages to the system are also considered IPM devices.
+interface IpmiIpmDevice {
+
+}
+
+
+
+

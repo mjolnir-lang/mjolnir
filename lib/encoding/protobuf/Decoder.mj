@@ -1,0 +1,112 @@
+
+
+struct Tag {
+    u32 field_number;
+    WireType wire_type;
+}
+
+
+class Decoder {
+
+
+    void encode_tag(const Slice<u8> &buffer)? {
+        buffer = (field_number << 3) | wire_type;
+    }
+
+
+    Tag decode_tag(const Slice<u8> &buffer)? {
+        u64 value, u32 n = decode_varint(buffer);
+        return {
+            field_number = buffer >> 3;
+            wire_type = buffer & 0x07u8;
+        };
+    }
+
+
+    i32 decode_i32(const Slice<u8> &buffer)? {
+        if (buffer.size() < 4) {
+            fail;
+        }
+
+        return (
+            (i32: buffer[0]) <<  0 |
+            (i32: buffer[1]) <<  8 |
+            (i32: buffer[2]) << 16 |
+            (i32: buffer[3]) << 24
+        );
+    }
+
+
+    f32 decode_f32(const Slice<u8> &buffer)? {
+        if (buffer.size() < 4) {
+            fail;
+        }
+
+        return (f32[:]:
+            (u32: buffer[0]) <<  0 |
+            (u32: buffer[1]) <<  8 |
+            (u32: buffer[2]) << 16 |
+            (u32: buffer[3]) << 24
+        );
+    }
+
+
+    i64 decode_i64(const Slice<u8> &buffer)? {
+        if (buffer.size() < 8) {
+            fail;
+        }
+
+        return (
+            (i64: buffer[0]) <<  0 |
+            (i64: buffer[1]) <<  8 |
+            (i64: buffer[2]) << 16 |
+            (i64: buffer[3]) << 24 |
+            (i64: buffer[4]) << 32 |
+            (i64: buffer[5]) << 40 |
+            (i64: buffer[6]) << 48 |
+            (i64: buffer[7]) << 56
+        );
+    }
+
+
+    f64 decode_f64(const Slice<u8> &buffer)? {
+        if (buffer.size() < 8) {
+            fail;
+        }
+
+        return (f64[:]:
+            (u64: buffer[0]) <<  0 |
+            (u64: buffer[1]) <<  8 |
+            (u64: buffer[2]) << 16 |
+            (u64: buffer[3]) << 24 |
+            (u64: buffer[4]) << 32 |
+            (u64: buffer[5]) << 40 |
+            (u64: buffer[6]) << 48 |
+            (u64: buffer[7]) << 56
+        );
+    }
+
+
+    (u64, u32) decode_varint(const Slice<u8> &buffer)? {
+        u64 value = 0;
+        u32 n = 0;
+
+        while (buffer[n] & 0x80u8) {
+            value |= (u64: buffer[n] & 0x7Fu8) << (7 * n);
+            n += 1;
+
+            if (n == buffer.size() && buffer[n - 1] & 0x80u8) {
+                fail;
+            }
+        }
+
+        return value, n;
+    }
+
+
+    String decode_string(const Slice<u8> &buffer)? {
+        Tag tag = Tag::decode(buffer[0]);
+        u32 length, n = decode_varint(buffer[1:]);
+        return String(&buffer[n], length);
+    }
+}

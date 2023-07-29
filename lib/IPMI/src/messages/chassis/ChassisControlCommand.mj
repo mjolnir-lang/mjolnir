@@ -1,0 +1,70 @@
+
+
+/// Chassis Control Command
+///
+/// The following command provides a mechanism for providing power up, power
+/// down, and reset control.
+class ChassisControlCommand {
+    struct Request request {
+        bitfield<u8> {
+            [7:4] = 0;
+
+            /// The command can also be used for compute blades or compute partition
+            /// applications where the blades or partitions entities are emulating independent
+            /// computer systems that implement IPMI. In these applications, the chassis power
+            /// control aspects of the command are not required to be supported. Individual
+            /// blades or computer partitions can elect to either not support the power on/off
+            /// functions, can use them for power control of the blade/partition independent of
+            /// the containing chassis, or may map them into a power control scheme for the
+            /// overall chassis. For example, a scheme where chassis power will go off only
+            /// after all blades within a chassis have been commanded into the 'power off' state.
+            [3:0] enum<u8> chassis_control {
+
+                0 = power down. Force system into soft off (S4/S45) state. This is for
+                'emergency' management power down actions. The command
+                does not initiate a clean shut-down of the operating system prior to
+                powering down the system.
+
+                1 = power up.
+
+                2 = power cycle (optional). This command provides a power off interval of at least 1 second following the deassertion of the system's
+                POWERGOOD status from the main power subsystem. It is
+                recommended that no action occur if system power is off (S4/S5)
+                when this action is selected, and that a D5h “Request parameter(s)
+                not supported in present state.” error completion code be returned.
+                Note that some implementations may cause a system power up if a
+                power cycle operation is selected when system power is down. For
+                consistency of operation, it is recommended that system
+                management software first check the system power state before
+                issuing a power cycle, and only issue the command if system
+                power is ON or in a lower sleep state than S4/S5.
+
+                3 = hard reset. In some implementations, the BMC may not know
+                whether a reset will cause any particular effect and will pulse the
+                system reset signal regardless of power state. If the implementation
+                can tell that no action will occur if a reset is delivered in a given
+                power state, then it is recommended (but still optional) that a D5h
+                "Request parameter(s) not supported in present state." error
+                completion code be returned.
+
+                4 = pulse Diagnostic Interrupt. (optional) Pulse a version of a diagnostic
+                interrupt that goes directly to the processor(s). This is typically used
+                to cause the operating system to do a diagnostic dump (OS
+                dependent). The interrupt is commonly an NMI on IA-32 systems
+                and an INIT on Intel Itanium processor based systems.
+
+                5 = Initiate a soft-shutdown of OS via ACPI by emulating a fatal
+                overtemperature. (optional)
+
+                all other = reserved
+            }
+        }
+    }
+    struct Response response {
+
+        /// Completion Code
+        ///
+        /// The implementation is allowed to return the completion code prior to performing the selected control action if necessary.
+        CompletionCode completion_code;
+    }
+}

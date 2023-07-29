@@ -1,0 +1,23 @@
+
+
+class Ld-r-hl {
+    bitfield<u8[1]> {
+        [7:6] = 0b01;
+        [5:3] r;
+        [2:0] = 0b110;
+    }
+
+
+    Ld-r-hl(u8 r) =>
+        this.r = r;
+
+
+    u8* data(safe) {
+        return (u8*: &this);
+    }
+
+
+    safe u8[1] &{(:)}(safe) {
+        return *(u8[1]*: &this);
+    }
+}

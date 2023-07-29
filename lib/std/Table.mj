@@ -1,0 +1,90 @@
+
+
+/// A generic data structure for storing homogenous records.
+class Table<type T, u32 SIZE> {
+    T (*data)[SIZE]
+    u32 capacity
+    u32 size
+
+
+
+    Table<T, SIZE>() {
+        data = null
+        capacity = 0
+        size = 0
+        width = 0
+    }
+
+
+
+    /// Append a column to a CSV table. Adding and removing columns in CSV data
+    /// is more expensive than adding and removing records. If possible, do not
+    /// change the columns when the table contains many records.
+    void append_column() {
+        
+    }
+
+
+    void insert_column(u32 index, T value) {
+        data.insert(index, column)
+    }
+
+
+    void insert_column(u32 index, const T &value) {
+        data.insert(index, column)
+    }
+
+
+    void move_column(u32 index, u32 dest, u32 n) {
+        data.move(index, dest, n)
+    }
+
+
+
+
+
+    void append(T *records) {
+        
+    }
+
+
+    /// Append a record 
+    void append(const T *records) {
+        
+    }
+
+
+    /// Append a record 
+    void append(Slice<T> records) {
+        
+    }
+
+
+    /// Append a record 
+    void append(const Slice<T> &records) {
+        
+    }
+
+
+    /// Append a record 
+    void append(List<T> records) {
+        
+    }
+
+
+    /// Append a record 
+    void append(const List<T> &records) {
+        
+    }
+
+
+    /// Append a record 
+    void append(const Iterable<T> &records) {
+        
+    }
+
+
+    void insert(u32 index) {
+        
+    }
+}

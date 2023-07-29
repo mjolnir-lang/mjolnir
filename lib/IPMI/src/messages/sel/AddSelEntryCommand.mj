@@ -1,0 +1,55 @@
+
+
+/// Add SEL Entry Command
+///
+/// This command is provided to enable BIOS to add records to the System Event
+/// Log. Normally, the SEL Device and the Event Receiver Device will be
+/// incorporated into the same management controller. In this case, BIOS or the
+/// system SMI Handler adds its own events to the SEL by formatting an Event
+/// Message and transmitting it to the SEL Device, rather than by using this
+/// command.
+///
+/// Records are added on after the last record in the SEL. The SEL Device adds
+/// the timestamp according to the SEL Record Type (see 31.6.1, SEL Record
+/// Type Ranges, following) when it creates the record. Thus, in some cases the
+/// timestamp bytes in the record data are ignored. However, 'dummy' timestamp
+/// bytes must still be present in the data.
+///
+/// The record data field that is passed in the request consists of all bytes
+/// of the SEL event record. The Record ID field that is passed in the request
+/// is just a placeholder. The Record ID field that was passed in the request
+/// will be overwritten with a Record ID value that the SEL Device generates
+/// before the record is stored. Depending on the Record Type, the entry may
+/// also be automatically timestamped (see following section). If the entry is
+/// automatically timestamped, the SEL Device will also over-write the four
+/// bytes of the record's timestamp field.
+///
+/// Note: The normal mechanism for adding entries to the SEL is via an Event
+/// Request message to the Event Receiver device.
+struct AddSelEntryCommand {
+    struct RequestRecord request {
+
+        /// Record Data, 16 bytes. Refer to section 0, SEL Record Formats
+        u8[16] record_data;
+    }
+    struct ResponseRecord response {
+
+        /// Completion Code. Generic, plus following command specific:
+        ///
+        /// `0x80` - operation not supported for this Record Type
+        /// `0x81` - cannot execute command, SEL erase in progress
+        u8 completion_code;
+
+        /// Record ID for added record, LS Byte first.
+        u16 record_id;
+    }
+}
+
+
+/// SEL Record Type Ranges
+///
+/// The following lists the ranges used for SEL Record types:
+///
+/// `0x00:0xBF` - Range reserved for standard SEL Record Types. As of this writing, only type 02h is defined. Records are automatically timestamped unless otherwise indicated.
+/// `0xC0:0xDF` - Range reserved for timestamped OEM SEL records. These records are automatically timestamped by the SEL Device.
+/// `0xE0:0xFF` - Range reserved for non-timestamped OEM SEL records. The SEL Device does not automatically timestamp these records. The four bytes passed in the byte locations for the timestamp will be directly entered into the SEL.

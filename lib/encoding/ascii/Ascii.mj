@@ -1,0 +1,137 @@
+
+
+
+class Ascii {
+
+
+    // Return if the character is a control character
+    // ch the character to process
+    bool is_cntrl(u8 ch) =>
+        ch < *" " || ch == 0x7Fu8;
+
+
+    // Return if the character is a printable character
+    // ch the character to process
+    bool is_print(u8 ch) =>
+        (*" " <= ch <= *"~");
+
+
+    // Return if the character is a graphical character
+    // ch the character to process
+    bool is_graph(u8 ch) =>
+        (*"!" <= ch <= *"~");
+
+
+    // Return if the character is a whitespace character
+    // ch the character to process
+    bool is_space(u8 ch) =>
+        ch == *" " || *"\t" <= ch <= *"\r";
+
+
+    // Return if the character is a blank character
+    // ch the character to process
+    bool is_blank(u8 ch) =>
+        ch == *" " || ch == *"\t";
+
+
+    // Return if the character is an uppercase letter character
+    // ch the character to process
+    bool is_upper(u8 ch) =>
+        (*"A" <= ch <= *"Z");
+
+
+    // Return if the character is a lowercase letter character
+    // ch the character to process
+    bool is_lower(u8 ch) =>
+        (*"a" <= ch <= *"z");
+
+
+    // Return if the character is a decimal digit character
+    // ch the character to process
+    bool is_digit(u8 ch) =>
+        (*"0" <= ch <= *"9");
+
+
+    // Return if the character is an octal digit character
+    // ch the character to process
+    bool is_octal(u8 ch) =>
+        (*"0" <= ch <= *"7");
+
+
+    // Return if the character is an alphabet character
+    // ch the character to process
+    bool is_alpha(u8 ch) =>
+        is_lower(ch) || is_upper(ch);
+
+
+    // Return if the character is a hexadecimal character
+    // ch the character to process
+    bool is_hexal(u8 ch) =>
+        is_digit(ch) || (*"A" <= ch <= *"F") || (*"a" <= ch <= *"f");
+
+
+    // Return if the character is an alphanumeric character
+    // ch the character to process
+    bool is_alnum(u8 ch) =>
+        is_alpha(ch) || is_digit(ch);
+
+
+    // Return if the character is an identifier character
+    // ch the character to process
+    bool is_ident(u8 ch) =>
+        is_alnum(ch) || ch == *"_";
+
+
+    // Return if the character is a punctuation character
+    // ch the character to process
+    bool is_punct(u8 ch) =>
+        (*"!" <= ch <= *"/") || (*":" <= ch <= *"@") || (*"[" <= ch <= *"`") || (*"{" <= ch <= *"~");
+
+
+    // Return the uppercase equivalent of the character if it is lowercase.
+    // ch the character to process
+    u8 to_upper(u8 ch) =>
+        is_lower(ch) ? ch - (*"a" - *"A") : ch;
+
+
+    // Return the lowercase equivalent of the character if it is uppercase.
+    // ch the character to process
+    u8 to_lower(u8 ch) =>
+        is_upper(ch) ? ch + (*"a" - *"A") : ch;
+
+
+    // Return the digit equivalent of the character.
+    // ch the character to process
+    u8 to_digit(u8 ch, bool is_upper) {
+        if (ch < 10) {
+            return ch + *"0";
+        }
+
+        if (ch < 16) {
+            return ch + is_upper ? *"A" - 10 : *"a" - 10;
+        }
+
+        fail;
+    }
+
+
+    // Parse a value from the character with a given base.
+    // ch The character to parse
+    // value The parsed value or unchanged
+    // base The number base
+    u32? parse(u8 ch, u32 base = 10) {
+        if (is_digit(ch)) {
+            ch -= *"0";
+        } else if (is_upper(ch)) {
+            ch -= *"A" - 10;
+        } else if (is_lower(ch)) {
+            ch -= *"a" - 10;
+        }
+
+        if (ch > base) {
+            fail;
+        }
+
+        return ch;
+    }
+}

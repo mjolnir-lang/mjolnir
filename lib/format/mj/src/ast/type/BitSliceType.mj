@@ -1,0 +1,65 @@
+
+
+// An 'Slice Type' is a contiguous slice of the base type whose size is the
+// product of the base type size and the slice size.
+class BitSliceType {
+    const Type &base_type;
+    bool is_const;
+    bool is_volatile;
+
+
+    BitSliceType(
+        const Type &base_type,
+        bool is_const,
+        bool is_volatile
+    ) {
+        .base_type = base_type;
+        .is_const = is_const;
+        .is_volatile = is_volatile;
+    }
+}
+
+
+impl<DerivedType> BitSliceType {
+
+
+    /// Return the size of the type in bytes.
+    u32 size(safe) {
+        return Platorm::ADDRESS_WIDTH;
+    }
+
+
+    /// Return the alignment of the type in bytes.
+    u32 alignment(safe) const {
+        return Platorm::ADDRESS_WIDTH;
+    }
+
+
+    /// Return true if the type is 'const' qualified.
+    bool is_const(safe) {
+        return is_const;
+    }
+
+
+    /// Return true if the type is 'volatile' qualified.
+    bool is_volatile(safe) {
+        return is_volatile;
+    }
+
+
+    const MjMethod &destructor(safe) {
+        return Method::NONE;
+    }
+
+
+    /// Return the 'const' qualified derivation of the type.
+    const Type &const_qualified_derivation(safe) {
+        return;
+    }
+
+
+    /// Return the 'volatile' qualified derivation of the type.
+    const Type &volatile_qualified_derivation(safe) {
+        return;
+    }
+}

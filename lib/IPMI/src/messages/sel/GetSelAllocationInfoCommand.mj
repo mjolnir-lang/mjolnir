@@ -1,0 +1,42 @@
+
+
+/// Returns the number of possible allocation units, the amount of usable free
+/// space (in allocation units), the allocation unit size (in bytes), and the
+/// size of the largest contiguous free region (in allocation units). The
+/// 'allocation unit size' is the number of bytes in which storage is
+/// allocated. For example, if a 16-byte record is to be added, and the SEL has
+/// a 32-byte allocation unit size, then the record would take up 32-bytes of
+/// storage.
+///
+/// The SEL implementation shall, at a minimum, support an allocation unit
+/// size of >= 16 bytes.
+class GetSelAllocationInfoCommand
+    struct ResponseRecord response {
+
+        /// Completion Code
+        u8 completion_code;
+
+        /// Number of possible allocation units, LS Byte first
+        ///
+        /// This number indicates whether the total number of possible allocation
+        /// units is equal to, or some number less than the log size divided by the
+        /// allocation unit size.
+        ///
+        /// `0x0000` - unspecified
+        u16 allocation_size;
+
+        /// Allocation unit size in bytes, LS Byte first.
+        ///
+        /// `0x0000` - unspecified
+        u16 allocation_unit_size;
+
+        /// Number of free allocation units, LS Byte first
+        u16 free_size;
+
+        /// Largest free block in allocation units, LS Byte first
+        u16 largest_free_block_size;
+
+        /// Maximum record size in allocation units.
+        u8 maximum_record_size;
+    }
+}

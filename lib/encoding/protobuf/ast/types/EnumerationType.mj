@@ -1,0 +1,19 @@
+import protobuf.ast.ProtoType;
+
+
+class EnumerationType {
+    Map<u32, Token> values;
+
+
+    bool verify() {
+        // we must have a `0` value and it must be first.
+        // no duoplicates
+        // upper snake case field names
+        // pascal case type name
+    }
+}
+
+
+impl<ProtoType> EnumerationType {
+
+}

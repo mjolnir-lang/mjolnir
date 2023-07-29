@@ -1,0 +1,19 @@
+
+
+/// Manufacturing Test On Command
+///
+/// If the device supports a 'manufacturing test mode', this command is reserved to turn that mode on. The specification of the functionality of this command is device dependent. A Cold Reset command shall, if accepted, take the device out of 'manufacturing test mode' - as shall a physical reset of the device. Device-specific commands to exit manufacturing test mode are also allowed.
+///
+/// Note that it may be possible to 'lock out' the command interface while in manufacturing test mode, in which case the Cold Reset command or other mechanism for exiting manufacturing test mode may fail and a physical reset of the device will be necessary to restore the device to normal operation.
+///
+/// The request parameters for this command are device specific. Typically, the parameters will be used for transmitting a password or key that prevents manufacturing test mode from being entered unless the correct values are provided.
+class ManufacturingTestOnCommand {
+    struct Request request {
+
+        /// device specific parameters. See text.
+        u8 device_specific_parameters;
+    }
+    struct Response response {
+        CompletionCode completion_code;
+    }
+}

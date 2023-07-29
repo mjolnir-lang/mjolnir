@@ -1,0 +1,94 @@
+
+/// Genral-Purpose Input/Output
+///
+/// This interface is not for async I/O GPIOs (I2C GPIO expanders)
+interface GpioPin {
+
+
+    /// Return the `GpioPin` capabilities.
+    GpioPinCapabilities capabilities(safe);
+
+
+    /// Configure the pin.
+    ///
+    /// It is important that the transition to the new configuration does not introduce hazards.
+    /// For example the transition from input-pull-up to output push-pull with output driven high
+    /// may momentarily drive the output low.
+    void? config(GpioPinConfig config);
+
+
+    void? config(PinMode pin_mode);
+
+
+    void set_callback(IrqMode event, Callable<void(GpioPin)> callback);
+    void enable_callback();
+    void disable_callback();
+    void has_callback();
+    void is_callback_enabled();
+
+
+    // Exclusive access
+    // Delayed operation
+    // Failible
+    // polled/interrupt driven
+    // grouped
+    // 
+
+
+    /// Set the output logic to high.
+    void set();
+
+
+    /// 
+    void set(bool value);
+
+
+    /// Set the driven logic value of the pin.
+    void set(DigitalLogic value);
+
+
+    /// Get the logic value of the pin.
+    void get(safe);
+
+
+    /// Get the driven value of the pin.
+    void get_driven(safe);
+
+
+    /// Return true if the value on the pin does not match the value being driven.
+    bool is_overdriven(safe);
+
+
+    /// Drive logic low on the pin.
+    /// This does not configure the pin as an output, but may configure interal state which will be apparent when the pin is changed to an output.
+    void clear();
+
+
+    /// Set the output to be the opposite of the currently driven output.
+    /// This is also used for asserted/negated toggling.
+    void toggle();
+
+
+    /// Set the signal state pf the pin.
+    void set_signal_state(SignalState signal_state);
+
+
+    /// Return the configured signal state of the pin.
+    SignalState set_signal_state(safe);
+
+
+    /// Drive the pin to the active logic state.
+    void assert();
+
+
+    /// Return true if the pin value matches the signal state.
+    bool is_asserted(safe);
+
+
+    /// Drive the pin to the inactive logic state.
+    void negate();
+
+
+    /// Return true if the pin does not value match the signal state.
+    bool is_negated(safe);
+}

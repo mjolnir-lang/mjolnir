@@ -1,0 +1,102 @@
+
+
+bitfield<u32> I3cDeviceId {
+    [11:0] manufacturer;
+    [] part_id;
+}
+
+
+enum<u16> I3cManufacturerId {
+
+    /// NXP Semiconductors
+    NXP_SEMICONDUCTORS = 0x000u;
+
+    /// NXP Semiconductors (reserved)
+    NXP_SEMICONDUCTORS_RESERVED_001 = 0x001u;
+    NXP_SEMICONDUCTORS_RESERVED_002 = 0x002u;
+    NXP_SEMICONDUCTORS_RESERVED_003 = 0x003u;
+
+    /// Ramtron International
+    RAMTRON_INTERNATIONAL = 0x004u;
+
+    /// Analog Devices
+    ANALOG_DEVICES = 0x005u;
+
+    /// STMicroelectronics
+    ST_MICROELECTRONICS = 0x006u;
+
+    /// ON Semiconductor
+    ON_SEMICONDUCTOR = 0x007u;
+
+    /// Sprintek Corporation
+    SPRINTEK_CORPORATION = 0x008u;
+
+    /// ESPROS Photonics AG
+    ESPROS_PHOTONICS_AG = 0x009u;
+
+    /// Fujitsu Semiconductor
+    FUJITSU_SEMICONDUCTOR = 0x00Au;
+
+    /// Flir
+    FLIR = 0x00Bu;
+
+    /// O2Micro
+    O2_MICRO = 0x00Cu;
+
+    /// Atmel
+    ATMEL = 0x00Du;
+
+    /// DIODES Incorporated
+    DIODES_INCORPORATED = 0x00Eu;
+
+    /// Pericom
+    PERICOM = 0x00Fu;
+
+    /// Marvell Semiconductor Inc
+    MARVELL_SEMICONDUCTOR_INC = 0x010u;
+
+    /// ForteMedia
+    FORTE_MEDIA = 0x011u;
+
+    /// Snaju LLC
+    SNAJU_LLC = 0x012u;
+
+    /// Intel
+    INTEL = 0x013u;
+
+    /// Pericom
+    PERICOM = 0x014u;
+
+    /// Arctic Sand Technologies
+    ARCTIC_SAND_TECHNOLOGIES = 0x015u;
+
+    /// Micron Technology
+    MICRON_TECHNOLOGY = 0x016u;
+
+    /// Semtech Corporation
+    SEMTECH_CORPORATION = 0x017u;
+
+    /// IDT
+    IDT = 0x018u;
+
+    /// TT Electronics
+    TT_ELECTRONICS = 0x019u;
+
+    /// Alien Technology
+    ALIEN_TECHNOLOGY = 0x01Au;
+
+    /// LAPIS semiconductor
+    LAPIS_SEMICONDUCTOR = 0x01Bu;
+
+    /// Qorvo
+    QORVO = 0x01Cu;
+
+    /// Wuxi Chipown Micro-electronics limited (Chipown)
+    WUXI_CHIPOWN_MICROELECTRONICS_LIMITED = 0x01Du;
+
+    /// KOA CORPORATION
+    KOA_CORPORATION = 0x01Eu;
+
+    /// Prevo Technologies, Inc.
+    PREVO_TECHNOLOGIES_INC = 0x01Fu;
+}

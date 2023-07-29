@@ -1,0 +1,5 @@
+
+
+class Ld-i-a {
+    u8 text[1];
+}

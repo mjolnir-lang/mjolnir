@@ -1,0 +1,43 @@
+
+
+/// Add with Carry, setting flags, adds two register values and the Carry flag value, and writes the result to the destination register. It updates the condition flags based on the result.
+class Adsc {
+    bitfield<u32> {
+        [31] bool sf;
+        [30] u8 op = 0;
+        [29] u8 s = 1;
+        [28:21] = 0b11010000u;
+        [20:16] u8 rm;
+        [15:10] = 0b000000u;
+        [9:5] u8 rn;
+        [4:0] u8 rd;
+    }
+
+
+    Ld-r-n(u8 r, u8 n) {
+        this = {
+            .r = r;
+            .n = n;
+        };
+    }
+}
+
+
+void operation() {
+    if (sf) {
+        u64 result;
+        u64 operand1 = X[n, 64];
+        u64 operand2 = X[m, 64];
+        u8 nzcv;
+        (result, nzcv) = AddWithCarry(operand1, operand2, PSTATE.C);
+        PSTATE.<N,Z,C,V> = nzcv;
+        X[d, 64] = result;
+    } else {
+        u32 result;
+        u32 operand1 = X[n, 32];
+        u32 operand2 = X[m, 32];
+        (result, nzcv) = AddWithCarry(operand1, operand2, PSTATE.C);
+        PSTATE.<N,Z,C,V> = nzcv;
+        X[d, 32] = result;
+    }
+}

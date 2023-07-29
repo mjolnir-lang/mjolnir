@@ -1,0 +1,52 @@
+
+
+/// Set Chassis Capabilities Command
+///
+/// This command is used to set the values that will be returned for the Get
+/// Chassis Capabilities command into non-volatile storage associated with the
+/// Chassis Device.
+///
+/// This command is recommended for all add-on bridge applications.
+class SetChassisCapabilitiesCommand {
+    struct Request request {
+
+        /// Capabilities Flags
+        bitfield<u8> capabilities_flags {
+
+            [7:2] = 0;
+
+            /// Provides Front Panel Lockout (see 28.1, Get Chassis Capabilities)
+            [1] provides_front_panel_lockout;
+
+            /// Provides intrusion
+            [0] provides_intrusion;
+        }
+
+        /// Chassis FRU Info Device Address (see 28.1, Get Chassis Capabilities
+        /// for a description of these addresses, their use, and the field
+        /// formatting)
+        u8 chassis_fru_info_device_address;
+        
+        /// Chassis SDR Device Address
+        u8 chassis_sdr_device_address;
+
+        /// Chassis SEL Device Address
+        u8 chassis_sel_device_address;
+
+        /// Chassis SM Device Address
+        u8 chassis_sm_device_address;
+
+        /// Chassis Bridge Device Address
+        u8 chassis_bridge_device_address;
+    }
+    struct Response response {
+
+        /// Completion Code
+        ///
+        /// NOTE: This command does not return an error completion code if an
+        /// attempt is made to change a 'read-only' parameter. Software must
+        /// check which fields in the response match the value from the request
+        /// by using the Get Chassis Capabilities command.
+        CompletionCode completion_code;
+    }
+}

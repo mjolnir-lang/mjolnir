@@ -1,0 +1,18 @@
+
+
+class Ld-ix-d-r {
+    bitfield<u8[3]> {
+        [0] = 0xDDu;
+        [1] = 0x36u;
+        [2] i8 d;
+        [3] n;
+    }
+
+
+    Ld-ix-d-n(i8 d, u8 n) {
+        this = {
+            .d = d;
+            .n = n;
+        };
+    }
+}

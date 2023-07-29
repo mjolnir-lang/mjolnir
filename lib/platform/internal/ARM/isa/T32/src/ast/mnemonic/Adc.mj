@@ -1,0 +1,41 @@
+
+
+class Adc {
+    Cond cond;
+    bool s;
+    Reg rn;
+    Reg rd;
+    u16 imm12;
+}
+
+
+/// ADC, ADCS (immediate) [T1]
+bitfield<u16[2]> AdcImmediateT1 {
+    [0][15:11] = 0b11110u;
+    [0][10] bool i;
+    [0][9:5] = 0b01010u;
+    [0][4] bool s;
+    [0][3:0] u8 rn;
+    [1][15] = 0;
+    [1][14:12] u8 imm3;
+    [1][11:8] u8 rd;
+    [1][7:0] u8 imm8;
+}
+
+
+/// ADC, ADCS (register) [T1]
+bitfield<u16> AdcRegisterT1 {
+    [15:9] = 0b0000100u;
+    [8:6] u8 rm;
+    [5:3] u8 rn;
+    [2:0] u8 rd;
+}
+
+
+/// ADC, ADCS (register) [T2]
+bitfield<u16> AdcRegisterT2 {
+    [15:8] = 0b01000100u;
+    [7] u8 dn;
+    [6:3] u8 rm;
+    [2:0] u8 rdn;
+}

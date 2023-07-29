@@ -1,0 +1,215 @@
+
+
+interface Writable<type T> {
+
+
+    void flush()
+
+
+    Task<u32> write_async(const T *data, u32 size)
+
+
+    Task<u32> write_async(const T[] data) =>
+        write_async(data, data.size())
+
+
+    Task<u32> write_async(const T &data) =>
+        write_async(&data, 1)
+
+
+    u32 write(const T *data, u32 size = 1) =>
+        write_async(data, size).wait()
+
+
+    u32 write(const T[] data) =>
+        write(data, data.size())
+
+
+    u32 write(const T &data) =>
+        write(&data, 1)
+}
+
+// c - const
+// m - mutable
+// v - volatile
+// s - safe
+// 
+
+
+interface Writable<u8> {
+
+
+    Task<u32> write_async(StringView string) =>
+        write_async(string.data(), string.size())
+
+
+    Task<u32> write_async(StringView string, u32 size) =>
+        write_async(string.data(), size)
+
+
+    u32 write(StringView string) =>
+        write(string.data(), string.size())
+
+
+    u32 write(StringView string, u32 size) =>
+        write(string.data(), size)
+
+
+    /// Print a format string.
+    Task<u32> print_async(StringView format, const Printable &args...) =>
+        vprint_async(format, args)
+
+
+    /// Print a format string.
+    u32 print(StringView format, const Printable &args...) =>
+        print_async(format, args).wait()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    u32 print(PrintFormat &format, const u8 *data, u32 size)
+
+
+    u32 print(PrintFormat &format, StringView data) {
+        return print(format, data.data(), data.size())
+    }
+
+
+    u32 print(PrintFormat &format, StringView data, u32 size) {
+        return print(format, data.data(), size)
+    }
+
+
+    u32 print(PrintFormat &format, SliceView<u8> data) {
+        return print(format, data.data(), data.size())
+    }
+
+
+    u32 print(PrintFormat &format, SliceView<u8> data, u32 size) {
+        return print(format, data.data(), size)
+    }
+
+
+    u32 print(PrintFormat &format, u8 value)
+
+
+    u32 print(PrintFormat &format, bool value)
+
+
+    u32 print(PrintFormat &format, void *value)
+
+
+    u32 print(PrintFormat &format, u32 value)
+
+
+    u32 print(PrintFormat &format, u64 value)
+
+
+    u32 print(PrintFormat &format, i32 value)
+
+
+    u32 print(PrintFormat &format, i64 value)
+
+
+    u32 print(PrintFormat &format, f64 value)
+
+
+    @internal
+    struct PrintFormat {
+        StringView extra
+        u32 index
+        u32 width
+        u32 precision
+        u32 base
+        u32 type_width
+        u8 fill
+        u8 align
+        u8 sign
+        u8 type
+        bool has_precision
+        bool has_alternate
+
+
+        @shared
+        u32 parse(PrintFormat &format, const String &string, const Printable &args...)
+    }
+
+
+    /// @brief Print a format string.
+    /// @return The number of bytes written.
+    @internal
+    u32 vprint(const String &format, const Printable &args...)
+
+
+    /// @brief Print a character.
+    /// @return The number of bytes written.
+    @internal
+    u32 vprint_byte(PrintFormat &format, const Printable &args...)
+
+
+    /// @brief Print a string.
+    /// @return The number of bytes written.
+    @internal
+    u32 vprint_string(PrintFormat &format, const Printable &args...)
+
+
+    /// @brief Print a list of strings.
+    /// @return The number of bytes written.
+    @internal
+    u32 vprint_list(PrintFormat &format, const Printable &args...)
+
+
+    /// @brief Print a boolean.
+    /// @return The number of bytes written.
+    @internal
+    u32 vprint_bool(PrintFormat &format, const Printable &args...)
+
+
+    /// @brief Print a pointer.
+    /// @return The number of bytes written.
+    @internal
+    u32 vprint_pointer(PrintFormat &format, const Printable &args...)
+
+
+    /// @brief Print a memory view.
+    /// @return The number of bytes written.
+    @internal
+    u32 vprint_memory(PrintFormat &format, const Printable &args...)
+
+
+    /// @brief Print an integer.
+    /// @return The number of bytes written.
+    @internal
+    u32 vprint_integer(PrintFormat &format, const Printable &args...)
+
+
+    /// @brief Print a floating-point number.
+    /// @return The number of bytes written.
+    @internal
+    u32 vprint_float(PrintFormat &format, const Printable &args...)
+
+
+    /// @brief Print a complex floating-point number.
+    /// @return The number of bytes written.
+    @internal
+    u32 vprint_complex(PrintFormat &format, const Printable &args...)
+
+
+    /// @brief Print a number with units of measure.
+    /// @return The number of bytes written.
+    @internal
+    u32 vprint_number(PrintFormat &format, const Printable &args...)
+}

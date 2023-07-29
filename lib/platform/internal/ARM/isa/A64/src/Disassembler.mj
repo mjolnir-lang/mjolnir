@@ -1,0 +1,79 @@
+
+
+class Disassembler {
+    Path input_file_path;
+    Path output_file_path;
+    TextFile &output;
+    u8[] source;
+
+
+    Disassembler(Path &input, Path &output) {
+        this.input = BinaryFile::open(input, READ_ONLY);
+        this.output = TextFile::open(output, READ_WRITE);
+    }
+
+
+    void disassemble() {
+        BinaryFile &input = BinaryFile::open(input, READ_ONLY);
+        source = Memory::allocate(source, (input.size + 1) / 2);
+        input.read_all(source);
+
+        output = TextFile::open(output, READ_WRITE);
+
+        do {
+            u8 op = source[index++];
+
+            match (op) {
+                Push-qq::OPCODE(0b00) => disassemble(Push-qq(op));
+                Push-qq::OPCODE(0b01) => disassemble(Push-qq(op));
+                Push-qq::OPCODE(0b10) => disassemble(Push-qq(op));
+                Push-qq::OPCODE(0b11) => disassemble(Push-qq(op));
+                Push-ix::OPCODE => disassemble(Push-ix(op));
+                Push-iy::OPCODE => disassemble(Push-iy(op));
+            }
+
+            if (opcode.has_target()) {
+                // remember that it jumps somewhere
+                if (opcode.target().is_relative()) {
+                    target = index + opcode.target() - 128;
+                } else if (opcode.target().is_absolute()) {
+                    target = opcode.target();
+                } else {
+
+                    // remember to trace the register contents to a target address.
+                    target = opcode.target();
+                }
+            }
+            
+            if (opcode.is_load() && opcode.load_address().is_absolute()) {
+                // this may be a variable or a target address.
+            }
+
+            // Assumptions
+            //
+            // relative jumps will not be affected by PIC
+            // absolute jumps may be affected by PIC
+            // both relative and absolute targets may not be in the source
+            // absolute addresses used as data may not be in the source
+            // differentiate between call and jump for function and label tracking
+            // functions may be jumped to when the calling function can safely return by way of the target function
+            // follow code execution
+            // always look for vector table and architecture defined addresses
+        }
+    }
+
+
+    @internal
+    void disassemble(Push-qq &op) {
+        StringView qq;
+
+        match (op.qq) {
+            0b00 => qq = 'BC';
+            0b01 => qq = 'DE';
+            0b10 => qq = 'HL';
+            0b11 => qq = 'AF';
+        }
+
+        output.print_line('PUSH  {}', qq);
+    }
+}

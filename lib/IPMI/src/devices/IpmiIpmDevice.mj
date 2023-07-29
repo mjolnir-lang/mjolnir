@@ -1,0 +1,39 @@
+
+
+/// Intelligent Platform Management device. This represents the 'basic' intelligent device that responds to the platform sensor and event interface messages. All Intelligent Platform Management devices on the IPMB are expected to respond to the mandatory 'IPM Device' commands. These are also referred to as the 'global' commands. Management Controllers that communicate via compatible messages to the system are also considered IPM devices.
+interface IpmiIpmDevice {
+
+}
+
+
+
+/// This section presents the commands that are common to all Intelligent Platform Management (IPM) devices that follow this specification's message/command interface. This includes management controllers that connect to the system via a compatible message interface, as well as 'IPMB Devices'.
+///
+/// IPMI Management Controllers shall recognize and respond to these commands via LUN 0. Refer to Appendix G - Command Assignments for the specification of the Network Function and Command (CMD) values and privilege levels for these commands.
+
+/// O/M = Optional/Mandatory.
+
+/// Table 20-, IPM Device 'Global' Commands
+/// Command Section O/M
+
+Get Device ID 20.1 M
+Cold Reset 20.2 O[1]
+Warm Reset 20.3 O
+Get Self Test Results 20.4 M
+Manufacturing Test On 20.5 O
+Set ACPI Power State 20.6 O
+Get ACPI Power State 20.7 O[3]
+Get Device GUID 20.8 O
+
+
+Broadcast Commands
+Broadcast 'Get Device ID' 20.9 M[2]
+
+
+[1] This command is not required to return a response in all implementations.
+[2] Broadcast is over IPMB channels only. Request is formatted as an entire IPMB
+application request message, from the RsSA field through the second checksum,
+with the message prefixed with the broadcast slave address, 00h. Response
+format is same as the regular 'Get Device ID' response.
+[3] Mandatory if Set ACPI Power State command is implemented on given
+management controller.

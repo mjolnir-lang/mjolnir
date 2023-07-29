@@ -1,0 +1,16 @@
+import mj.ast;
+
+
+class ProtobufCompiler {
+
+
+    ProtobufCompiler() {
+        ;
+    }
+
+
+    /// Compile the protobuf file into a Mjolnir module.
+    MjModule compile()? {
+        fail;
+    }
+}

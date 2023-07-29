@@ -1,0 +1,13 @@
+
+
+interface PinMux {
+
+
+    /// The number of options on the MUX.
+    u32 width();
+
+    /// The bitmask of valid selections.
+    u32 mask();
+
+    void select(u32 id);
+}

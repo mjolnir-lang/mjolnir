@@ -1,0 +1,9 @@
+
+
+class GetChassisCapabilitiesCommand {
+    struct Response response {
+
+        /// Completion Code
+        CompletionCode completion_code;
+    }
+}

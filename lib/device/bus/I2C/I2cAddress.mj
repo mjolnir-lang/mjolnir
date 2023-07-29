@@ -1,0 +1,31 @@
+
+bitfield<u16> I2cAddress {
+    [14:] target_address;
+    [15] read_not_write;
+}
+
+
+enum<u8> I2cAddress {
+    
+
+    /// General Call Address
+    ///
+    /// The general call addresses all devices on the bus using the I2C address 0.
+    ///
+    /// If a device does not need the information provided, it simply does nothing.
+    /// Devices processing the message acknowledge this address and behave as slave
+    /// receiver.
+    ///
+    /// The master cannot detect how many devices are using the message.
+    ///
+    /// The second byte contains a command. The possible commands are described in
+    /// the I2C specification chapter 3.13. The value 0 e.g. is a Software Reset.
+    GENERAL_CALL = 0x00u8;
+
+    = 0b0000'001 CBUS address[3]
+    = 0b0000'010 reserved for different bus format[4]
+    = 0b0000'011 reserved for future purposes
+    = 0b0000'1XX Hs-mode controller code
+    = 0b1111'1XX device ID
+    = 0b1111'0XX 10-bit target addressing
+}

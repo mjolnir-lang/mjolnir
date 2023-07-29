@@ -1,0 +1,29 @@
+
+
+/// Chassis Identify Command
+///
+/// This command causes the chassis to physically identify itself by a
+/// mechanism chosen by the system implementation; such as turning on blinking
+/// user-visible lights or emitting beeps via a speaker, LCD panel, etc.
+/// Unless the optional "Force Identify On" capability is supported and used,
+/// the Chassis Identify command automatically times out and deasserts the
+/// indication after a configurable time-out. Software must periodically resend
+/// the command to keep the identify condition asserted. This will restart the
+/// timeout.
+class ChassisIdentifyCommand {
+    struct Request request {
+
+        /// This parameter byte is optionally present. If not provided, the Chassis Identify can be used to turn on the Identify indication for the default timeout interval, but cannot be used to turn the indication off.
+        u8<s> identify_interval;
+
+        /// This parameter byte is optionally present. If provided, it is highly recommended that the chassis provides a local manual mechanism that enables a user or service personnel to turn off Identify. If a local manual mechanism is not provided, AC removal (BMC reset) should remove the indication.
+        bitfield<u8> {
+            [0] force_identify_on;
+        }
+    }
+    struct Response response {
+
+        /// Completion Code
+        CompletionCode completion_code;
+    }
+}

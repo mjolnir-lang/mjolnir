@@ -1,0 +1,11 @@
+
+
+/// Sliceable provides a non-owning view over a collection of objects.
+interface Sliceable<type T> {
+    implements Iterable<T>
+    implements Indexable<T>
+
+
+    // Return a slice.
+    Slice<safe T> slice(safe; u32 start, u32 stop)
+}

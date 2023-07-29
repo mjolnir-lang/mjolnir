@@ -1,0 +1,18 @@
+
+
+class Ld-iy-d-r {
+    bitfield<u8[4]> {
+        [0] = 0xFDu;
+        [1][7:3] = 0b01110;
+        [1][2:0] r;
+        [2] i8 d;
+    }
+
+
+    Ld-iy-d-r(i8 d, u8 r) {
+        this = {
+            .d = d;
+            .r = r;
+        };
+    }
+}

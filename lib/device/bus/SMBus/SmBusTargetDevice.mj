@@ -1,0 +1,17 @@
+import i2c;
+
+
+/// A target device responds to its own address and receives commands. Depending on
+/// the transaction type, a target may either receive data from a controller device (target-
+/// receiver) or may send data to a controller device (target-transmitter).
+///
+/// A device may be designed to be a target only. A target device may also be
+/// designed to become a controller in certain circumstances, such as when using the
+/// SMBus Host Notify protocol (Section 6.5.9).
+///
+/// The number of targets in a system is theoretically limited only by the number of
+/// available addresses. In practice, the number of targets is limited by the maximum
+/// bus capacitance and rise time specifications.
+@api(1.0)
+class SmBusTargetDevice {
+}

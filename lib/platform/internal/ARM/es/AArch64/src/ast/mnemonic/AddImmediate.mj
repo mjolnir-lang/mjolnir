@@ -1,0 +1,57 @@
+
+
+/// 
+class AddImmediate {
+    bitfield<u32> {
+        [31] bool sf;
+        [30] u8 op = 0;
+        [29] u8 sh;
+        [28:23] = 0b100010u;
+        [22] u8 s = 0;
+        [21:10] u16 imm12;
+        [9:5] u8 rn;
+        [4:0] u8 rd;
+    }
+
+
+    Add(bool sf, u8 rm, u8 sh, u8 imm3, u8 rn, u8 rd) {
+        this = {
+            .sf = sf;
+            .rm = rm;
+            .sh = sh;
+            .imm12 = imm12;
+            .rn = rn;
+            .rd = rd;
+        };
+    }
+}
+
+
+void operation() {
+
+    // Decode
+
+
+    // Execute
+    if (sf) {
+        u64 result;
+        u64 operand1 = (rn == 31) ? SP()[63:0] : X(rn, 64);
+        (result, _) = AddWithCarry(operand1, imm12, '0');
+
+        if (rd == 31) {
+            SP() = ZeroExtend(result, 64);
+        } else {
+            X(rd, 64) = result;
+        }
+    } else {
+        u32 result;
+        u32 operand1 = (rn == 31) ? SP()[31:0] : X(rn, 32);
+        (result, _) = AddWithCarry(operand1, imm12, '0');
+
+        if (rd == 31) {
+            SP() = ZeroExtend(result, 64);
+        } else {
+            X(rd, 32) = result;
+        }
+    }
+}

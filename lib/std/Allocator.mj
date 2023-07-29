@@ -1,0 +1,90 @@
+
+
+class AllocatorIterator<type T> {
+    T **ptr
+    T **end
+
+
+    AllocatorIterator(Allocator<T> &allocator) {
+        ptr = allocator[0]
+        end = allocator[allocator.size() - 1]
+    }
+
+
+    bool is_empty(safe) {
+        return ptr == end
+    }
+
+
+    T &'next() {
+        return *ptr++
+    }
+}
+
+
+/// An allocator of objects with O(1) access time
+class Allocator<type T, u32 PAGE_SIZE = 32> {
+    T (*data_)[PAGE_SIZE]; // slabs
+    T *next
+    u32 size
+
+
+    Allocator() {}
+
+
+    ~Allocator() {
+        clear()
+        Memory::free(data)
+    }
+
+
+    u32 size(safe) {
+        return data.size()
+    }
+
+
+    u32 capacity(safe) {
+        return data.capacity()
+    }
+
+
+    void clear() {
+        for (T &value : *this) {
+            value.~T()
+        }
+
+        // TODO: Reorder pointers?
+    }
+
+
+    void reserve(u32 size) {
+        data.reserve(size)
+    }
+
+
+    /// @brief Append a new element to the vector in place.
+    /// @tparam ...Args
+    /// @param ...args
+    T &allocate(...) {
+        return data.append_new(...)
+    }
+
+
+    void free(T &value) {
+        value.~T()
+    }
+
+
+    safe T &{[]}(safe; u32 index) {
+        return *ptrs[index]
+    }
+}
+
+
+impl<Iterator<T>> Allocator<type T> {
+
+
+    AllocatorIterator<safe T> iterator(safe) {
+        return AllocatorIterator<safe T>(this)
+    }
+}

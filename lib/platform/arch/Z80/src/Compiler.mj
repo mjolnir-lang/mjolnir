@@ -1,0 +1,55 @@
+import lang.mj;
+
+
+// options
+//
+// PIC (Position Independant Code)
+// shared library
+// static binary
+// fixed address
+// 
+
+
+// IR is memory-to-memory machine
+// translate to z80 registers and stuff
+
+
+/// A `CompilerBackend` compiles the Mjolnir Interpediate Representation (IR)
+/// into architecture specific machine code.
+class CompilerBackend {
+    File &output;
+}
+
+
+impl<Mj::CompilerBackend> CompilerBackend {
+    void? compile(Ir::Program &program) {
+        fail;
+
+        // architecture specific optimizations
+        // z80 uses a special instruction RST to call small, high use subroutines
+        // layout
+        // relative address fitting
+        // translate to register access
+        // uses loads/stores
+        // optimize static calling conventions
+        // overlap functions
+        // find duplicate code
+
+        // order constants, zeroed variables, and initialized variables
+        // insert startup code
+        // use runtime
+
+
+        for (function in program.functions()) {
+            ;
+        }
+
+        for (data in program.data()) {
+            ;
+        }
+
+        for (data in program.data()) {
+            ;
+        }
+    }
+}

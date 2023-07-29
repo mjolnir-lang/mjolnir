@@ -1,0 +1,28 @@
+
+
+class Message {
+    void *data;
+    u32 size;
+}
+
+
+class RequestMessage {
+    void *data;
+    u32 size;
+}
+
+
+class ResponseMessage {
+    void *data;
+    u32 size;
+}
+
+
+class Command {
+    bool is_optional;
+}
+
+
+enum<Command> GlobalCommand {
+
+}

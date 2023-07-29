@@ -1,0 +1,95 @@
+#pragma once
+
+#include "mj/ast/types/MjBasicType.hpp"
+
+
+// Not a class. A data container only. no methods, no properties, no shared.
+class MjStructureType : public MjBasicType {
+private:
+    Vector<MjType> derivations_; // The derived types
+    Vector<MjMember *> members_; // Members
+    const MjTypeName &name_;     // The type identifier sequence (TODO)
+    const MjComment &comment_;   // The type documentation comment
+    u32 size_;             // The type size in bytes
+    u32 alignment_;        // The type alignment in bytes
+    const bool is_const_;        // The type mutability. Memory may not be modified through this type
+    const bool is_volatile_;     // The type volatility. Memory may be modified outside of the program
+public:
+
+
+    MjStructureType(
+        const MjTypeName &name,
+        const MjComment &comment,
+        bool is_const,
+        bool is_volatile
+    ) :
+        name_(name),
+        comment_(comment),
+        is_const_(is_const),
+        is_volatile_(is_volatile)
+    {
+        size_ = 0;
+        alignment_ = 0;
+
+        for (MjMember *member : members_) {
+            size_ = std::max(size_, member->size());
+            alignment_ = std::max(alignment_, member->size());
+        }
+    }
+
+
+    const MjTypeName &name() const {
+        return name_;
+    }
+
+
+    const MjComment &comment() const {
+        return comment_;
+    }
+
+
+    /// \brief Return the size of the type in bytes.
+    u32 size() const {
+        return size_;
+    }
+
+
+    /// \brief Return the alignment of the type in bytes.
+    u32 alignment() const {
+        return alignment_;
+    }
+
+
+    /// \brief Return true if the type is 'const' qualified.
+    bool is_const() const {
+        return is_const_;
+    }
+
+
+    /// \brief Return true if the type is 'volatile' qualified.
+    bool is_volatile() const {
+        return is_volatile_;
+    }
+
+
+    const MjMethod &destructor() const {
+        return destructor_;
+    }
+
+
+    const Vector<MjMember *> &members() const {
+        return members_;
+    }
+
+
+    /// \brief Return the 'const' qualified derivation of the type.
+    const MjType &const_qualified_derivation() const {
+        return;
+    }
+
+
+    /// \brief Return the 'volatile' qualified derivation of the type.
+    const MjType &volatile_qualified_derivation() const {
+        return;
+    }
+};

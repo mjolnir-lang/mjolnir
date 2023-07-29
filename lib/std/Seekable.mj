@@ -1,0 +1,26 @@
+
+
+interface Seekable {
+
+
+    // Reposition the cursor to the end of the data.
+    u32 cursor(safe)
+
+
+    // Reposition the cursor to the given offset relative to the start of the data.
+    void seek(u32 offset)
+
+
+    // Reposition the cursor to the start of the data.
+    void seek_start() {
+        seek(0)
+    }
+
+
+    // Reposition the cursor to the end of the data.
+    void seek_end()
+
+
+    // Reposition the cursor relative to its current offset.
+    void seek_advance(i32 offset)
+}

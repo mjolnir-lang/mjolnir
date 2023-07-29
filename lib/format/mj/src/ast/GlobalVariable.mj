@@ -1,0 +1,84 @@
+
+
+/// @brief An `GlobalVariable` is an `Variable` that belongs to a shared or global scope or is literal.
+class GlobalVariable {
+    const Comment &comment_;    // The comment associated with the variable
+    const Token &name_;    // The variable name
+    const Type &type_;         // The variable type
+    List<const Token *> definition_; // The temporary sequence of tokens that make the definition
+    Storage storage_;            // The data of the variable
+    u64 address_;          // The absolute address of the variable storage
+    bool is_literal_;      // The memory will not be modified
+    bool is_reference_;    // The variable is a reference (storage is indeterminant)
+    bool is_alias_;        // The variable is a reference (storage is not needed)
+
+
+    GlobalVariable(
+        const Token &name,
+        const Type &type,
+        Comment &comment,
+        bool is_reference,
+        bool is_alias
+    ) {
+        name_(name),
+        type_(type),
+        comment_(comment),
+        storage_(type.size()),
+        is_reference_(is_reference),
+        is_alias_(is_alias)
+    }
+}
+
+
+impl<Variable> GlobalVariable {
+
+
+    // The comment associated with the variable
+    const Comment &comment(safe) =>
+        comment;
+
+
+    // The variable name
+    const Token &name(safe) =>
+        name;
+
+
+    // The variable type
+    const Type &type(safe) =>
+        type;
+
+
+    // The temporary sequence of tokens that make the definition
+    const List<const Token *> &definition(safe) =>
+        definition;
+
+
+    // The data of the variable
+    const Storage &storage(safe) =>
+        storage;
+
+
+    // The absolute address of the variable storage
+    u64 address(safe) =>
+        address;
+
+
+    // The memory will not be modified
+    bool is_literal(safe) =>
+        is_literal;
+
+
+    // The memory may be be modified even when const
+    bool is_safe(safe) =>
+        is_safe;
+
+
+    // The variable is a reference (storage is indeterminant)
+    bool is_reference(safe) =>
+        is_reference;
+
+
+    // The variable is a reference (storage is not needed)
+    bool is_alias(safe) =>
+        is_alias;
+}

@@ -1,0 +1,19 @@
+
+
+struct I2cBusTiming {
+
+    /// The bus frequency in Hz
+    u32<hz> bus_frequency;
+
+    /// The time SCL signal takes to rise in ns; t(r) in the I2C specification
+    u32<ns> scl_rise_time;
+
+    /// The time SCL signal takes to fall in ns; t(f) in the I2C specification
+    u32<ns> scl_fall_time;
+
+    /// The time IP core additionally needs to setup SCL in ns
+    u32<ns> scl_int_delay;
+
+    /// The time SDA signal takes to fall in ns; t(f) in the I2C specification 
+    u32<ns> sda_fall_time;
+}

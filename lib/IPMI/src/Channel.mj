@@ -1,0 +1,221 @@
+
+
+/// IPMI uses a 'channel model' for directing communication between different
+/// interfaces in the BMC. Channels serve as the means for identifying the
+/// medium for a messaging interface, and for configuring user information and
+/// passwords, message authentication, access modes and privilege limits
+/// associated with that interface.
+///
+/// Each channel has its own set of configuration parameters for user
+/// information and channel privilege limits. This allows different sets of
+/// user names and passwords and different levels and types of authentication
+/// to be used on different channels. IPMI Messaging and Alerting can also be
+/// independently enabled or disabled for an entire channel on a per channel
+/// basis.
+///
+/// Channels share commands related to authentication, access, and
+/// configuration. These commands are independent from the type of
+/// communication medium. This reduces the amount of medium-specific
+/// information that software needs to deal with, and simplifies task such as
+/// bridging IPMI messages between different media.
+class Channel {
+    ChannelNumber number;
+    ChannelProtocolType protocol_type;
+    ChannelMediumType medium_type;
+    ChannelPrivilegeLevel privilege_level;
+    List<Session> sessions;
+}
+
+
+/// Each interface has a channel number that is used when configuring the
+/// channel and for routing messages between channels. Only the channel number
+/// assignments for the primary IPMB and the System Interface are fixed, the
+/// assignment of other channel numbers can vary on a per-platform basis.
+/// Software uses a Get Channel Info command to determine what types of
+/// channels are available and what channel number assignments are used on a
+/// given platform.
+enum<u8> ChannelNumber {
+
+    /// Channel `0x0` is assigned for communication with the primary IPMB. IPMB protocols are used for IPMI messages. Refer to [IPMB] for more information.
+    PRIMARY_IPMB = 0;
+
+    /// Channels 1-7 can be assigned to different types types of communication media and protocols for IPMI messages (e.g. IPMB, LAN, ICMB, etc.), based on the system implementation. For IPMI 1.5, 'Channel Protocol Type' and 'Channel Medium Type' numbers identify the channel's protocol and medium, respectively. Software can use the Get Channel Info command to retrieve this information.
+    IMPLEMENTATION_SPECIFIC = [0x1:0xB];
+
+    ///
+    RESERVED = [0xC:0xD];
+
+    /// The value `0xE` is used as a way to identify the current channel that the command is being received from. For example, if software wants to know what channel number it's presently communicating over, it can find out by issuing a Get Channel Info command for channel E.
+    PRESENT_IF = 0xE;
+
+    /// Channel `0xF` is assigned for routing messages to the system interface.
+    SYSTEM_INTERFACE = 0xF;
+}
+
+
+/// Channel Protocol Type
+///
+/// The protocol used for transferring IPMI messages on a given channel is
+/// identified using a channel protocol type number. In earlier versions of the
+/// specification, this also implied the particular medium for the channel. The
+/// Channel Medium Type number is now used to explicitly indicate the class of
+/// the media. Both these values are used in the Get Channel Info command.
+///
+/// Sensor Data Record 0x14 - BMC Message Channel Info is superceded by the Get
+/// Channel Info command. New implementations should use the Get Channel Info
+/// command instead.
+enum<u8> ChannelProtocolType {
+
+    /// reserved
+    NA = 0x00;
+
+    /// Used for IPMB, serial/modem Basic Mode, and LAN
+    IPMB_1_0 = 0x01;
+
+    /// ICMB v1.0 - See Section 8, ICMB Interface.
+    ICMB_1_0 = 0x02;
+
+    /// reserved
+    RESERVED = 0x03;
+
+    /// IPMI on PCI-SMBus / SMBus 1.x - 2.x [1]
+    ///
+    /// Request = [rsSA, Netfn(even)/rsLUN, 00h, rqSA, rqSeq/rqLUN, CMD[2], <data>, PEC]
+    /// Response = [rqSA or rqSWID, NetFn(odd)/rqLUN, 00h, rsSA or rsSWID, rqSeq/rsLUN, CMD, completion code, <data>, PEC]
+    IPMI_SMBUS  = 0x04;
+
+    /// KCS System Interface Format - See Section 9, Keyboard Controller Style (KCS) Interface
+    KCS = 0x05;
+
+    /// SMIC System Interface Format - See Section 10, SMIC Interface
+    SMIC = 0x06;
+
+    /// BT System Interface Format, IPMI v1.0 - See Section 11, Block Transfer (BT) Interface
+    BT_10 = 0x07;
+
+    /// BT System Interface Format, IPMI v1.5 - See Section 11, Block Transfer (BT) Interface
+    BT_15 = 0x08;
+
+    /// Terminal Mode - See Section 14.7, Terminal Mode
+    TMODE = 0x09;
+
+    /// OEM Protocol 1 through 4, respectively
+    NA = [0x1C:0x1F];
+}
+
+1. Note that the IPMI format is intentionally illegal with respect to the SMBus specification protocols in order to provide a way
+for a management controller to unambiguously differentiate IPMI messages from SMBus transactions. This enables a
+management controller to support both SMBus and IPMI protocols without concern that they would overlap. The PEC
+(packet error code) is an 8-bit CRC calculated per the SMBus 2.0 specification. This format makes it simple to use the
+same hardware or firmware routines for data integrity checking of both IPMI and SMBus messages.)
+2. Note that certain network functions, such as OEM/Group, require additional standard fields within the <data> portion of a
+message.
+
+
+
+
+
+/// Channel Medium Type
+///
+/// The Channel Medium Type number is a seven-bit value that identifies the general class of medium that is being used for the channel.
+enum<u8> ChannelMediumType {
+    RESERVED = 0x0;
+    IPMB_I2C = 0x1;
+    ICMB_V1_0 = 0x2;
+    ICMB_V0_9 = 0x3;
+    802_3_LAN = 0x4;
+    ASYNCH_SERIAL_MODEM (RS-232) = 0x5;
+    OTHER_LAN = 0x6;
+    PCI_SMBUS = 0x7;
+    SMBUS_V1_X = 0x8;
+    SMBUS_V2_0 = 0x9;
+    USB_1_X = 0xA;
+    USB_2_X = 0xB;
+    SYSTEM_INTERFACE_KCS_SMIC_OR_BT = 0xC;
+    OEM = [0x60:0x7F];
+}
+
+
+/// Channel Access Modes
+///
+/// Session-based channels can be configured to provide IPMI Messaging access
+/// only when the system is in certain states. This allows the system user to
+/// configure various levels of security and remotely accessible features. The
+/// access modes are summarized in the Table 6-, Channel Access Modes. Commands
+/// allow the power-up default (non-volatile) Access Mode for a channel to be
+/// configured, and allow the Access Mode setting to be changed dynamically.
+/// Channel Access Modes are configured using the Set Channel Access command.
+/// The Set Channel Access command is also used to enable or disable Alerting
+/// for the entire channel.
+///
+/// Support for any given access mode is implementation specific. It is
+/// expected that most implementations will support Disabled and Always
+/// Available, and that serial/modem channels will also support the Shared
+/// access mode.
+enum<u8> ChannelAccessMode {
+
+    /// The channel is only available out-of-band while the machine is powered-off and during POST until the boot process is initiated. This option is primarily used with Serial Port Sharing where it may be desirable to ensure that the BMC does not take control of the serial port during OS run-time. The BMC will not claim the port once the port has been switched over to the system using the 'force mux' option in the Set Serial/Modem Mux command, unless the system becomes powered down or is reset.
+    ///
+    /// As a consequence, run-time software must rely on mechanisms such as the IPMI Watchdog Timer to power down or reset the system in order to enable communication to the BMC under failure conditions.
+    ///
+    /// There is a Modem Ring Time parameter in the serial/modem channels that configures the amount of time that the BMC waits for RING before directing the modem to connect. This parameter can be used to enable the BIOS to 'answer the phone' instead of the BMC. See Table 14-, Serial Port Sharing Access Characteristics for more information.
+    ///
+    /// LAN Channels do not typically allow setting Pre-boot Access Mode. If it is provided, BIOS should disable the channel at the end of POST (start of boot) by using the Set Channel Access command to set the channel to 'disabled' using the volatile setting.
+    ///
+    /// The Pre-boot Only setting does not affect serial/modem alerting. If alerting is enabled and software does not handle the event, the BMC will take control of the port/channel for the time it takes to deliver the alert. Alerting can be enabled or disabled for an entire channel via the Set Channel Access command.
+    PRE_BOOT_ONLY;
+
+    /// The channel is dedicated to communication with the BMC and is available during all system states (powered-down, powered-up, pre-boot, sleep, run-time, etc.) For IPMI LAN channels, this means that RMCP packets are handled by the BMC.
+    ///
+    /// For serial/modem channels on systems that support serial port sharing, the port can still be switched over to the system, however the BMC will always 'answer the phone' and respond to escape sequences and packets that activate the port. The BIOS will typically disable software access to the serial port when it sees the BMC configured for Always Available mode. This is done to prevent any possible confusion between auto-answer applications running on the OS and the BMC's answering of the phone.
+    ALWAYS_AVAILABLE;
+
+    /// The channel can be shared between system software and the BMC.
+    ///
+    /// Shared Mode is typically only used when there is a need to switch the communication resource between system software and the BMC because the system and BMC cannot readily interleave their traffic on the medium, as is the case with Serial Port Sharing.
+    ///
+    /// For IPMI LAN Channels, Shared Mode means that the implementation allows system software to receive and respond to RMCP packets. However, this does not prevent the BMC from handling IPMI RMCP packets and RMCP Ping/Pong. If software wanted exclusive access to RMCP Packets, it would need to temporarily disable IPMI messaging by setting the volatile setting of the access mode to 'disabled'. Note that if system software failed, a system reset (e.g. watchdog reset) or power down would be required to restore LAN communication with the BMC.
+    ///
+    /// For serial/modem channels that support Serial Port Sharing, the system BIOS will typically leave the baseboard serial port available for software use when it sees this mode set. This allows system software to use the port and any external modem for 'outgoing' traffic, while the BMC can still 'answer the phone' for incoming calls. Thus, in shared mode, the mux will be set to 'system' whenever the BMC is not in the process of answering a call or handling or establishing an IPMI messaging session.
+    ///
+    /// There is a Modem Ring Time parameter in the serial/modem channels that configures the amount of time that the BMC waits for RING before directing the modem to connect. This parameter can be used to enable 'auto answer' OS applications, while providing a way to connect to the BMC if a failure prevents the run-time application from answering the phone.
+    ///
+    /// If the Modem Ring Time is set to a non-zero wait time, the BMC will leave the mux set to the system until the Modem Ring Time expires, at which time the BMC can answer the phone. If the Modem Ring Time is set to a zero wait time, the BMC will take the mux and attempt to answer the phone as soon as it detects an incoming call. See Table 14-, Serial Port Sharing Access Characteristics for more information.
+    SHARED;
+
+    /// The channel is disabled from being used to communicate with the BMC. The Disabled setting does not affect alerting. Alerting is separately enabled or disabled via a separate field in the Set Channel Access command.
+    DISABLED;
+}
+
+
+/// Channel Privilege Levels
+///
+/// Channel privilege limits determine the maximum privilege that a user can
+/// have on a given channel. One channel can be configured to allow users to
+/// have up to Administrator level privilege, while another channel may be
+/// restricted to allow no higher than User level. The privilege level limits
+/// take precedence over the privilege level capabilities assigned per user.
+///
+/// Channels can be configured to operate with a particular maximum Privilege
+/// Level. Privilege levels tell the BMC which commands are allowed to be
+/// executed via the channel. The Set Channel Access command is used
+/// to set the maximum privilege level limit for a channel. The Set Session
+/// Privilege Level Command is used to request the ability to perform
+/// operations at a particular privilege level. The Set Session Privilege Level
+/// command can only be used to set privilege levels that are less than or
+/// equal to the privilege level limit for the entire channel, regardless of
+/// the privilege level of the user.
+enum<u8> ChannelPrivilegeLevel {
+
+    /// This may be considered the lowest privilege level. Only commands necessary to support initiating a Callback are allowed.
+    CALLBACK;
+
+    /// Only 'benign' commands are allowed. These are primarily commands that read data structures and retrieve status. Commands that can be used to alter BMC configuration, write data to the BMC or other management controllers, or perform system actions such as resets, power on/off, and watchdog activation are disallowed.
+    USER;
+
+    /// All BMC commands are allowed, except for configuration commands that can change the behavior of the out-of-band interfaces. For example, Operator privilege does not allow the capability to disable individual channels, or change user access privileges.
+    OPERATOR;
+
+    /// All BMC commands are allowed, including configuration commands. An Adminstrator can even execute configuration commands that would disable the channel that the Administrator is communicating over.
+    ADMINISTRATOR;
+}

@@ -1,0 +1,248 @@
+
+
+class Cpu {
+    u32 r0;
+    u32 r1;
+    u32 r2;
+    u32 r3;
+    u32 r4;
+    u32 r5;
+    u32 r6;
+    u32 r7;
+    u32 r8;
+    u32 r9;
+    u32 r10;
+    u32 r11;
+    u32 r12;
+
+    /// Stack Pointer (SP)
+    ///
+    /// Used as a pointer to the active stack. For usage restrictions see Use of `0b1101` as a register specifier on page A5-77. This is preset to the top of the Main stack on reset. See The SP registers on page B1-186 for more information. SP is sometimes referred to as R13.
+    union {
+        u32 sp;
+        u32 r13;
+    }
+
+    /// Link Register (LR)
+    ///
+    /// Stores the Return Link. This is a value that relates to the return address from a subroutine that is entered using a Branch with Link instruction. The LR register is also updated on exception entry, see Exception entry behavior on page B1-196. LR is sometimes referred to as R14.
+    ///
+    /// NOTE: LR can be used for other purposes when it is not required to support a return from a subroutine.
+    union {
+        u32 lr;
+        u32 r14;
+    }
+
+    /// Program Counter (PC)
+    ///
+    /// See Use of `0b1111` as a register specifier on page A5-76 for more information. The PC is loaded with the Reset handler start address on reset. PC is sometimes referred to as R15.
+    union {
+        u32 pc;
+        u32 r15;
+    }
+
+    /// Program Status Register (PSR)
+    union psr {
+
+        /// The Application Program Status Register (APSR)
+        ///
+        /// Program status is reported in the 32-bit APSR.
+        /// Holds flags that can be written by application-level software, that is, by unprivileged software. APSR handling of application-level writeable flags by the MSR and MRS instructions is consistent across ARMv6T2, ARMv6-M, and all ARMv7 profiles.
+        bitfield<u32> apsr {
+
+            /// Negative condition code flag. Set to bit [31] of the result of the instruction. If the result is regarded as a two's complement signed integer, then N is set to 1 if the result is negative and set to 0 if it is positive or zero.
+            [31] n;
+
+            /// Zero condition code flag. Set to 1 if the result of the instruction is zero, and to 0 otherwise. A result of zero often indicates an equal result from a comparison.
+            [30] z;
+
+            /// Carry condition code flag. Set to 1 if the instruction results in a carry condition, for example an unsigned overflow on an addition.
+            [29] c;
+
+            /// Overflow condition code flag. Set to 1 if the instruction results in an overflow condition, for example a signed overflow on an addition
+            [28] v;
+
+            @reserved
+            [27:0];
+        }
+
+        /// Interrupt Program Status Register, IPSR
+        ///
+        /// When the processor is executing an exception handler, holds the exception number of the exception being processed. Otherwise, the IPSR value is zero.
+        bitfield<u32> ipsr {
+
+            @reserved
+            [31:6];
+
+            /// Negative condition code flag. Set to bit [31] of the result of the instruction. If the result is regarded as a two's complement signed integer, then N is set to 1 if the result is negative and set to 0 if it is positive or zero.
+            [5:0] exception_number;
+        }
+
+        /// Execution Program Status Register, EPSR
+        ///
+        /// Holds Execution state bits.
+        bitfield<u32> epsr {
+
+            /// Negative condition code flag. Set to bit [31] of the result of the instruction. If the result is regarded as a two's complement signed integer, then N is set to 1 if the result is negative and set to 0 if it is positive or zero.
+            [24] t;
+            [9] a;
+        }
+    }
+
+    // BranchWritePC()
+    // ===============
+    BranchWritePC(bits(32) address)
+    BranchTo(address<31:1>:’0’);
+    The BXWritePC() and BLXWritePC() functions each perform an interworking branch:
+
+
+
+
+    // BXWritePC()
+    // ===========
+    BXWritePC(bits(32) address)
+    if CurrentMode == Mode_Handler && address<31:28> == ‘1111’ then
+    ExceptionReturn(address<27:0>);
+    else
+    EPSR.T = address<0>; // if EPSR.T == 0, a HardFault
+    // is taken on the next instruction
+    BranchTo(address<31:1>:’0’);
+    // BLXWritePC()
+    // ============
+    BLXWritePC(bits(32) address)
+    EPSR.T = address<0>; // if EPSR.T == 0, a HardFault is taken on the next instruction
+    BranchTo(address<31:1>:’0’);
+    The LoadWritePC() and ALUWritePC() functions are used for two cases where the behavior was systematically
+    modified between architecture versions. The functions simplify to aliases of the branch functions in the M-profile
+    architecture variants:
+    // LoadWritePC()
+    // =============
+    LoadWritePC(bits(32) address)
+    BXWritePC(address);
+    // ALUWritePC()
+    // ============
+    ALUWritePC(bits(32) address)
+    BranchWritePC(address);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    Shift and rotate operations
+ARMv6-M instructions use the following types of shift and rotate operations:
+Logical Shift Left
+(LSL) moves each bit of a bitstring left by a specified number of bits. Zeros are shifted in at the right
+end of the bitstring. Bits that are shifted off the left end of the bitstring are discarded, except that the
+last such bit can be produced as a carry output.
+Logical Shift Right
+(LSR) moves each bit of a bitstring right by a specified number of bits. Zeros are shifted in at the left
+end of the bitstring. Bits that are shifted off the right end of the bitstring are discarded, except that
+the last such bit can be produced as a carry output.
+Arithmetic Shift Right
+(ASR) moves each bit of a bitstring right by a specified number of bits. Copies of the leftmost bit are
+shifted in at the left end of the bitstring. Bits that are shifted off the right end of the bitstring are
+discarded, except that the last such bit can be produced as a carry output.
+Rotate Right (ROR) moves each bit of a bitstring right by a specified number of bits. Each bit that is shifted off the
+right end of the bitstring is re-introduced at the left end. The last bit shifted off the right end of the
+bitstring can be produced as a carry output.
+
+
+    Pseudocode details of shift and rotate operations
+    These shift and rotate operations are supported in pseudocode by the following functions:
+
+
+    // LSL_C
+    (bits(N) result, bit carry_out) LSL_C(bits(N) x, u32 shift) {
+        extended_x = x : Zeros(shift);
+        result = extended_x<N-1:0>;
+        carry_out = extended_x<N>;
+        return (result, carry_out);
+    }
+
+
+    // LSL
+    bits(N) LSL(bits(N) x, u32 shift) {
+        if (shift == 0) {
+            return x;
+        }
+
+        return LSL_C(x, shift);
+    }
+
+
+    // LSR_C()
+    // =======
+    (bits(N), bit) LSR_C(bits(N) x, integer shift)
+    assert shift > 0;
+    extended_x = ZeroExtend(x, shift+N);
+    result = extended_x<shift+N-1:shift>;
+    carry_out = extended_x<shift-1>;
+    return (result, carry_out);
+    // LSR()
+    // =====
+    bits(N) LSR(bits(N) x, integer shift)
+    assert shift >= 0;
+    if shift == 0 then
+    result = x;
+    else
+    (result, -) = LSR_C(x, shift);
+    return result;
+    // ASR_C()
+    // =======
+    (bits(N), bit) ASR_C(bits(N) x, integer shift)
+    assert shift > 0;
+    extended_x = SignExtend(x, shift+N);
+    result = extended_x<shift+N-1:shift>;
+    carry_out = extended_x<shift-1>;
+    return (result, carry_out);
+    // ASR()
+    // =====
+    bits(N) ASR(bits(N) x, integer shift)
+    assert shift >= 0;
+    if shift == 0 then
+    result = x;
+    else
+    (result, -) = ASR_C(x, shift);
+    return result;
+    // ROR_C()
+    // =======
+    (bits(N), bit) ROR_C(bits(N) x, integer shift)
+    assert shift != 0;
+    m = shift MOD N;
+    result = LSR(x,m) OR LSL(x,N-m);
+    carry_out = result<N-1>;
+    return (result, carry_out);
+    // ROR()
+    // =====
+    bits(N) ROR(bits(N) x, integer shift)
+    if shift == 0 then
+    result = x;
+    else
+    (result, -) = ROR_C(x, shift);
+    return result;
+    // RRX_C()
+    // =======
+    (bits(N), bit) RRX_C(bits(N) x, bit carry_in)
+    result = carry_in : x<N-1:1>;
+    carry_out = x<0>;
+    return (result, carry_out);
+    // RRX()
+    // =====
+    bits(N) RRX(bits(N) x, bit carry_in)
+    (result, -) = RRX_C(x, carry_in);
+    return result;
+
+}

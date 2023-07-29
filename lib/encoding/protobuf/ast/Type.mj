@@ -1,0 +1,41 @@
+import protobuf.ast;
+
+
+/// Message fields can be one of the following:
+///
+///
+/// In proto3, repeated fields of scalar numeric types use packed encoding by default. You can find out more about packed encoding in Protocol Buffer Encoding.
+enum<u8> FieldRule {
+
+    /// A well-formed message can have zero or one of this field (but not more than one). When using proto3 syntax, this is the default field rule when no other field rules are specified for a given field. You cannot determine whether it was parsed from the wire. It will be serialized to the wire unless it is the default value. For more on this subject, see Field Presence.
+    SINGULAR = 1;
+
+    /// The same as singular, except that you can check to see if the value was explicitly set.
+    /// An optional field is in one of two possible states:
+    /// - the field is set, and contains a value that was explicitly set or parsed from the wire.
+    ///   It will be serialized to the wire.
+    /// - the field is unset, and will return the default value. It will not be serialized to the wire.
+    OPTIONAL = 2;
+
+    /// This field type can be repeated zero or more times in a well-formed message. The order of the repeated values will be preserved.
+    REPEATED = 3;
+
+    /// This is a paired key/value field type. See Maps for more on this field type.
+    MAP = 4;
+}
+
+
+interface Type {
+
+
+    Token &'name();
+
+
+    Vector<FieldRule> &'field_rules();
+
+
+    Vector<Token> &'reserved_field_names();
+
+
+    Vector<u32> &'reserved_field_numbers();
+}

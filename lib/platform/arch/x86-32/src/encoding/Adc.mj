@@ -1,0 +1,24 @@
+
+
+/// ADC - Add With Carry [RM]
+bitfield<u8> AdcEncodingRm {
+    [7:0] = 0x3Fu;
+}
+
+
+/// ADC - Add With Carry [MR]
+bitfield<u8> AdcEncodingMr {
+    [7:0] = 0x3Fu;
+}
+
+
+/// ADC - Add With Carry [MI]
+bitfield<u8> AdcEncodingMi {
+    [7:0] = 0x3Fu;
+}
+
+
+/// ADC - Add With Carry [I]
+bitfield<u8> AdcEncodingI {
+    [7:0] = 0x3Fu;
+}

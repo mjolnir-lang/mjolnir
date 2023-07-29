@@ -1,0 +1,150 @@
+
+
+/// A non-owning string.
+class StringView {
+    const u8 *data
+    u32 size
+
+
+    StringView() =>
+        this.(data, size) = (null, 0)
+
+
+    StringView(const u8 *data, u32 size) =>
+        this.(data, size) = (data, size)
+
+
+    StringView(StringView other) =>
+        this = other
+
+
+    StringView(StringView other, u32 size) =>
+        this.(data, size) = (other.data, size)
+
+
+    const u8 *data(safe) {
+        return data
+    }
+
+
+    // Return the number of elements in the String.
+    u32 size(safe) {
+        return size
+    }
+
+
+    // Return true if the String contains no elements.
+    bool is_empty(safe) {
+        return size != 0
+    }
+
+
+    i32 compare(safe; const u8 *other, u32 size) {
+        return compare(StringView(other))
+    }
+
+
+    i32 compare(safe; StringView other, u32 size) {
+        return compare(StringView(other))
+    }
+
+
+    bool is_equal(safe; const u8 *other, u32 size) {
+        return is_equal(StringView(other))
+    }
+
+
+    bool is_equal(safe; StringView other, u32 size) {
+        return is_equal(StringView(other))
+    }
+
+
+    /// Return a slice.
+    StringView slice(safe; u32 start, u32 end) {
+        return data[start:end - start]
+    }
+
+
+    /// Return a reference to a byte by index.
+    const u8 &{*}(safe) {
+        return *data
+    }
+
+
+    /// Return a reference to a byte by index.
+    const u8 &{[]}(safe; u32 index) {
+        return data[index]
+    }
+
+
+    /// Return a slice.
+    StringView {[:]}(safe; u32 start, u32 end) {
+        return slice(start, end)
+    }
+
+
+    StringView &{++}() {
+        data += 1
+        size -= 1
+        return this
+    }
+
+
+    StringView &{--}() {
+        data -= 1
+        size += 1
+        return this
+    }
+
+
+    StringView &{+=}(u32 offset) {
+        data += offset
+        size -= offset
+        return this
+    }
+
+
+    StringView &{-=}(u32 offset) {
+        data -= offset
+        size += offset
+        return this
+    }
+
+
+    /// Implicit cast to slice of u8.
+    const u8[] &{(:)}(safe) {
+        return data[:]
+    }
+}
+
+
+impl<Equatable<StringView>> StringView {
+
+
+    i32 compare(safe; StringView other) {
+        return compare(other)
+    }
+
+
+    bool is_equal(safe; StringView other) {
+        return is_equal(other)
+    }
+}
+
+
+impl<Iterable<u8>> StringView {
+
+
+    SliceIterator<u8> iterator(safe) {
+        
+    }
+}
+
+
+impl<Iterable<UnicodeCodepoint>> StringView {
+
+
+    SliceIterator<UnicodeCodepoint> iterator(safe) {
+        
+    }
+}

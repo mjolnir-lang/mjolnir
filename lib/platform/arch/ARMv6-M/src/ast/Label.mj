@@ -1,0 +1,7 @@
+
+
+class Label {
+    StringView text;
+    u16 address;
+    Opcode *opcode;
+}

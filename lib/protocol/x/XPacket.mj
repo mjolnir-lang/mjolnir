@@ -1,0 +1,9 @@
+
+
+
+enum<u8> X11PacketType {
+    REQUEST;
+    REPLY;
+    EVENT;
+    ERROR;
+}

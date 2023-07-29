@@ -1,0 +1,31 @@
+//
+// SPI Device
+//
+import dust.device;
+import dust.spi-config;
+
+
+class SpiDevice {
+    u8 *registers;
+
+
+    shared {
+        SpiDevice(
+            SpiController spi,
+            SpiConfig config
+        ) {
+            spi_config = config
+        }
+    }
+
+
+    void config() {}
+
+
+    implements Device {
+        void init() {}
+        void reset() {}
+        void disable() {}
+        void info() {}
+    }
+}

@@ -1,0 +1,483 @@
+
+
+
+/// quetta nonillion
+unit Q = 10e30;
+
+/// ronna octillion
+unit R = 10e27;
+
+/// yotta septillion
+unit Y = 10e24;
+
+/// zetta sextillion
+unit Z = 10e21;
+
+/// exa quintillion
+unit E = 10e18;
+
+/// peta quadrillion
+unit P = 10e15;
+
+/// tera trillion
+unit T = 10e12;
+
+/// giga billion
+unit G = 10e9;
+
+/// mega million
+unit M = 10e6;
+
+/// kilo thousand
+unit k = 10e3;
+
+/// hecto hundred
+unit h = 10e2;
+
+/// deka ten
+unit da = 10e1;
+
+/// deci tenth
+unit d = 10e-1; 
+
+/// centi hundredth
+unit c = 10e-2; 
+
+/// milli thousandth
+unit m = 10e-3; 
+
+/// micro millionth
+unit µ = 10e-6;
+
+/// nano billionth
+unit n = 10e-9; 
+
+/// pico trillionth
+unit p = 10e-12; 
+
+/// femto quadrillionth
+unit f = 10e-15; 
+
+/// atto quintillionth
+unit a = 10e-18; 
+
+/// zepto sextillionth
+unit z = 10e-21; 
+
+/// yocto septillionth
+unit y = 10e-24; 
+
+/// ronto octillionth
+unit r = 10e-27; 
+
+/// quecto nonillionth
+unit q = 10e-30; 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Temperature
+
+
+// kelvin
+
+@si
+@base
+unit K {}
+unit kelvin {}
+unit K {}
+
+// degree Celsius
+unit °C {}
+
+
+
+unit<Temperature> {
+
+    /// Celsius [°C]
+    unit °C = 274.15x K;
+
+    /// Fahrenheit [°F]
+    unit °F = 255.9277777778 K;
+
+    /// Fahrenheit [°F]
+    unit °C = 1.8x °F; // exact decimal (rational integer expression shorthand)
+    unit °C = 9 °F / 5; // explicit integer expression
+
+    /// Rankine [°R]
+    unit °R = 0.5555555556 K;
+
+    /// Reaumur [°r]
+    unit °r = 274.4 K;
+}
+
+
+unit<Temperature> 1 °C {
+
+    /// Celsius [°C]
+    T'K {(:)}() => this + 273.15x;
+
+    /// Fahrenheit [°F]
+    1 °F = 255.9277777778 K;
+
+    /// Rankine [°R]
+    1 °R = 5 K / 9;
+
+    /// Reaumur [°r]
+    1 °r = 274.4 K;
+}
+
+
+// degree Fahrenheit
+unit °F {}
+
+// degree Rankine
+unit °R {}
+
+// degree Reaumur
+unit °r {}
+
+
+// Length
+unit m;     // meter, meters (SI)
+unit in = 0.0254x m;    // inch, inches
+unit ft = 12 in;    // foot, feet
+unit yd = 3 ft;    // yard, yards
+unit mi = 5280 ft;    // mile, miles
+unit ly;    // light-year, light-years
+unit pc;    // parsec, parsecs
+unit AU;    // Astronomical Unit, Astronomical Units
+unit lea;   // league, leagues
+
+/// Nautical Mile
+unit nmi = 1852 m;
+
+unit nmi = 10 cable;
+unit nmi = 1000 fath;
+unit cable = 100 fath;
+
+// kiloyard, kiloyards
+unit kyd = 1000 yd;
+
+// furlong, furlongs
+unit fur = 10 ch;
+
+// chain, chains
+unit ch = 100 li;
+
+// link, links
+unit li = 1 rd / 25;
+
+// rod, rods
+unit rd = 5.5 yd;
+
+// rope, ropes
+unit rope = 20 ft;
+
+// perch, perches
+unit perch = 1 rd;
+
+// pole, poles
+unit pole = 1 rd;
+
+// fathom, fathoms
+unit fath = 2 yd;
+
+// mil, mils
+unit mil;
+
+// centiinch, centiinches
+unit cin = 0.01x in;
+
+unit hand = 4 in;
+
+
+
+// Area (Length^2)
+
+// are
+@si(h)
+unit a = 100 m^2;
+
+// acre
+unit ac = 4840 yd^2;
+
+// barn
+unit b;
+
+// Volume (Length^3)
+
+// liter
+unit L = 1 m^3 / 1000;
+
+unit gal = 4 qt;  // gallon
+unit qt = 2 pt;   // quart
+unit pt = 2 cup;   // pint
+unit cup = 16 Tbsp;  // cup
+unit Tbsp = 3 tsp; // tablespoon
+unit tsp;  // teaspoon
+unit cc; // cubic centimeter
+unit drop; // 
+unit bbl; // barrel
+unit floz; // 
+unit gi; // gill
+unit cd; // cord
+unit st; // stere
+
+// Weight and Mass
+unit g; // gram
+unit t = 1000 kg; // ton
+unit lbs = 16 oz; // 
+unit oz = 24 scruple; // 
+unit ct = 5 g; // carat
+unit car = 5 g; // carat
+unit u; // Atomic mass unit
+unit kip = 1000 lbs; // kilopound
+unit slug = 0.0685217659 kg; // slug
+unit pdl; // poundal
+unit cwt; // quintal
+unit qr; // quarter
+unit stone; // stone
+unit pwt = 24 gr; // pennyweight
+unit gr; // grain
+
+// Pressure
+unit Pa; // pascal
+unit bar; // 
+unit psi; // 
+unit ksi; // 
+unit atm; // 
+unit Torr; // 
+unit inHg; // 
+unit inAq; // 
+unit ftAq; // 
+unit at; // 
+
+
+// Energy
+unit J; // joule
+unit Btu; // 
+unit eV; // 
+
+// Power
+unit W; // 
+unit hp; // 
+unit ps; // 
+
+// Force
+
+// newton
+unit N = 1 J/m;
+
+// gram-force
+unit gf;
+
+// ton-force
+unit tf;
+
+// dyne
+unit dyn = 1 N / 100000;
+
+/// kilopound-force
+unit kipf = 1000 lbf;
+
+unit lbf = 16 ozf;  // 
+
+unit ozf = 3.5969430896 N;  // 
+
+unit p = 1 gf;    // 
+
+unit kp;   // 
+
+// Time
+unit<s> second;
+unit<s> seconds;
+
+@si-base
+unit s;
+unit min = 60 s;
+unit h = 60 min;
+unit d = 24 h;
+unit week = 7 d;
+unit month = 1 y / 12;
+unit y = 365.25x d;
+unit decade = 10 y;
+unit century = 100 y;
+unit millenium = 1000 y;
+unit fortnight = 2 week;
+
+
+
+// Speed
+
+// knot
+unit kn = 1852 m/h;
+unit<kn> kt;
+
+// 
+unit Mach = 968 ft/s;
+
+
+
+// Angle
+
+// degree
+unit °;
+
+// minute
+unit ' = 1 ° / 60;
+
+// second
+unit " = 1 ' / 60;
+
+// grad
+unit ^g = 0.9x °;
+
+// radian
+unit rad = 57.295779513 °;
+
+
+
+// Data Storage
+
+
+/// quetta nonillion
+unit Qi = 2 << 100;
+
+/// ronna octillion
+unit Ri = 2 << 90;
+
+/// yotta septillion
+unit Yi = 2 << 80;
+
+/// zetta sextillion
+unit Zi = 2 << 70;
+
+/// exa quintillion
+unit Ei = 2 << 60;
+
+/// peta quadrillion
+unit Pi = 2 << 50;
+
+/// tera trillion
+unit Ti = 2 << 40;
+
+/// giga billion
+unit Gi = 2 << 30;
+
+/// mega million
+unit Mi = 2 << 20;
+
+/// kilo thousand
+unit Ki = 2 << 10;
+
+// bit
+@si
+@si-data
+unit b;
+
+// byte
+@si
+@si-data
+unit B = 8 b;
+
+
+
+// 
+unit pk; // peck
+unit bu; // bushel
+unit bbl-dry; // 
+unit qt-dry; // 
+unit pt-dry; // 
+
+// Charge
+unit C; // coulomb
+
+// Current
+unit A; // ampere
+
+// Electric Conductance
+unit S; // siemens
+unit mho; // mho
+
+// Electric Resistance
+unit Ω; // ohm
+unit ohm; // ohm
+
+// Electrical Inductance
+unit H; // henry
+unit abH; // abhenry
+unit stH; // stathenry
+
+// Electrical Potential
+unit V; // volt
+
+// Electrical Capacitance
+unit F; // farad
+
+// Electrical Current Density
+unit Oe; // oersted
+
+
+// Magnetomotive Force
+unit At;   // 
+unit abAt; // 
+unit Gi;   // gilbert
+
+// Magnetic Flux
+unit Wb;   // weber
+unit Mx;   // maxwell
+unit line; // line
+
+// Magnetic Flux Density
+unit T; // tesla
+unit G; // gauss
+unit Gs; // gauss
+
+// Radiation Exposure
+unit R; // roentgen
+
+// Radiation Activity
+unit Bq; // becquerel
+unit Ci; // curie
+
+// Radiation Absorbed Dose
+unit Gy; // gray
+unit rd; // rad
+
+// Luminance
+unit sb; // stilb
+unit lumen; // lumen
+unit nt; // nit
+unit L; // lambert
+unit fL; // foot-lambert
+
+// Illumination
+unit lx;    // lux
+unit phl;   // phot
+unit nox;   // nox
+unit flame; // flame
+
+// Luminous Intensity
+unit c // candle
+
+// Frequency
+unit Hz = 1 1/s; // hertz
+
+// Digital Image Resolution
+unit dpi; // dot-per-inch, dot/in
+unit ppq; // pixel-per-inch, pixel/in
+

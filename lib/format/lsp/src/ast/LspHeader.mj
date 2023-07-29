@@ -1,0 +1,53 @@
+
+
+///
+/// Base Protocol
+///
+
+
+/// The base protocol consists of a header and a content part (comparable to HTTP).
+/// The header and content part are separated by a `"\r\n"`.
+
+
+///
+/// Header Part
+///
+
+
+/// The header part consists of header fields.
+///
+/// Each header field is comprised of a name and a value,
+/// separated by `": "` (a colon and a space). The structure of header fields
+/// conform to the HTTP semantic.
+/// Each header field is terminated by `"\r\n"`.
+/// Considering the last header field and the overall header itself are each terminated with `"\r\n"`,
+/// and that at least one header is mandatory, this means that two `"\r\n"` sequences always
+/// immediately precede the content part of a message.
+///
+
+/// The header part is encoded using the ASCII encoding.
+/// This includes the `"\r\n"` separating the header and content part.
+struct HeaderPart {
+
+    /// The length of the content part in bytes. This header is required.
+    JsonNumber content_length;
+
+    /// The mime type of the content part. Defaults to application/vscode-jsonrpc; charset=utf-8
+    JsonString content_type;
+}
+
+
+
+
+///
+/// $ Notifications and Requests
+///
+
+/// Notification and requests whose methods start with `"$/"` are messages which are protocol
+/// implementation dependent and might not be implementable in all clients or servers.
+/// For example if the server implementation uses a single threaded synchronous programming
+/// language then there is little a server can do to react to a `$/cancelRequest` notification.
+/// If a server or client receives notifications starting with `"$/"` it is free to ignore the notification.
+/// If a server or client receives a request starting with `"$/"` it must error the request with error
+/// code `METHOD_NOT_FOUND` (e.g. `-32601`).
+

@@ -1,0 +1,10 @@
+//
+// Quad Serial Peripheral Interface (QSPI)
+//
+import dust.spi;
+
+
+interface Qspi {
+    implements BusDevice<QspiDevice> {}
+    implements Spi;
+}

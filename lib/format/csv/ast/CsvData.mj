@@ -1,0 +1,54 @@
+import filesystem.file;
+import format.csv;
+import encoding.utf-8;
+
+
+class CsvData {
+    CsvData data;
+    File &file;
+
+
+    CsvData() {}
+
+
+    void insert_row(u32 index) {
+        ;
+    }
+
+
+    void insert_column(u32 index) {
+        ;
+    }
+
+
+    /// Append a record (move)
+    void append_record(CsvRecord record) {
+        ;
+    }
+
+
+    /// Append a record (move)
+    void append_record(CsvRecord record) {
+        ;
+    }
+
+
+    /// Append a record (copy)
+    void append_record(const CsvRecord &record) {
+        ;
+    }
+
+
+    /// Append a record 
+    void append_record(List<CsvRecord> records) {
+        ;
+    }
+
+
+    /// Append a column to a CSV table. Adding and removing columns in CSV data
+    /// is more expensive than adding and removing records. If possible, do not
+    /// change the columns when the table contains many records.
+    void append_column() {
+        ;
+    }
+}

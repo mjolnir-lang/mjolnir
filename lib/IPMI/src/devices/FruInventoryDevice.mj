@@ -1,0 +1,6 @@
+
+
+/// The FRU Inventory Device provides the interface to a particular module's FRU Inventory (serial number, part number, asset tag, etc.) information. There will typically be one set of FRU Inventory information for each major module in the system. There can be just as many FRU Inventory Devices providing access to that information. The Primary FRU Inventory Device for a given management controller is defined as the device that contains the information about the FRU that holds the management controller itself.
+interface IpmiFruInventoryDevice {
+
+}

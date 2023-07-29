@@ -1,0 +1,51 @@
+
+
+/// Get ACPI Power State Command
+///
+/// The command can also be used to retrieve the present power state
+/// information that has been set into the controller. This is an independent
+/// setting from the system power state that may not necessarily match the
+/// actual power state of the system. Unspecified bits and codes are reserved
+/// and shall be returned as 0.
+class GetAcpiPowerStateCommand {
+    struct Response response {
+
+        /// Completion Code
+        CompletionCode completion_code;
+
+        /// ACPI System Power State to set
+        ///
+        /// Power states are mutually exclusive. Only one state can be set at a time.
+        bitfield<u8> acpi_system_power_state {
+
+            /// System Power State enumeration
+            ///
+            /// `0x00` - S0 / G0 working
+            /// `0x01` - S1 hardware context maintained, typically equates to processor/chip set clocks stopped
+            /// `0x02` - S2 typically equates to stopped clocks with processor/cache context lost
+            /// `0x03` - S3 typically equates to "suspend-to-RAM"
+            /// `0x04` - S4 typically equates to "suspend-to-disk"
+            /// `0x05` - S5 / G2 soft off
+            /// `0x06` - S4/S5 sent when message source cannot differentiate between S4 and S5
+            /// `0x07` - G3 mechanical off
+            /// `0x08` - sleeping sleeping - cannot differentiate between S1-S3.
+            /// `0x09` - G1 sleeping sleeping - cannot differentiate between S1-S4
+            /// `0x0A` - override S5 entered by override
+            /// `0x20` - Legacy On Legacy On (indicates On for system that don't support ACPI or have ACPI capabilities disabled)
+            /// `0x21` - Legacy Off Legacy Soft-Off
+            /// `0x2A` - power state has not been initialized, or device lost track of power state.
+            [6:0] system_power_state;
+        }
+
+        /// ACPI Device Power State
+        bitfield<u8> acpi_device_power_state {
+            /// Device Power State enumeration
+            /// `0x00` - D0
+            /// `0x01` - D1
+            /// `0x02` - D2
+            /// `0x03` - D3
+            /// `0x2A` - unknown - power state has not been initialized, or device lost track of power state.
+            [6:0] device_power_state;
+        }
+    }
+}

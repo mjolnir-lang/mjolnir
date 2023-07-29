@@ -1,0 +1,644 @@
+import wayland-util;
+import wayland-version;
+
+
+enum<u8> WlEvent {
+    READABLE = 0x01,
+    WRITABLE = 0x02,
+    HANGUP   = 0x04,
+    ERROR    = 0x08
+}
+
+
+/// File descriptor dispatch function type
+///
+/// Functions of this type are used as callbacks for file descriptor events.
+///
+/// `fd` The file descriptor delivering the event.
+/// `mask` Describes the kind of the event as a bitwise-or of:
+/// \c WL_EVENT_READABLE, \c WL_EVENT_WRITABLE, \c WL_EVENT_HANGUP,
+/// \c WL_EVENT_ERROR.
+/// `data` The user data argument of the related WlEventLoop::add_fd()
+/// call.
+/// \return If the event source is registered for re-check with
+/// WlEventSource::check(): 0 for all done, 1 for needing a re-check.
+/// If not registered, the return value is ignored and should be zero.
+///
+/// \sa WlEventLoop::add_fd()
+/// \memberof wl_event_source
+////
+type<i32 (i32 fd, u32 mask, void *data)*> WlEventLoopFdFunc;
+
+
+/// Timer dispatch function type
+///
+/// Functions of this type are used as callbacks for timer expiry.
+///
+/// `data` The user data argument of the related WlEventLoop::add_timer()
+/// call.
+/// \return If the event source is registered for re-check with
+/// WlEventSource::check(): 0 for all done, 1 for needing a re-check.
+/// If not registered, the return value is ignored and should be zero.
+///
+/// \sa WlEventLoop::add_timer()
+/// \memberof wl_event_source
+////
+type<i32 (void *data)*> WlEventLoopTimerFunc;
+
+
+/// Signal dispatch function type
+///
+/// Functions of this type are used as callbacks for (POSIX) signals.
+///
+/// `signal_number`
+/// `data` The user data argument of the related WlEventLoop::add_signal()
+/// call.
+/// \return If the event source is registered for re-check with
+/// WlEventSource::check(): 0 for all done, 1 for needing a re-check.
+/// If not registered, the return value is ignored and should be zero.
+///
+/// \sa WlEventLoop::add_signal()
+/// \memberof wl_event_source
+////
+type<i32 (i32 signal_number, void *data)*> WlEventLoopSignalFunc;
+
+
+/// Idle task function type
+///
+/// Functions of this type are used as callbacks before blocking in
+/// WlEventLoop::dispatch().
+///
+/// `data` The user data argument of the related WlEventLoop::add_idle()
+/// call.
+///
+/// \sa WlEventLoop::add_idle() WlEventLoop::dispatch()
+/// \memberof wl_event_source
+////
+type<void (void *data)*> WlEventLoopIdleFunc;
+
+
+/// \WlEventLoop
+///
+/// \brief An event loop context
+///
+/// Usually you create an event loop context, add sources to it, and call
+/// WlEventLoop::dispatch() in a loop to process events.
+///
+/// \sa wl_event_source
+////
+class WlEventLoop {
+
+
+    WlEventLoop();
+
+
+    ~WlEventLoop();
+
+
+    WlEventSource *add_fd(i32 fd, u32 mask, WlEventLoopFdFunc func, void *data);
+
+
+    i32 dispatch(i32 timeout);
+
+
+    void dispatch_idle();
+
+
+    WlEventSource *add_idle(WlEventLoopIdleFunc func, void *data);
+
+
+    i32 get_fd();
+
+
+    WlEventSource *add_timer(WlEventLoopTimerFunc func, void *data);
+
+
+    WlEventSource *add_signal(i32 signal_number, WlEventLoopSignalFunc func, void *data);
+
+
+    void add_destroy_listener(WlListener *listener);
+
+
+    WlListener *get_destroy_listener(WlNotifyFunc notify);
+}
+
+/// \WlEventSource
+///
+/// \brief An abstract event source
+///
+/// This is the generic type for fd, timer, signal, and idle sources.
+/// Functions that operate on specific source types must not be used with
+/// a different type, even if the function signature allows it.
+////
+class WlEventSource {
+
+
+    i32
+    WlEventSource::fd_update(WlEventSource *source, u32 mask);
+
+
+    i32
+    WlEventSource::timer_update(WlEventSource *source,
+                    i32 ms_delay);
+
+    i32
+    WlEventSource::remove(WlEventSource *source);
+
+    void
+    WlEventSource::check(WlEventSource *source);
+}
+
+
+WlListener;
+
+type<void (WlListener *listener, void *data)*> WlNotifyFunc;
+
+
+class WlClient {
+}
+
+type<void (WlClient *client, void *data, u32 version, u32 id)*> WlGlobalBindFunc;
+
+
+class WlDisplay {
+
+
+    WlDisplay();
+
+
+    ~WlDisplay();
+
+
+    WlEventLoop *get_event_loop();
+
+
+    i32 add_socket(const char *name);
+
+
+    const char *add_socket_auto();
+
+
+    i32 add_socket_fd(i32 sock_fd);
+
+
+    void terminate();
+
+
+    void run();
+
+
+    void flush_clients();
+
+
+    void destroy_clients();
+
+
+    u32 get_serial();
+
+
+    u32 next_serial();
+
+
+    void add_destroy_listener(WlListener *listener);
+
+
+    void add_client_created_listener(WlListener *listener);
+
+
+    WlListener *get_destroy_listener(WlNotifyFunc notify);
+
+
+    void set_global_filter(WlDisplayGlobalFilterFunc filter, void *data);
+
+
+    i32 init_shm();
+
+
+    u32 *add_shm_format(u32 format);
+
+
+    WlProtocolLogger *add_protocol_logger(WlProtocolLoggerFunc, void *user_data);
+}
+
+
+struct wl_global *
+wl_global_create(WlDisplay *display,
+         const WlInterface *interface,
+         i32 version,
+         void *data, wl_global_bind_func_t bind);
+
+void
+wl_global_remove(struct wl_global *global);
+
+void
+wl_global_destroy(struct wl_global *global);
+
+/// A filter function for wl_global objects
+///
+/// `client` The client object
+/// `global` The global object to show or hide
+/// `data`   The user data pointer
+///
+/// A filter function enables the server to decide which globals to
+/// advertise to each client.
+///
+/// When a wl_global filter is set, the given callback function will be
+/// called during wl_global advertisement and binding.
+///
+/// This function should return true if the global object should be made
+/// visible to the client or false otherwise.
+////
+type<bool (const WlClient *client, const WlGlobal *global, void *data)*> WlDisplayGlobalFilterFunc;
+
+
+const WlInterface *
+wl_global_get_interface(const struct wl_global *global);
+
+u32
+wl_global_get_name(const struct wl_global *global,
+                   const struct wl_client *client);
+
+u32
+wl_global_get_version(const struct wl_global *global);
+
+WlDisplay *
+wl_global_get_display(const struct wl_global *global);
+
+void *
+wl_global_get_user_data(const struct wl_global *global);
+
+void
+wl_global_set_user_data(struct wl_global *global, void *data);
+
+struct wl_client *
+wl_client_create(WlDisplay *display, i32 fd);
+
+WlList *
+WlDisplay::get_client_list(WlDisplay *display);
+
+WlList *
+wl_client_get_link(struct wl_client *client);
+
+struct wl_client *
+wl_client_from_link(WlList *link);
+
+/// Iterate over a list of clients. */
+#define wl_client_for_each(client, list)                \
+    for (client = wl_client_from_link((list)->next);    \
+         wl_client_get_link(client) != (list);            \
+         client = wl_client_from_link(wl_client_get_link(client)->next))
+
+void
+wl_client_destroy(struct wl_client *client);
+
+void
+wl_client_flush(struct wl_client *client);
+
+void
+wl_client_get_credentials(struct wl_client *client,
+              pid_t *pid, uid_t *uid, gid_t *gid);
+
+i32
+wl_client_get_fd(struct wl_client *client);
+
+void
+wl_client_add_destroy_listener(struct wl_client *client,
+                   WlListener *listener);
+
+WlListener *
+wl_client_get_destroy_listener(struct wl_client *client,
+                   wl_notify_func_t notify);
+
+void
+wl_client_add_destroy_late_listener(struct wl_client *client,
+                    WlListener *listener);
+
+WlListener *
+wl_client_get_destroy_late_listener(struct wl_client *client,
+                    wl_notify_func_t notify);
+
+WlResource *
+wl_client_get_object(struct wl_client *client, u32 id);
+
+void
+wl_client_post_no_memory(struct wl_client *client);
+
+void
+wl_client_post_implementation_error(struct wl_client *client,
+                                    const char* msg, ...) WL_PRINTF(2,3);
+
+void
+wl_client_add_resource_created_listener(struct wl_client *client,
+                                        WlListener *listener);
+
+typedef enum wl_iterator_result (*wl_client_for_each_resource_iterator_func_t)(
+                        WlResource *resource,
+                        void *user_data);
+
+void
+wl_client_for_each_resource(struct wl_client *client,
+                            wl_client_for_each_resource_iterator_func_t iterator,
+                            void *user_data);
+
+/// \class WlListener
+///
+/// \brief A single listener for Wayland signals
+///
+/// WlListener provides the means to listen for wl_signal notifications. Many
+/// Wayland objects use WlListener for notification of significant events like
+/// object destruction.
+///
+/// Clients should create WlListener objects manually and can register them as
+/// listeners to signals using #wl_signal_add, assuming the signal is
+/// directly accessible. For opaque structs like wl_event_loop, adding a
+/// listener should be done through provided accessor methods. A listener can
+/// only listen to one signal at a time.
+///
+/// \code
+/// WlListener your_listener;
+///
+/// your_listener.notify = your_callback_method;
+///
+/// // Direct access
+/// wl_signal_add(&some_object->destroy_signal, &your_listener);
+///
+/// // Accessor access
+/// wl_event_loop *loop = ...;
+/// WlEventLoop::add_destroy_listener(loop, &your_listener);
+/// \endcode
+///
+/// If the listener is part of a larger struct, #wl_container_of can be used
+/// to retrieve a pointer to it:
+///
+/// \code
+/// void your_listener(WlListener *listener, void *data)
+/// {
+///     struct your_data *data;
+///
+///     your_data = wl_container_of(listener, data, your_member_name);
+/// }
+/// \endcode
+///
+/// If you need to remove a listener from a signal, use WlList_remove().
+///
+/// \code
+/// WlList_remove(&your_listener.link);
+/// \endcode
+///
+/// \sa wl_signal
+////
+WlListener {
+    WlList link;
+    wl_notify_func_t notify;
+};
+
+/// \class wl_signal
+///
+/// \brief A source of a type of observable event
+///
+/// Signals are recognized points where significant events can be observed.
+/// Compositors as well as the server can provide signals. Observers are
+/// WlListener's that are added through #wl_signal_add. Signals are emitted
+/// using #wl_signal_emit, which will invoke all listeners until that
+/// listener is removed by WlList_remove() (or whenever the signal is
+/// destroyed).
+///
+/// \sa WlListener for more information on using wl_signal
+////
+struct wl_signal {
+    WlList listener_list;
+};
+
+/// Initialize a new \ref wl_signal for use.
+///
+/// `signal` The signal that will be initialized
+///
+/// \memberof wl_signal
+////
+void wl_signal_init(struct wl_signal *signal) {
+    WlList_init(&signal->listener_list);
+}
+
+/// Add the specified listener to this signal.
+///
+/// `signal` The signal that will emit events to the listener
+/// `listener` The listener to add
+///
+/// \memberof wl_signal
+////
+static inline void
+wl_signal_add(struct wl_signal *signal, WlListener *listener)
+{
+    WlList_insert(signal->listener_list.prev, &listener->link);
+}
+
+/// Gets the listener struct for the specified callback.
+///
+/// `signal` The signal that contains the specified listener
+/// `notify` The listener that is the target of this search
+/// \return the list item that corresponds to the specified listener, or null
+/// if none was found
+///
+/// \memberof wl_signal
+////
+static inline WlListener *
+wl_signal_get(struct wl_signal *signal, wl_notify_func_t notify)
+{
+    WlListener *l;
+
+    WlList_for_each(l, &signal->listener_list, link)
+        if (l->notify == notify)
+            return l;
+
+    return null;
+}
+
+/// Emits this signal, notifying all registered listeners.
+///
+/// `signal` The signal object that will emit the signal
+/// `data` The data that will be emitted with the signal
+///
+/// \memberof wl_signal
+////
+static inline void
+wl_signal_emit(struct wl_signal *signal, void *data)
+{
+    WlListener *l, *next;
+
+    WlList_for_each_safe(l, next, &signal->listener_list, link)
+        l->notify(l, data);
+}
+
+void
+wl_signal_emit_mutable(struct wl_signal *signal, void *data);
+
+
+type<void (WlResource *resource)*> WlResourceDestroyFunc;
+
+
+class WlResource {
+
+
+    WlResource(WlClient *client, const WlInterface *interface, i32 version, u32 id);
+
+
+    ~WlResource();
+
+
+    /// Post an event to the client's object referred to by 'resource'.
+    /// 'opcode' is the event number generated from the protocol XML
+    /// description (the event name). The variable arguments are the event
+    /// parameters, in the order they appear in the protocol XML specification.
+    ///
+    /// The variable arguments' types are:
+    /// - type=uint:    u32
+    /// - type=i32:        i32
+    /// - type=fixed:    WlFixed
+    /// - type=string:    (const char *) to a nil-terminated string
+    /// - type=array:    (struct WlArray *)
+    /// - type=fd:        i32, that is an open file descriptor
+    /// - type=new_id:    (struct wl_object *) or (WlResource *)
+    /// - type=object:    (struct wl_object *) or (WlResource *)
+    ////
+    void post_event(u32 opcode, ...);
+
+
+    void post_event_array(u32 opcode, union wl_argument *args);
+
+
+    void queue_event(u32 opcode, ...);
+
+
+    void queue_event_array(u32 opcode, union wl_argument *args);
+
+    /// msg is a printf format string, variable args are its args.
+    void post_error(u32 code, StringView msg, ...);
+
+
+    void post_no_memory();
+
+
+    WlDisplay *wl_client_get_display(WlClient *client);
+
+
+    void set_implementation(const void *implementation, void *data, WlResourceDestroyFunc destroy);
+
+
+    void set_dispatcher(WlDispatcherFunc dispatcher, const void *implementation, void *data, WlResourceDestroyFunc destroy);
+
+
+    u32 get_id();
+
+
+    WlList *get_link();
+
+
+    WlResource *from_link(WlList *resource);
+
+
+    WlResource *find_for_client(WlList *list, struct wl_client *client);
+
+
+    WlClient *get_client();
+
+
+    void set_user_data(void *data);
+
+
+    void *get_user_data();
+
+
+    i32 get_version();
+
+
+    void set_destructor(WlResourceDestroyFunc destroy);
+
+
+    i32 instance_of(const WlInterface *interface, const void *implementation);
+
+
+    const char *WlResource::get_class();
+
+
+    void add_destroy_listener(WlListener *listener);
+
+
+    WlListener *get_destroy_listener(WlNotifyFunc notify);
+
+
+    #define WlResource::for_each(resource, list)                    \
+        for (resource = 0, resource = WlResource::from_link((list)->next);    \
+            WlResource::get_link(resource) != (list);                \
+            resource = WlResource::from_link(WlResource::get_link(resource)->next))
+
+    #define WlResource::for_each_safe(resource, tmp, list)                    \
+        for (resource = 0, tmp = 0,                            \
+            resource = WlResource::from_link((list)->next),    \
+            tmp = WlResource::from_link((list)->next->next);    \
+            WlResource::get_link(resource) != (list);                \
+            resource = tmp,                            \
+            tmp = WlResource::from_link(WlResource::get_link(resource)->next))
+}
+
+
+class WlShmBuffer {
+
+
+    @shared
+    WlShmBuffer &get(WlResource *resource);
+
+
+    @deprecated
+    WlShmBuffer(WlClient *client, u32 id, i32 width, i32 height, i32 stride, u32 format);
+
+
+    void begin_access();
+
+
+    void end_access();
+
+
+    void *get_data();
+
+
+    i32 get_stride();
+
+
+    u32 get_format();
+
+
+    i32 get_width();
+
+
+    i32 get_height();
+
+
+    WlShmPool *ref_pool();
+}
+
+
+void
+wl_shm_pool_unref(struct wl_shm_pool *pool);
+
+
+void
+wl_log_set_handler_server(wl_log_func_t handler);
+
+
+enum<u8> WlProtocolLoggerType {
+    REQUEST;
+    EVENT;
+};
+
+
+struct WlProtocolLoggerMessage {
+    WlResource *resource;
+    i32 message_opcode;
+    const WlMessage *message;
+    i32 arguments_count;
+    const WlArgument *arguments;
+};
+
+
+type<void (void *user_data, WlProtocolLoggerType direction, const WlProtocolLoggerMessage *message)*> WlProtocolLoggerFunc;
+

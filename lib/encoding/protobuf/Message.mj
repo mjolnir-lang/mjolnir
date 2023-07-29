@@ -1,0 +1,46 @@
+
+
+interface ProtobufMessage {
+
+
+    void encode(u8 *buffer, u32 &size);
+
+
+    ProtobufMessage decode();
+
+
+
+    /// checks if all the required fields have been set.
+    bool is_initialized() const;
+
+
+    /// returns a human-readable representation of the message, particularly useful for debugging.
+    String debug_string() const;
+
+
+    /// overwrites the message with the given message’s values.
+    void copy_from(const Person &from);
+
+
+    /// clears all the elements back to the empty state.
+    void clear();
+
+
+
+
+
+    /// serializes the message and stores the bytes in the given string. Note that the bytes are binary, not text; we only use the string class as a convenient container.
+    bool encode(String &output)? const;
+
+
+    /// parses a message from the given string.
+    bool decode(const String &data)?;
+
+
+    /// writes the message to the given C++ ostream.
+    bool encode(Stream &output)? const;
+
+
+    /// parses a message from the given C++ istream.
+    bool decode(Stream &input)?;
+}

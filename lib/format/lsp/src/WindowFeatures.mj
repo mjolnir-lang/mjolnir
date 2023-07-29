@@ -1,0 +1,232 @@
+
+
+/// ShowMessage Notification
+///
+/// The show message notification is sent from a server to a client to ask the client to display a particular message in the user interface.
+///
+/// Notification:
+///
+/// method: ‘window/showMessage’
+/// params: ShowMessageParams defined as follows:
+interface LspShowMessageParams {
+
+    /// The message type. See {@link MessageType}.
+    LspMessageType type();
+
+
+    /// The actual message.
+    String message();
+}
+
+/// Where the type is defined as follows:
+
+enum<u8> LspMessageType {
+
+    /// An error message.
+    ERROR = 1;
+
+    /// A warning message.
+    WARNING = 2;
+
+    /// An information message.
+    INFO = 3;
+
+    /// A log message.
+    LOG = 4;
+}
+
+///
+/// ShowMessage Request
+///
+
+/// The show message request is sent from a server to a client to ask the client to display a particular message in the user interface. In addition to the show message notification the request allows to pass actions and to wait for an answer from the client.
+
+/// Client Capability:
+///
+/// property path (optional): window.showMessage
+/// property type: ShowMessageRequestClientCapabilities defined as follows:
+
+
+/// Show message request client capabilities
+interface ShowMessageRequestClientCapabilities {
+
+    /// Capabilities specific to the `MessageActionItem` type.
+    messageActionItem?: {
+
+        /// Whether the client supports additional attributes which
+        /// are preserved and sent back to the server in the
+        /// request's response.
+        additionalPropertiesSupport?: boolean;
+    };
+}
+
+Request:
+
+    method: ‘window/showMessageRequest’
+    params: ShowMessageRequestParams defined as follows:
+
+interface ShowMessageRequestParams {
+
+    /// The message type. See {@link MessageType}
+    MessageType type();
+
+
+    /// The actual message
+    String message();
+
+
+    /// The message action items to present.
+    MessageActionItem[]? actions();
+}
+
+/// Where the MessageActionItem is defined as follows:
+
+interface MessageActionItem {
+
+    /// A short title like 'Retry', 'Open Log' etc.
+    String title();
+}
+
+Response:
+
+    result: the selected MessageActionItem | null if none got selected.
+    error: code and message set in case an exception happens during showing a message.
+
+Show Document Request (:arrow_right_hook:)
+
+    New in version 3.16.0
+
+The show document request is sent from a server to a client to ask the client to display a particular resource referenced by a URI in the user interface.
+
+Client Capability:
+
+    property path (optional): window.showDocument
+    property type: ShowDocumentClientCapabilities defined as follows:
+
+
+/// Client capabilities for the show document request.
+@api(3.16)
+interface ShowDocumentClientCapabilities {
+
+    /// The client has support for the show document
+    /// request.
+    bool support();
+}
+
+Request:
+
+    method: ‘window/showDocument’
+    params: ShowDocumentParams defined as follows:
+
+
+/// Params to show a resource.
+@api(3.16)
+interface ShowDocumentParams {
+
+    /// The uri to show.
+    uri: URI;
+
+
+    /// Indicates to show the resource in an external program.
+    /// To show, for example, https://code.visualstudio.com/
+    /// in the default WEB browser set `external` to `true`.
+    bool? external();
+
+
+    /// An optional property to indicate whether the editor
+    /// showing the document should take focus or not.
+    /// Clients might ignore this property if an external
+    /// program is started.
+    bool? take_focus();
+
+
+    /// An optional selection range if the document is a text
+    /// document. Clients might ignore the property if an
+    /// external program is started or the file is not a text
+    /// file.
+    LspRange? selection();
+}
+
+Response:
+
+    result: ShowDocumentResult defined as follows:
+
+
+/// The result of an show document request.
+@api(3.16)
+interface ShowDocumentResult {
+
+    /// A boolean indicating if the show was successful.
+    bool success();
+}
+
+    error: code and message set in case an exception happens during showing a document.
+
+LogMessage Notification (:arrow_left:)
+
+/// The log message notification is sent from the server to the client to ask the client to log a particular message.
+
+Notification:
+
+    method: ‘window/logMessage’
+    params: LogMessageParams defined as follows:
+
+interface LogMessageParams {
+
+    /// The message type. See {@link MessageType}
+    MessageType type();
+
+
+    /// The actual message
+    String message();
+}
+
+Create Work Done Progress (:arrow_right_hook:)
+
+/// The window/workDoneProgress/create request is sent from the server to the client to ask the client to create a work done progress.
+
+Client Capability:
+
+    property name (optional): window.workDoneProgress
+    property type: boolean
+
+Request:
+
+    method: ‘window/workDoneProgress/create’
+    params: WorkDoneProgressCreateParams defined as follows:
+
+interface WorkDoneProgressCreateParams {
+
+    /// The token to be used to report progress.
+    ////
+    ProgressToken token();
+}
+
+Response:
+
+    result: void
+    error: code and message set in case an exception happens during the ‘window/workDoneProgress/create’ request. In case an error occurs a server must not send any progress notification using the token provided in the WorkDoneProgressCreateParams.
+
+Cancel a Work Done Progress (:arrow_right:)
+
+/// The window/workDoneProgress/cancel notification is sent from the client to the server to cancel a progress initiated on the server side using the window/workDoneProgress/create. The progress need not be marked as cancellable to be cancelled and a client may cancel a progress for any number of reasons: in case of error, reloading a workspace etc.
+
+Notification:
+
+    method: ‘window/workDoneProgress/cancel’
+    params: WorkDoneProgressCancelParams defined as follows:
+
+interface WorkDoneProgressCancelParams {
+
+    /// The token to be used to report progress.
+    ProgressToken token();
+}
+
+Telemetry Notification (:arrow_left:)
+
+/// The telemetry notification is sent from the server to the client to ask the client to log a telemetry event. The protocol doesn’t specify the payload since no interpretation of the data happens in the protocol. Most clients even don’t handle the event directly but forward them to the extensions owing the corresponding server issuing the event.
+
+Notification:
+
+    method: ‘telemetry/event’
+    params: ‘object’ | ‘number’ | ‘boolean’ | ‘string’;

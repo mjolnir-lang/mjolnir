@@ -1,0 +1,6 @@
+
+
+class Ld-a-r {
+    const u8 = 0xEDu;
+    const u8 = 0x5Fu;
+}

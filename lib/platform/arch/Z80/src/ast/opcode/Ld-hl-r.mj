@@ -1,0 +1,13 @@
+
+
+class Ld-hl-r {
+    bitfield<u8[2]> {
+        [0] = 0x36u;
+        [1] n;
+    }
+
+
+    Ld-hl-r(u8 n) {
+        this.n = n;
+    }
+}

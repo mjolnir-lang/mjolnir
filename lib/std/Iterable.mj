@@ -1,0 +1,9 @@
+
+
+/// An Iterable object provides a default iterator.
+interface Iterable<type T> {
+
+
+    /// Return the default iterator.
+    Iterator<safe T> iterator(safe)
+}

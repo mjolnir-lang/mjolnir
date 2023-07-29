@@ -1,0 +1,11 @@
+import std
+
+
+interface Printable {
+
+
+    void print(safe)
+
+
+    String to_string(safe)
+}

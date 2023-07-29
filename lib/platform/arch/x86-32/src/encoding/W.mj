@@ -1,0 +1,104 @@
+
+
+/// WAIT/FWAIT - Wait
+bitfield<u8> WaitEncodingZo {
+    [7:0] = 0x9Bu;
+}
+
+/// WBINVD - Write Back and Invalidate Cache
+bitfield<u8[2]> WbinvdEncodingZo {
+    [0] = 0x0Fu;
+    [1] = 0x09u;
+}
+
+/// WBNOINVD - Write Back and Do Not Invalidate Cache
+bitfield<u8[3]> WbnoinvdEncodingZo {
+    [0] = 0xF3u;
+    [1] = 0x0Fu;
+    [2] = 0x09u;
+}
+
+/// WRFSBASE/WRGSBASE - Write FS/GS Segment Base
+bitfield<u8[]> WrfsbaseEncodingM {
+    [] = 0xu;
+}
+
+/// WRMSR - Write to Model Specific Register
+bitfield<u8[2]> WrmsrEncodingZo {
+    [0] = 0x0Fu;
+    [1] = 0x30u;
+}
+
+/// WRPKRU - Write Data to User Page Key Register
+bitfield<u8[3]> WrpkruEncodingZo {
+    [0] = 0x0Fu;
+    [1] = 0x01u;
+    [2] = 0xEFu;
+}
+
+/// WRSSD/WRSSQ - Write to Shadow Stack
+bitfield<u8[3]> WrssdEncodingZo {
+    [0] = 0x0Fu;
+    [1] = 0x38u;
+    [2] = 0xF6u;
+}
+
+/// 
+bitfield<u8[]> EncodingZo {
+    [] = 0xu;
+}
+
+/// 
+bitfield<u8[]> EncodingZo {
+    [] = 0xu;
+}
+
+/// 
+bitfield<u8[]> EncodingZo {
+    [] = 0xu;
+}
+
+/// 
+bitfield<u8[]> EncodingZo {
+    [] = 0xu;
+}
+
+/// 
+bitfield<u8[]> EncodingZo {
+    [] = 0xu;
+}
+
+/// 
+bitfield<u8[]> EncodingZo {
+    [] = 0xu;
+}
+
+/// 
+bitfield<u8[]> EncodingZo {
+    [] = 0xu;
+}
+
+/// 
+bitfield<u8[]> EncodingZo {
+    [] = 0xu;
+}
+
+/// 
+bitfield<u8[]> EncodingZo {
+    [] = 0xu;
+}
+
+/// 
+bitfield<u8[]> EncodingZo {
+    [] = 0xu;
+}
+
+/// 
+bitfield<u8[]> EncodingZo {
+    [] = 0xu;
+}
+
+/// 
+bitfield<u8[]> EncodingZo {
+    [] = 0xu;
+}

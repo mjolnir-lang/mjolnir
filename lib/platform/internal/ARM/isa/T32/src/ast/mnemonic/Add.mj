@@ -1,0 +1,119 @@
+
+
+class Add {
+    Cond cond;
+    bool s;
+    Reg rn;
+    Reg rd;
+    u16 imm12;
+}
+
+
+/// ADD, ADDS (immediate) [T1]
+bitfield<u16> AddImmediateT1 {
+    [15:9] = 0b0001110u;
+    [8:6] u8 imm3;
+    [5:3] u8 rn;
+    [2:0] u8 rd;
+}
+
+
+/// ADD, ADDS (immediate) [T2]
+bitfield<u16> AddImmediateT2 {
+    [15:11] = 0b00110u;
+    [10:8] u8 rdn;
+    [7:0] u8 imm8;
+}
+
+
+/// ADD, ADDS (immediate) [T3]
+bitfield<u16[2]> AddImmediateT3 {
+    [0][15:11] = 0b11110u;
+    [0][10] bool i;
+    [0][9:5] = 0b01000u;
+    [0][4] bool s;
+    [0][3:0] u8 rn;
+    [1][15] = 0;
+    [1][14:12] u8 imm3;
+    [1][11:8] u8 rd;
+    [1][7:0] u8 imm8;
+}
+
+
+/// ADD, ADDS (immediate) [T4]
+bitfield<u16[2]> AddImmediateT4 {
+    [0][15:11] = 0b11110u;
+    [0][10] bool i;
+    [0][9:4] = 0b100000u;
+    [0][3:0] u8 rn;
+    [1][15] = 0;
+    [1][14:12] u8 imm3;
+    [1][11:8] u8 rd;
+    [1][7:0] u8 imm8;
+}
+
+
+/// ADD, ADDS (register) [T1]
+bitfield<u16> AddRegisterT1 {
+    [15:9] = 0b0000100u;
+    [8:6] u8 rm;
+    [5:3] u8 rn;
+    [2:0] u8 rd;
+}
+
+
+/// ADD, ADDS (register) [T2]
+bitfield<u16> AddRegisterT2 {
+    [15:8] = 0b01000100u;
+    [7] u8 dn;
+    [6:3] u8 rm;
+    [2:0] u8 rdn;
+}
+
+
+/// ADD, ADDS (register) [T3]
+bitfield<u16[2]> AddRegisterT3 {
+    [0][15:5] = 0b11101011000u;
+    [0][4] bool s;
+    [0][3:0] u8 rn;
+    [1][15] = 0;
+    [1][14:12] u8 imm3;
+    [1][11:8] u8 rd;
+    [1][7:6] u8 imm2;
+    [1][5:4] u8 stype;
+    [1][3:0] u8 rm;
+}
+
+
+/// ADD, ADDS (SP plus immediate) [T1]
+bitfield<u16> AddSpPlusImmediateT1 {
+    [15:11] = 0b10101u;
+    [10:8] u8 rd;
+    [7:0] u8 imm8;
+}
+
+
+/// ADD, ADDS (SP plus immediate) [T2]
+bitfield<u16> AddSpPlusImmediateT2 {
+    [15:7] = 0b101100000u;
+    [6:0] u8 imm7;
+}
+
+
+/// ADD, ADDS (SP plus immediate) [T3]
+bitfield<u16[2]> AddSpPlusImmediateT3 {
+    [15:8] = 0b11110u;
+    [7] u8 dn;
+    [6:3] u8 rm;
+    [2:0] u8 rdn;
+}
+
+
+/// 
+bitfield<u16> AddSpPlusRegisterT1 {
+}
+
+
+/// 
+bitfield<u16> AddImmediateToPcT1 {
+}

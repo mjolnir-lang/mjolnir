@@ -1,0 +1,36 @@
+
+
+unit<Temperature> {
+
+    /// Celsius [°C]
+    1 °C = 274.15x K;
+
+    /// Fahrenheit [°F]
+    1 °F = 255.9277777778 K;
+
+    /// Fahrenheit [°F]
+    1 °C/s = 1.8x °F/s; // exact decimal (rational integer expression shorthand)
+    1 °C/s = 9 °F/s / 5; // explicit integer expression
+
+    /// Rankine [°R]
+    1 °R = 0.5555555556 K;
+
+    /// Reaumur [°r]
+    1 °r = 274.4 K;
+}
+
+
+unit<Temperature> 1 °C {
+
+    /// Celsius [°C]
+    T'K {(:)}() => this + 273.15x;
+
+    /// Fahrenheit [°F]
+    1 °F = 255.9277777778 K;
+
+    /// Rankine [°R]
+    1 °R = 5 K / 9;
+
+    /// Reaumur [°r]
+    1 °r = 274.4 K;
+}

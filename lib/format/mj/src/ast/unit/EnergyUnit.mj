@@ -1,0 +1,117 @@
+
+
+/// watt-hour
+unit<Energy> {
+
+    /// watt-hour [W*h]
+    1 W*h = 3600 J;
+
+    /// watt-second [W*s]
+    1 W*s = 1 J;
+}
+
+
+/// calorie (nutritional)
+1 cal = 4186.8 J;
+
+/// horsepower (metric) hour
+1 = 2647795.5 J;
+
+/// Btu (IT) [Btu (IT), Btu]
+1 Btu = 1055.05585262 J;
+
+/// Btu (th) [Btu (th)]
+1 Btu = 1054.3499999744 J;
+
+/// electron-volt [eV]
+1 eV = 1.6021766339999E-19 J;
+
+/// erg
+1 = 1.0E-7 J;
+
+/// newton meter [N*m]
+1 N*m = 1 J;
+
+/// horsepower hour [hp*h]
+1 hp*h = 2684519.5368856 J;
+
+/// kilocalorie (IT) [kcal (IT)]
+1 = 4186.8 J;
+
+/// kilocalorie (th) [kcal (th)]
+1 = 4184 J;
+
+/// calorie (IT) [cal (IT), cal]
+1 cal = 4.1868 J;
+
+/// calorie (th) [cal (th)]
+1 cal = 4.184 J;
+
+/// mega Btu (IT) [MBtu (IT)]
+1 MBtu = 1055055852.62 J;
+
+/// ton-hour (refrigeration)
+1 = 12660670.23144 J;
+
+/// fuel oil equivalent @kiloliter
+1 = 40197627984.822 J;
+
+/// fuel oil equivalent @barrel (US)
+1 = 6383087908.3509 J;
+
+/// ton (explosives)
+1 = 4184000000 J;
+
+/// dyne centimeter [dyn*cm]
+1 dyn*cm = 1.0E-7 J;
+
+/// gram-force meter [gf*m]
+1 gf*m = 0.00980665 J;
+
+/// gram-force centimeter
+1 = 9.80665E-5 J;
+
+/// kilogram-force centimeter
+1 = 0.0980665 J;
+
+/// kilogram-force meter
+1 = 9.8066499997 J;
+
+/// kilopond meter [kp*m]
+1 kp*m = 9.8066499997 J;
+
+/// pound-force foot [lbf*ft]
+1 lbf*ft = 1.3558179483 J;
+
+/// pound-force inch [lbf*in]
+1 lbf*in = 0.112984829 J;
+
+/// ounce-force inch [ozf*in]
+1 ozf*in = 0.0070615518 J;
+
+/// foot-pound [ft*lbf]
+1 ft*lbf = 1.3558179483 J;
+
+/// inch-pound [in*lbf]
+1 in*lbf = 0.112984829 J;
+
+/// inch-ounce [in*ozf]
+1 in*ozf = 0.0070615518 J;
+
+/// poundal foot [pdl*ft]
+1 pdl*ft = 0.04214011 J;
+
+/// therm
+1 = 105505600 J;
+
+/// therm (EC)
+1 = 105505600 J;
+
+/// therm (US)
+1 = 105480400 J;
+
+/// Hartree energy
+1 = 4.3597482E-18 J;
+
+/// Rydberg constant
+1 = 2.1798741E-18 J;

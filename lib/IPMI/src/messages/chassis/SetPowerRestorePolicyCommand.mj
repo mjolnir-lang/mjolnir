@@ -1,0 +1,50 @@
+
+
+/// Set Power Restore Policy Command
+///
+/// This command can be used to configure the power restore policy. This
+/// configuration parameter is kept in non-volatile storage. The power restore
+/// policy determines how the system or chassis behaves when AC power returns
+/// after an AC power loss. The Get Chassis Status command returns the power
+/// restore policy setting.
+///
+/// In some installations, the chassis' main power feed may be DC based. For
+/// example, -48V. In this case, the power restore policy for AC/mains refers
+/// to the loss and restoration of the DC main power feed.
+class SetPowerRestorePolicyCommand {
+    struct Request request {
+        bitfield<u8> {
+
+            [7:3] = 0;
+
+            /// 0 - chassis always stays powered off after AC/mains is applied, power pushbutton or command required to power on system
+            /// 1 - after AC/mains is applied or returns, power is restored to the state that was in effect when AC/mains was removed or lost
+            /// 2 - chassis always powers up after AC/mains is applied or returns
+            /// 3 - no change (just get present policy support)
+            /// other - reserved
+            [2:0] power_restore_policy;
+        }
+    }
+    struct Response response {
+
+        /// Completion Code
+        ///
+        /// A non-zero completion code should be returned if an attempt is made
+        /// to set a policy option that is not supported.
+        CompletionCode completion_code;
+
+        bitfield<u8> power_restore_policy_support {
+
+            [7:3] = 0;
+
+            /// chassis supports always powering up after AC/mains returns
+            [2] always_power_up;
+
+            /// chassis supports restoring power to state that was in effect when AC/mains was lost
+            [1] restore_power_state;
+
+            /// chassis supports staying powered off after AC/mains returns
+            [0] stay_powered_off;
+        }
+    }
+}

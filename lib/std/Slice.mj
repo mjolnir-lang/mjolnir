@@ -1,0 +1,70 @@
+
+
+class SliceIterator<type T> {
+    T *next
+    T *end
+
+
+    SliceIterator(safe; safe T *data, u32 size) {
+        next = data
+        end = &data[size]
+    }
+
+
+    /// @brief Return true if there are no more elements in the iterator.
+    bool is_empty(safe) {
+        return next == end
+    }
+
+
+    /// @brief Return a reference to the next element and increment the iterator.
+    T &next() {
+        return *next++
+    }
+}
+
+
+/// A non-owning array of contiguous elements
+/// T 
+class Slice<type T> {
+    T *const data
+    const u32 size
+
+
+    Slice(safe; safe T *data, u32 size) {
+        this.data = data
+        this.size = size
+    }
+
+
+    // Return true if the Vector contains no elements.
+    bool is_empty(safe) {
+        return size == 0
+    }
+
+
+    // Return the number of elements in the Vector.
+    u32 size(safe) {
+        return size
+    }
+
+
+    safe T *data(safe) {
+        return data
+    }
+
+
+    Slice<safe T> slice(safe; u32 start, u32 end) {
+        return Slice<safe T>(&data[start], end - start)
+    }
+
+
+    SliceIterator<safe T> iterator(safe) {
+        return SliceIterator<safe T>(data)
+    }
+
+
+    safe T &{[]}(safe; u32 index) {
+        return data[index]
+    }
+}

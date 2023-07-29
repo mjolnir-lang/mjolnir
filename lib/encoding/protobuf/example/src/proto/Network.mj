@@ -1,0 +1,22 @@
+import protobuf.message;
+
+
+
+class Message {
+
+}
+
+
+impl<ProtobufMessage> Message {
+
+
+    void encode(u8 *buffer, u32 &size) {
+        ;
+    }
+
+
+    ProtobufMessage decode() {
+        return message;
+    }
+}
+

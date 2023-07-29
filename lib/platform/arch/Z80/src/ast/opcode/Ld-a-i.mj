@@ -1,0 +1,9 @@
+
+
+class Ld-a-i {
+    const u8 = 0xEDu;
+    const u8 = 0x57u;
+
+
+    Ld-a-i();
+}

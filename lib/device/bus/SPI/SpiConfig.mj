@@ -1,0 +1,15 @@
+//
+// SPI Configuration
+//
+
+
+struct SpiConfig {
+    Gpio *cs;
+    u32 clock;
+    u16 frame_size;
+    SpiMode mode;
+    ByteOrder byte_order;
+    BitOrder bit_order;
+    SignalState cs_signal_state;
+    bool is_framed;
+}

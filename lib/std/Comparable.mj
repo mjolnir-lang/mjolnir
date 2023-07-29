@@ -1,0 +1,44 @@
+
+
+interface Comparable<type T> {
+    implements Equatable<T>
+
+
+    @pure
+    i32 compare(safe; T other)
+
+
+    @pure
+    bool is_equal(safe; T other) =>
+        compare(other) == 0
+
+
+    /// Return true if this object 
+    @final
+    i32 {<=>}(safe; T other) =>
+        compare(other)
+
+
+    /// Return true if this object is less than the other object.
+    @final
+    bool {<}(safe; T other) =>
+        compare(other) < 0
+
+
+    /// Return true if this object is greater than the other object.
+    @final
+    bool {>}(safe; T other) =>
+        compare(other) > 0
+
+
+    /// Return true if this object is less than or equal to the other object.
+    @final
+    bool {<=}(safe; T other) =>
+        compare(other) <= 0
+
+
+    /// Return true if this object is greater than or equal to the other object.
+    @final
+    bool {>=}(safe; T other) =>
+        compare(other) >= 0
+}

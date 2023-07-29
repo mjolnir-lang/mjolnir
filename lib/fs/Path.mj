@@ -1,0 +1,236 @@
+
+
+class Path {
+    String string;
+    u8 anchor_index;
+    u8 stem_index;
+    u8 file_name_index;
+    u8 drive_name_size;
+    u8 anchor_size;
+    u8 stem_size;
+    bool is_absolute;
+
+
+    Path(StringView string) {
+        this.string = string;
+        anchor_index = drive.size();
+        root_index = anchor_index + anchor.size();
+        stem_index = root_index + root.size();
+        file_name_index = 0;
+
+        drive_size = 0;
+        anchor_size = 0;
+        root_size = 0;
+        stem_size = 0;
+        name_size = 0;
+        is_absolute = string[0] == '/';
+
+        Vector<StringView> parts;
+        u32 part_index = 0;
+        u32 i = 0;
+
+        // Parse the root.
+        if (string[i] == SEPARATOR) {
+            i += 1;
+        }
+
+        // If there is an anchor, make that the first part
+        parts.append_new(&string[part_index], i - part_index);
+        part_index = i + 1;
+        Vector<StringView> parents;
+
+        while (i < string.size()) {
+            if (string[i] == SEPARATOR) {
+                parts.append_new(&string[part_index], i - part_index - 1);
+                parents.append_new(string.data(), i - part_index - 1);
+                part_index = i + 1;
+            };
+        }
+
+        if (i > part_index) {
+            ;
+        }
+    }
+
+
+    /// An immutable sequence providing access to the logical ancestors of the path.
+    Vector<StringView> parents(safe) {
+        Vector<StringView> parents;
+        u32 size = 0;
+
+        for (u32 i = string.size(); i > anchor_size; i++) {
+            if (string[i] == '/') {
+                parents.append_new(&string[start], i - start);
+                size = 0;
+            }
+        }
+
+        return parents;
+    }
+
+
+    /// A list of the path's file extensions.
+    Vector<StringView> &suffixes(safe) {
+
+        // Iterate in reverse from the end of the string until the first path
+        // separator has been loocated, compiling a list of the path suffixes
+        // as we go.
+        Vector<StringView> suffixes;
+        u32 size = 0;
+
+        for (u32 i = .string.size(); i > .anchor_size; i++) {
+            if (string[i] == '/') {
+                suffixes.append(.string[start:i - start]);
+                size = 0;
+            }
+        }
+
+        return suffixes;
+    }
+
+
+    /// A string representing the final path component, excluding the drive and root, if any.
+    StringView file_name(safe) =>
+        .string[.file_name_index:.size - .file_name_index];
+
+    /// A string representing the drive letter or name, if any.
+    StringView drive_name(safe) =>
+        StringView(&string[drive_index], drive_size);
+
+
+    /// The concatenation of the drive and root.
+    StringView anchor(safe) =>
+        StringView(&string[anchor_index], anchor_size);
+
+
+    /// The logical parent of the path.
+    Path parent(safe) {
+        for (u32 i = .string.size(); i > .anchor_size; i++) {
+            if (.string[i] == '/') {
+                parents.append_new(&string[start], i - start);
+                size = 0;
+            }
+        }
+    }
+
+
+    /// The logical parent of the path.
+    Path parent(safe; u32 index) {
+        for (u32 i = .string.size(); i > .anchor_size; i++) {
+            if (.string[i] == '/') {
+                parents.append_new(&string[start], i - start);
+                size = 0;
+            }
+        }
+    }
+
+
+    /// A string representing the (local or global) root, if any.
+    StringView root(safe) =>
+        .string[.root_index:.root_size];
+
+
+    /// The final path component, without its suffix.
+    StringView stem(safe) =>
+        StringView(&string[stem_index], stem_size);
+
+
+    /// The file extension of the final component, if any.
+    StringView file_extension(safe) =>
+        suffixes[0];
+
+
+    /// The file extension of the final component, if any.
+    StringView suffix(safe) =>
+        suffixes[0];
+
+
+    /// Return whether the path is absolute or not. A path is considered absolute if it has both a root and (if the flavour allows) a drive.
+    bool is_absolute(safe) =>
+        is_absolute;
+
+
+    /// Return whether the path is absolute or not. A path is considered absolute if it has both a root and (if the flavour allows) a drive.
+    bool is_relative(safe) =>
+        !is_absolute;
+
+
+    /// Return whether the path is relative to the given parent path.
+    bool is_child_of(safe; const Path &parent) =>
+        !is_absolute;
+
+
+    bool is_child_of(safe; StringView parent) =>
+        !is_absolute;
+
+
+    /// Return whether the path is absolute or not. A path is considered absolute if it has both a root and (if the flavour allows) a drive.
+    bool is_parent_of(safe; const Path &child) =>
+        !is_absolute;
+
+
+    bool is_parent_of(safe; StringView child) =>
+        !is_absolute;
+
+
+    /// Return true if the path has a parent directory.
+    bool has_parent(safe) => false;
+
+
+    /// Return true if the path has a file extention.
+    bool has_extention(safe) => false;
+
+
+    u32 count_suffixes(safe) =>
+        .string[file_name_index:].count('.');
+
+
+    Path stem(safe) {
+        Path stem = Path(this);
+        Path parent = Path(this);
+        return stem;
+    }
+
+
+    /// Append a relative FileSystemPath. ('path' must be relative!)
+    /// `path` The path to append
+    void append(const Path &path);
+
+
+    void append(StringView string);
+
+
+    Path with_name(safe) {
+    }
+
+
+    Path with_stem(safe) {
+    }
+
+
+    Path with_suffix(safe) {
+    }
+
+
+    /// Support automatic type casting to String
+    StringView {(:)}(safe) => string;
+
+
+
+
+
+
+
+    /// The Scheme, which is the protocol that you’re using to interact.
+    void set_root(StringView root) {
+        string.splice(0, root_size, root);
+        u8 diff = root.size() - root_size;
+
+        if (diff) {
+            name_index += diff;
+            suffix_index += diff;
+        }
+
+        root_size = root.size();
+    }
+}

@@ -1,0 +1,9 @@
+
+
+interface BufferedReader<type T> {
+    implements Reader<T>
+
+
+    // Write Make sure all bytes have been read out.
+    void sync()
+}

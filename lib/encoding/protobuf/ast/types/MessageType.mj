@@ -1,0 +1,12 @@
+import protobuf.ast.Type;
+
+
+class MessageType {
+    Token name;
+    Map<u32, Type &> fields;
+}
+
+
+impl<Type> MessageType {
+
+}

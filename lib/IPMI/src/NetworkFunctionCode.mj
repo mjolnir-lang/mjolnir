@@ -1,0 +1,81 @@
+
+
+bitfield<u8> NetworkFunctionCode {
+    [7:1] value;
+    [0] is_request;
+}
+
+
+enum<u8> NetworkFunctionCode {
+
+    /// Chassis Device Requests and Responses
+    ///
+    /// 00h identifies the message as a command/request and 01h as a
+    /// response, relating to the common chassis control and status functions.
+    CHASSIS = 0;
+
+    /// Bridge Requests and Responses
+    ///
+    /// 02h (request) or 03h (response) identifies the message as containing
+    /// data for bridging to the next bus. This data is typically another
+    /// message, which may also be a bridging message. This function is
+    /// present only on bridge nodes.
+    BRIDGE = 1;
+
+    /// Sensor and Event Requests and Responses
+    ///
+    /// This functionality can be present on any node. 04 identifies the
+    /// message as a command/request and 05h as a response, relating to
+    /// the configuration and transmission of Event Messages and system
+    /// Sensors.
+    SENSOR_EVENT = 2;
+
+    /// Application Requests and Responses
+    ///
+    /// 06h identifies the message as an application command/request and
+    /// 07h a response. The exact format of application messages is
+    /// implementation-specific for a particular device, with the exception of
+    /// App messages that are defined by the IPMI specifications.
+    ///
+    /// Note that it is possible that new versions of this specification will
+    /// identify new App commands. To avoid possible conflicts with future
+    /// versions of this specification, it is highly recommended that the
+    /// OEM/Group network functions be used for providing ‘value added’
+    /// functions rather than the App network function code.
+    APP = 3;
+
+    /// Firmware Transfer Requests and Responses
+    ///
+    /// The format of firmware transfer requests and responses matches the
+    /// format of Application messages. The type and content of firmware
+    /// transfer messages is defined by the particular device.
+    FIRMWARE = 4;
+
+    /// Non-Volatile Storage Requests and Responses
+    ///
+    /// This functionality can be present on any node that provides non-
+    /// volatile storage and retrieval services.
+    STORAGE = 5;
+
+    /// Media-Specific Configuration and Control
+    ///
+    /// Requests (0C) and responses (0D) for IPMI-specified messages that are
+    /// media-specific configuration and operation, such as configuration of
+    /// serial and LAN interfaces.
+    TRANSPORT = 6;
+
+    /// 
+    ///
+    /// 
+    GROUP_EXTENSION = 0x2C;
+
+    /// 
+    ///
+    /// 
+    OEM_GROUP = 0x2E;
+
+    /// 
+    ///
+    /// 
+    CONTROLLER_SPECIFIC_OEM_GROUP = 0x30;
+}

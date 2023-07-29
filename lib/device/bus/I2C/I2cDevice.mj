@@ -1,0 +1,5 @@
+
+
+class I2cDevice {
+    I2cAddress address;
+}

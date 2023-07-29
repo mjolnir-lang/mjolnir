@@ -1,0 +1,21 @@
+
+
+/// An adapter for converting Unicode codepoint streams into UTF-8 data.
+class Utf8StreamEncoder {
+    Writable<Unicode> &output
+
+
+    Utf8StreamEncoder(Writable<Unicode> &'output) {
+        this.output = output;
+    }
+}
+
+
+impl<Writable<u8>> Utf8StreamEncoder {
+
+
+    // Write multiple codepoints.
+    void write(const UnicodeCodepoint *data, u32 size) {
+        Utf8::encode(output, data, size);
+    }
+}

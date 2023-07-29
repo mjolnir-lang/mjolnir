@@ -1,0 +1,583 @@
+
+
+type<u32> UnicodeCodepoint {
+
+
+    bool is_valid() {
+        return this in (0:0xD800u32 | 0xE000u32:0x110000u32);
+    }
+
+
+    bool is_latin_1() {
+        return this in 0:127;
+    }
+}
+
+
+/// In the Unicode standard, a plane is a continuous group of 65,536 (2^16)
+/// code points. There are 17 planes, identified by the numbers 0 to 16, which
+/// corresponds with the possible values 00–1016 of the first two positions in
+/// six position hexadecimal format (U+hhhhhh). Plane 0 is the Basic
+/// Multilingual Plane (BMP), which contains most commonly used characters. The
+/// higher planes 1 through 16 are called "supplementary planes". The last code
+/// point in Unicode is the last code point in plane 16, U+10FFFF. As of
+/// Unicode version 15.0, five of the planes have assigned code points
+/// (characters), and seven are named.
+///
+/// The limit of 17 planes is due to UTF-16, which can encode 220 code points
+/// (16 planes) as pairs of words, plus the BMP as a single word. UTF-8 was
+/// designed with a much larger limit of 231 (2,147,483,648) code points
+/// (32,768 planes), and would still be able to encode 221 (2,097,152) code
+/// points (32 planes) even under the current limit of 4 bytes.
+///
+/// The 17 planes can accommodate 1,114,112 code points. Of these, 2,048 are
+/// surrogates (used to make the pairs in UTF-16), 66 are non-characters, and
+/// 137,468 are reserved for private use, leaving 974,530 for public
+/// assignment.
+///
+/// Planes are further subdivided into Unicode blocks, which, unlike planes, do
+/// not have a fixed size. The 327 blocks defined in Unicode 15.0 cover 26% of
+/// the possible code point space, and range in size from a minimum of 16 code
+/// points (sixteen blocks) to a maximum of 65,536 code points (Supplementary
+/// Private Use Area-A and -B, which constitute the entirety of planes 15 and
+/// 16). For future usage, ranges of characters have been tentatively mapped
+/// out for most known current and ancient writing systems.
+enum<u8 id> UnicodePlane {
+    StringView name;
+    u16 blocks_count;
+    u32 codpoints_count;
+    u32 assigned_characters_count;
+
+    /// The Basic Multilingual Plane
+    BMP = {0, "Basic Multilingual Plane", 164, 65520, 55634};
+
+    /// The Supplementary Multilingual Plane
+    SMP = {1, "Supplementary Multilingual Plane", 151, 26160, 23276};
+
+    /// The Supplementary Ideographic Plane
+    SIP = {2, "Supplementary Ideographic Plane", 6, 60912, 60873};
+
+    /// The Tertiary Ideographic Plane
+    TIP = {3, "Tertiary Ideographic Plane", 3, 9136, 9131};
+
+    /// The Supplementary Special-purpose Plane
+    SSP = {14, "Supplementary Special-purpose Plane", 2, 368, 337};
+
+    /// Supplementary Private Use Area-A
+    SPUA_A = {15, "Supplementary Private Use Area-A", 1, 65536, 0};
+
+    /// Supplementary Private Use Area-B
+    SPUA_B = {16, "Supplementary Private Use Area-B", 1, 65536, 0};
+};
+
+
+/// Unicode 15.0 defines 327 blocks
+/// 164 in plane 0, the Basic Multilingual Plane (in table below: § BMP)
+/// 151 in plane 1, the Supplementary Multilingual Plane (§ SMP)
+/// 6 in plane 2, the Supplementary Ideographic Plane (§ SIP)
+/// 2 in plane 3, the Tertiary Ideographic Plane (§ TIP)
+/// 2 in plane 14 (E in hexadecimal), the Supplementary Special-purpose Plane (§ SSP)
+/// One each in the planes 15 (Fhex) and 16 (10hex), called Supplementary Private Use Area-A and -B (§ PUA-A)
+enum<u8> UnicodeBlock {
+    UnicodePlane plane;
+    StringView name;
+    UnicodeCodepoint first_codpoint;
+    UnicodeCodepoint last_codpoint;
+    u32 codpoints_count;
+    u32 assigned_characters_count;
+
+    // Latin (52 characters), Common (76 characters)
+    BASIC_LATIN = {BMP, "Basic Latin", 0x0000, 0x007F, 128, 128};
+
+    // Latin (64 characters), Common (64 characters)
+    LATIN_1_SUPPLEMENT = {BMP, "Latin-1 Supplement", 0x0080, 0x00FF, 128, 128}
+
+    /// Latin Extended-A
+    /// Latin
+    LATIN_EXTENDED_A = {BMP, "Latin Extended-A", 0x0100, 0x017F, 128, 128};
+
+    /// Latin Extended-B
+    // Latin
+    LATIN_EXTENDED_B = {BMP, "Latin Extended-B", 0x0180, 0x024F, 208, 208};
+
+    /// IPA Extensions
+    /// Latin
+    IPA_EXTENSIONS = {BMP, "IPA Extensions", 0x0250, 0x02AF, 96, 96};
+
+    // Bopomofo (2 characters), Latin (14 characters), Common (64 characters)
+    SPACING_MODIFIER_LETTERS = {BMP, "Spacing Modifier Letters", 0x02B0, 0x02FF, 80, 80};
+
+    // Inherited
+    COMBINING_DIACRITICAL_MARKS = {BMP, "Combining Diacritical Marks", 0x0300, 0x036F, 112, 112};
+
+    // Coptic (14 characters), Greek (117 characters), Common (4 characters)
+    GREEK_AND_COPTIC = {BMP, "Greek and Coptic", 0x0370, 0x03FF, 144, 135};
+
+    // Cyrillic (254 characters), Inherited (2 characters)
+    CYRILLIC = {BMP, "Cyrillic", 0x0400, 0x04FF, 256, 256};
+
+    // Cyrillic
+    CYRILLIC_SUPPLEMENT = {BMP, "Cyrillic Supplement", 0x0500, 0x052F, 48, 48};
+
+    // Armenian
+    ARMENIAN = {BMP, "Armenian", 0x0530, 0x058F, 96, 91};
+
+    // Hebrew
+    HEBREW = {BMP, "Hebrew", 0x0590, 0x05FF, 112, 88};
+
+    // Arabic (238 characters), Common (6 characters), Inherited (12 characters)
+    ARABIC = {BMP, "Arabic", 0x0600, 0x06FF, 256, 256};
+
+    // Syriac
+    SYRIAC = {BMP, "Syriac", 0x0700, 0x074F, 80, 77};
+
+    // Arabic
+    ARABIC_SUPPLEMENT = {BMP, "Arabic Supplement", 0x0750, 0x077F, 48, 48};
+
+    // Thaana
+    THAANA = {BMP, "Thaana", 0x0780, 0x07BF, 64, 50};
+
+    // Nko
+    NKO = {BMP, "NKo", 0x07C0, 0x07FF, 64, 62};
+
+    // Samaritan
+    SAMARITAN = {BMP, "Samaritan", 0x0800, 0x083F, 64, 61};
+
+    // Mandaic
+    MANDAIC = {BMP, "Mandaic", 0x0840, 0x085F, 32, 29};
+
+    // Syriac
+    SYRIAC_SUPPLEMENT = {BMP, "Syriac Supplement", 0x0860, 0x086F, 16, 11};
+
+    // Arabic
+    ARABIC_EXTENDED_B = {BMP, "Arabic Extended-B", 0x0870, 0x089F, 48, 41};
+
+    // Arabic (95 characters), Common (1 character)
+    ARABIC_EXTENDED_A = {BMP, "Arabic Extended-A", 0x08A0, 0x08FF, 96, 96};
+
+    // Devanagari (122 characters), Common (2 characters), Inherited (4 characters)
+    DEVANAGARI = {BMP, "Devanagari", 0x0900, 0x097F, 128, 128};
+
+    // Bengali
+    BENGALI = {BMP, "Bengali", 0x0980, 0x09FF, 128, 96};
+
+    // Gurmukhi
+    GURMUKHI = {BMP, "Gurmukhi", 0x0A00, 0x0A7F, 128, 80};
+
+    // Gujarati
+    GUJARATI = {BMP, "Gujarati", 0x0A80, 0x0AFF, 128, 91};
+
+    // Oriya
+    ORIYA = {BMP, "Oriya", 0x0B00, 0x0B7F, 128, 91};
+
+    // Tamil
+    TAMIL = {BMP, "Tamil", 0x0B80, 0x0BFF, 128, 72};
+
+    // Telugu
+    TELUGU = {BMP, "Telugu", 0x0C00, 0x0C7F, 128, 100};
+
+    // Kannada
+    KANNADA = {BMP, "Kannada", 0x0C80, 0x0CFF, 128, 91};
+
+    // Malayalam
+    MALAYALAM = {BMP, "Malayalam", 0x0D00, 0x0D7F, 128, 118};
+
+    // Sinhala
+    SINHALA = {BMP, "Sinhala", 0x0D80, 0x0DFF, 128, 91};
+
+    // Thai (86 characters), Common (1 character)
+    THAI = {BMP, "Thai", 0x0E00, 0x0E7F, 128, 87};
+
+    // Lao
+    LAO = {BMP, "Lao", 0x0E80, 0x0EFF, 128, 83};
+
+    // Tibetan (207 characters), Common (4 characters)
+    TIBETAN = {BMP, "Tibetan", 0x0F00, 0x0FFF, 256, 211};
+
+    // Myanmar
+    MYANMAR = {BMP, "Myanmar", 0x1000, 0x109F, 160, 160};
+
+    // Georgian (87 characters), Common (1 character)
+    GEORGIAN = {BMP, "Georgian", 0x10A0, 0x10FF, 96, 88};
+
+    // Hangul
+    HANGUL_JAMO = {BMP, "Hangul Jamo", 0x1100, 0x11FF, 256, 256};
+
+    // Ethiopic
+    ETHIOPIC = {BMP, "Ethiopic", 0x1200, 0x137F, 384, 358};
+
+    // Ethiopic
+    ETHIOPIC_SUPPLEMENT = {BMP, "Ethiopic Supplement", 0x1380, 0x139F, 32, 26};
+
+    // Cherokee
+    CHEROKEE = {BMP, "Cherokee", 0x13A0, 0x13FF, 96, 92};
+
+    // Canadian Aboriginal
+    UNIFIED_CANADIAN_ABORIGINAL_SYLLABICS = {BMP, "Unified Canadian Aboriginal Syllabics", 0x1400, 0x167F, 640, 640};
+
+    // Ogham
+    OGHAM = {BMP, "Ogham", 0x1680, 0x169F, 32, 29};
+
+    // Runic (86 characters), Common (3 characters)
+    RUNIC = {BMP, "Runic", 0x16A0, 0x16FF, 96, 89};
+
+    // Tagalog
+    TAGALOG = {BMP, "Tagalog", 0x1700, 0x171F, 32, 23};
+
+    // Hanunoo (21 characters), Common (2 characters)
+    HANUNOO = {BMP, "Hanunoo", 0x1720, 0x173F, 32, 23};
+
+    // Buhid
+    BUHID = {BMP, "Buhid", 0x1740, 0x175F, 32, 20};
+
+    // Tagbanwa
+    TAGBANWA = {BMP, "Tagbanwa", 0x1760, 0x177F, 32, 18};
+
+    // Khmer
+    KHMER = {BMP, "Khmer", 0x1780, 0x17FF, 128, 114};
+
+    // Mongolian (155 characters), Common (3 characters)
+    MONGOLIAN = {BMP, "Mongolian", 0x1800, 0x18AF, 176, 158};
+
+    // Canadian Aboriginal
+    UNIFIED_CANADIAN_ABORIGINAL_SYLLABICS_EXTENDED = {BMP, "Unified Canadian Aboriginal Syllabics Extended", 0x18B0, 0x18FF, 80, 70};
+
+    // Limbu
+    LIMBU = {BMP, "Limbu", 0x1900, 0x194F, 80, 68};
+
+    // Tai Le
+    TAI_LE = {BMP, "Tai Le", 0x1950, 0x197F, 48, 35};
+
+    // New Tai Lue
+    NEW_TAI_LUE = {BMP, "New Tai Lue", 0x1980, 0x19DF, 96, 83};
+
+    // Khmer
+    KHMER_SYMBOLS = {BMP, "Khmer Symbols", 0x19E0, 0x19FF, 32, 32};
+
+    // Buginese
+    BUGINESE = {BMP, "Buginese", 0x1A00, 0x1A1F, 32, 30};
+
+    // Tai Tham
+    TAI_THAM = {BMP, "Tai Tham", 0x1A20, 0x1AAF, 144, 127};
+
+    // Inherited
+    COMBINING_DIACRITICAL_MARKS_EXTENDED = {BMP, "Combining Diacritical Marks Extended", 0x1AB0, 0x1AFF, 80, 31};
+
+    // Balinese
+    BALINESE = {BMP, "Balinese", 0x1B00, 0x1B7F, 128, 124};
+
+    // Sundanese
+    SUNDANESE = {BMP, "Sundanese", 0x1B80, 0x1BBF, 64, 64};
+
+    // Batak
+    BATAK = {BMP, "Batak", 0x1BC0, 0x1BFF, 64, 56};
+
+    // Lepcha
+    LEPCHA = {BMP, "Lepcha", 0x1C00, 0x1C4F, 80, 74};
+
+    // Ol Chiki
+    OL_CHIKI = {BMP, "Ol Chiki", 0x1C50, 0x1C7F, 48, 48};
+
+    // Cyrillic
+    CYRILLIC_EXTENDED_C = {BMP, "Cyrillic Extended-C", 0x1C80, 0x1C8F, 16, 9};
+
+    // Georgian
+    GEORGIAN_EXTENDED = {BMP, "Georgian Extended", 0x1C90, 0x1CBF, 48, 46};
+
+    // Sundanese
+    SUNDANESE_SUPPLEMENT = {BMP, "Sundanese Supplement", 0x1CC0, 0x1CCF, 16, 8};
+
+    // Common (16 characters), Inherited (27 characters)
+    VEDIC_EXTENSIONS = {BMP, "Vedic Extensions", 0x1CD0, 0x1CFF, 48, 43};
+
+    // Cyrillic (2 characters), Greek (15 characters), Latin (111 characters)
+    PHONETIC_EXTENSIONS = {BMP, "Phonetic Extensions", 0x1D00, 0x1D7F, 128, 128};
+
+    // Greek (1 character), Latin (63 characters)
+    PHONETIC_EXTENSIONS_SUPPLEMENT = {BMP, "Phonetic Extensions Supplement", 0x1D80, 0x1DBF, 64, 64};
+
+    // Inherited
+    COMBINING_DIACRITICAL_MARKS_SUPPLEMENT = {BMP, "Combining Diacritical Marks Supplement", 0x1DC0, 0x1DFF, 64, 64};
+
+    // Latin
+    LATIN_EXTENDED_ADDITIONAL = {BMP, "Latin Extended Additional", 0x1E00, 0x1EFF, 256, 256};
+
+    // Greek
+    GREEK_EXTENDED = {BMP, "Greek Extended", 0x1F00, 0x1FFF, 256, 233};
+
+    // Common (109 characters), Inherited (2 characters)
+    GENERAL_PUNCTUATION = {BMP, "General Punctuation", 0x2000, 0x206F, 112, 111};
+
+    // Latin (15 characters), Common (27 characters)
+    SUPERSCRIPTS_AND_SUBSCRIPTS = {BMP, "Superscripts and Subscripts", 0x2070, 0x209F, 48, 42};
+
+    // Common
+    CURRENCY_SYMBOLS = {BMP, "Currency Symbols", 0x20A0, 0x20CF, 48, 33};
+
+    // Inherited
+    COMBINING_DIACRITICAL_MARKS_FOR_SYMBOLS = {BMP, "Combining Diacritical Marks for Symbols", 0x20D0, 0x20FF, 48, 33};
+
+    // Greek (1 character), Latin (4 characters), Common (75 characters)
+    LETTERLIKE_SYMBOLS = {BMP, "Letterlike Symbols", 0x2100, 0x214F, 80, 80};
+
+    // Latin (41 characters), Common (19 characters)
+    NUMBER_FORMS = {BMP, "Number Forms", 0x2150, 0x218F, 64, 60};
+
+    // Common
+    ARROWS = {BMP, "Arrows", 0x2190, 0x21FF, 112, 112};
+
+    // Common
+    MATHEMATICAL_OPERATORS = {BMP, "Mathematical Operators", 0x2200, 0x22FF, 256, 256};
+
+    // Common
+    MISCELLANEOUS_TECHNICAL = {BMP, "Miscellaneous Technical", 0x2300, 0x23FF, 256, 256};
+
+    // Common
+    CONTROL_PICTURES = {BMP, "Control Pictures", 0x2400, 0x243F, 64, 39};
+
+    // Common
+    OPTICAL_CHARACTER_RECOGNITION = {BMP, "Optical Character Recognition", 0x2440, 0x245F, 32, 11}
+
+    // Common
+    ENCLOSED_ALPHANUMERICS = {BMP, "Enclosed Alphanumerics", 0x2460, 0x24FF, 160, 160};
+
+    // Common
+    BOX_DRAWING = {BMP, "Box Drawing", 0x2500, 0x257F, 128, 128};
+
+    // Common
+    BLOCK_ELEMENTS = {BMP, "Block Elements", 0x2580, 0x259F, 32, 32};
+
+    // Common
+    GEOMETRIC_SHAPES = {BMP, "Geometric Shapes", 0x25A0, 0x25FF, 96, 96};
+
+    // Common
+    MISCELLANEOUS_SYMBOLS = {BMP, "Miscellaneous Symbols", 0x2600, 0x26FF, 256, 256};
+
+    // Common
+    DINGBATS = {BMP, "Dingbats", 0x2700, 0x27BF, 192, 192};
+
+    // Common
+    MISCELLANEOUS_MATHEMATICAL_SYMBOLS_A = {BMP, "Miscellaneous Mathematical Symbols-A", 0x27C0, 0x27EF, 48, 48};
+
+    // Common
+    SUPPLEMENTAL_ARROWS_A = {BMP, "Supplemental Arrows-A", 0x27F0, 0x27FF, 16, 16};
+
+    // Braille
+    BRAILLE_PATTERNS = {BMP, "Braille Patterns", 0x2800, 0x28FF, 256, 256};
+
+    // Common
+    SUPPLEMENTAL_ARROWS_B = {BMP, "Supplemental Arrows-B", 0x2900, 0x297F, 128, 128};
+
+    // Common
+    MISCELLANEOUS_MATHEMATICAL_SYMBOLS_B = {BMP, "Miscellaneous Mathematical Symbols-B", 0x2980, 0x29FF, 128, 128};
+
+    // Common
+    SUPPLEMENTAL_MATHEMATICAL_OPERATORS = {BMP, "Supplemental Mathematical Operators", 0x2A00, 0x2AFF, 256, 256};
+
+    // Common
+    MISCELLANEOUS_SYMBOLS_AND_ARROWS = {BMP, "Miscellaneous Symbols and Arrows", 0x2B00, 0x2BFF, 256, 253};
+
+    // Glagolitic
+    GLAGOLITIC = {BMP, "Glagolitic", 0x2C00, 0x2C5F, 96, 96};
+
+    // Latin
+    LATIN_EXTENDED_C = {BMP, "Latin Extended-C", 0x2C60, 0x2C7F, 32, 32};
+
+    // Coptic
+    COPTIC = {BMP, "Coptic", 0x2C80, 0x2CFF, 128, 123};
+
+    // Georgian
+    GEORGIAN_SUPPLEMENT = {BMP, "Georgian Supplement", 0x2D00, 0x2D2F, 48, 40};
+
+    // Tifinagh
+    TIFINAGH = {BMP, "Tifinagh", 0x2D30, 0x2D7F, 80, 59};
+
+    // Ethiopic
+    ETHIOPIC_EXTENDED = {BMP, "Ethiopic Extended", 0x2D80, 0x2DDF, 96, 79};
+
+    // Cyrillic
+    CYRILLIC_EXTENDED_A = {BMP, "Cyrillic Extended-A", 0x2DE0, 0x2DFF, 32, 32};
+
+    // Common
+    SUPPLEMENTAL_PUNCTUATION = {BMP, "Supplemental Punctuation", 0x2E00, 0x2E7F, 128, 94};
+
+    // Han
+    CJK_RADICALS_SUPPLEMENT = {BMP, "CJK Radicals Supplement", 0x2E80, 0x2EFF, 128, 115};
+
+    // Han
+    KANGXI_RADICALS = {BMP, "Kangxi Radicals", 0x2F00, 0x2FDF, 224, 214};
+
+    // Common
+    IDEOGRAPHIC_DESCRIPTION_CHARACTERS = {BMP, "Ideographic Description Characters", 0x2FF0, 0x2FFF, 16, 12};
+
+    // Han (15 characters), Hangul (2 characters), Common (43 characters), Inherited (4 characters)
+    CJK_SYMBOLS_AND_PUNCTUATION = {BMP, "CJK Symbols and Punctuation", 0x3000, 0x303F, 64, 64};
+
+    // Hiragana (89 characters), Common (2 characters), Inherited (2 characters)
+    HIRAGANA = {BMP, "Hiragana", 0x3040, 0x309F, 96, 93};
+
+    // Katakana (93 characters), Common (3 characters)
+    KATAKANA = {BMP, "Katakana", 0x30A0, 0x30FF, 96, 96};
+
+    // Bopomofo
+    BOPOMOFO = {BMP, "Bopomofo", 0x3100, 0x312F, 48, 43};
+
+    // Hangul
+    HANGUL_COMPATIBILITY_JAMO = {BMP, "Hangul Compatibility Jamo", 0x3130, 0x318F, 96, 94};
+
+    // Common
+    KANBUN = {BMP, "Kanbun", 0x3190, 0x319F, 16, 16};
+
+    // Bopomofo
+    BOPOMOFO_EXTENDED = {BMP, "Bopomofo Extended", 0x31A0, 0x31BF, 32, 32};
+
+    // Common
+    CJK_STROKES = {BMP, "CJK Strokes", 0x31C0, 0x31EF, 48, 36};
+
+    // Katakana
+    KATAKANA_PHONETIC_EXTENSIONS = {BMP, "Katakana Phonetic Extensions", 0x31F0, 0x31FF, 16, 16};
+
+    // Hangul (62 characters), Katakana (47 characters), Common (146 characters)
+    ENCLOSED_CJK_LETTERS_AND_MONTHS = {BMP, "Enclosed CJK Letters and Months", 0x3200, 0x32FF, 256, 255};
+
+    // Katakana (88 characters), Common (168 characters)
+    CJK_COMPATIBILITY = {BMP, "CJK Compatibility", 0x3300, 0x33FF, 256, 256};
+
+    // Han
+    CJK_UNIFIED_IDEOGRAPHS_EXTENSION_A = {BMP, "CJK Unified Ideographs Extension A", 0x3400, 0x4DBF, 6592, 6592};
+
+    // Common
+    YIJING_HEXAGRAM_SYMBOLS = {BMP, "Yijing Hexagram Symbols", 0x4DC0, 0x4DFF, 64, 64};
+
+    // Han
+    CJK_UNIFIED_IDEOGRAPHS = {BMP, "CJK Unified Ideographs", 0x4E00, 0x9FFF, 20992, 20992};
+
+    // Yi
+    YI_SYLLABLES = {BMP, "Yi Syllables", 0xA000, 0xA48F, 1168, 1165};
+
+    // Yi
+    YI_RADICALS = {BMP, "Yi Radicals", 0xA490, 0xA4CF, 64, 55};
+
+    // Lisu
+    LISU = {BMP, "Lisu", 0xA4D0, 0xA4FF, 48, 48};
+
+    // Vai
+    VAI = {BMP, "Vai", 0xA500, 0xA63F, 320, 300};
+
+    // Cyrillic
+    CYRILLIC_EXTENDED_B = {BMP, "Cyrillic Extended-B", 0xA640, 0xA69F, 96, 96};
+
+    // Bamum
+    BAMUM = {BMP, "Bamum", 0xA6A0, 0xA6FF, 96, 88};
+
+    // Common
+    MODIFIER_TONE_LETTERS = {BMP, "Modifier Tone Letters", 0xA700, 0xA71F, 32, 32};
+
+    // Latin (188 characters), Common (5 characters)
+    LATIN_EXTENDED_D = {BMP, "Latin Extended-D", 0xA720, 0xA7FF, 224, 193};
+
+    // Syloti Nagri
+    SYLOTI_NAGRI = {BMP, "Syloti Nagri", 0xA800, 0xA82F, 48, 45};
+
+    // Common
+    COMMON_INDIC_NUMBER_FORMS = {BMP, "Common Indic Number Forms", 0xA830, 0xA83F, 16, 10};
+
+    // Phags Pa
+    PHAGS_PA = {BMP, "Phags-pa", 0xA840, 0xA87F, 64, 56};
+
+    // Saurashtra
+    SAURASHTRA = {BMP, "Saurashtra", 0xA880, 0xA8DF, 96, 82};
+
+    // Devanagari
+    DEVANAGARI_EXTENDED = {BMP, "Devanagari Extended", 0xA8E0, 0xA8FF, 32, 32};
+
+    // Kayah Li (47 characters), Common (1 character)
+    KAYAH_LI = {BMP, "Kayah Li", 0xA900, 0xA92F, 48, 48};
+
+    // Rejang
+    REJANG = {BMP, "Rejang", 0xA930, 0xA95F, 48, 37};
+
+    // Hangul
+    HANGUL_JAMO_EXTENDED_A = {BMP, "Hangul Jamo Extended-A", 0xA960, 0xA97F, 32, 29};
+
+    // Javanese (90 characters), Common (1 character)
+    JAVANESE = {BMP, "Javanese", 0xA980, 0xA9DF, 96, 91};
+
+    // Myanmar
+    MYANMAR_EXTENDED_B = {BMP, "Myanmar Extended-B", 0xA9E0, 0xA9FF, 32, 31};
+
+    // Cham
+    CHAM = {BMP, "Cham", 0xAA00, 0xAA5F, 96, 83};
+
+    // Myanmar
+    MYANMAR_EXTENDED_A = {BMP, "Myanmar Extended-A", 0xAA60, 0xAA7F, 32, 32};
+
+    // Tai Viet
+    TAI_VIET = {BMP, "Tai Viet", 0xAA80, 0xAADF, 96, 72};
+
+    // Meetei Mayek
+    MEETEI_MAYEK_EXTENSIONS = {BMP, "Meetei Mayek Extensions", 0xAAE0, 0xAAFF, 32, 23};
+
+    // Ethiopic
+    ETHIOPIC_EXTENDED_A = {BMP, "Ethiopic Extended-A", 0xAB00, 0xAB2F, 48, 32};
+
+    // Latin (56 characters), Greek (1 character), Common (3 characters)
+    LATIN_EXTENDED_E = {BMP, "Latin Extended-E", 0xAB30, 0xAB6F, 64, 60};
+
+    // Cherokee
+    CHEROKEE_SUPPLEMENT = {BMP, "Cherokee Supplement", 0xAB70, 0xABBF, 80, 80};
+
+    // Meetei Mayek
+    MEETEI_MAYEK = {BMP, "Meetei Mayek", 0xABC0, 0xABFF, 64, 56};
+
+    // Hangul
+    HANGUL_SYLLABLES_ = {BMP, "Hangul Syllables ", 0xAC00, 0xD7AF, 11184, 11172};
+
+    // Hangul
+    HANGUL_JAMO_EXTENDED_B = {BMP, "Hangul Jamo Extended-B", 0xD7B0, 0xD7FF, 80, 72};
+
+    // Unknown
+    HIGH_SURROGATES = {BMP, "High Surrogates", 0xD800, 0xDB7F, 896, 0};
+
+    // Unknown
+    HIGH_PRIVATE_USE_SURROGATES = {BMP, "High Private Use Surrogates", 0xDB80, 0xDBFF, 128, 0};
+
+    // Unknown
+    LOW_SURROGATES = {BMP, "Low Surrogates", 0xDC00, 0xDFFF, 1024, 0};
+
+    // Unknown
+    PRIVATE_USE_AREA = {BMP, "Private Use Area", 0xE000, 0xF8FF, 6400, 6400};
+
+    // Han
+    CJK_COMPATIBILITY_IDEOGRAPHS = {BMP, "CJK Compatibility Ideographs", 0xF900, 0xFAFF, 512, 472};
+
+    // Armenian (5 characters), Hebrew (46 characters), Latin (7 characters)
+    ALPHABETIC_PRESENTATION_FORMS = {BMP, "Alphabetic Presentation Forms", 0xFB00, 0xFB4F, 80, 58};
+
+    // Arabic (629 characters), Common (2 characters)
+    ARABIC_PRESENTATION_FORMS_A = {BMP, "Arabic Presentation Forms-A", 0xFB50, 0xFDFF, 688, 631};
+
+    // Inherited
+    VARIATION_SELECTORS = {BMP, "Variation Selectors", 0xFE00, 0xFE0F, 16, 16};
+
+    // Common
+    VERTICAL_FORMS = {BMP, "Vertical Forms", 0xFE10, 0xFE1F, 16, 10};
+
+    // Cyrillic (2 characters), Inherited (14 characters)
+    COMBINING_HALF_MARKS = {BMP, "Combining Half Marks", 0xFE20, 0xFE2F, 16, 16};
+
+    // Common
+    CJK_COMPATIBILITY_FORMS = {BMP, "CJK Compatibility Forms", 0xFE30, 0xFE4F, 32, 32};
+
+    // Common
+    SMALL_FORM_VARIANTS = {BMP, "Small Form Variants", 0xFE50, 0xFE6F, 32, 26};
+
+    // Arabic (140 characters), Common (1 character)
+    ARABIC_PRESENTATION_FORMS_B = {BMP, "Arabic Presentation Forms-B", 0xFE70, 0xFEFF, 144, 141};
+
+    // Hangul (52 characters), Katakana (55 characters), Latin (52 characters), Common (66 characters)
+    HALFWIDTH_AND_FULLWIDTH_FORMS = {BMP, "Halfwidth and Fullwidth Forms", 0xFF00, 0xFFEF, 240, 225};
+
+    // Common
+    SPECIALS = {BMP, "Specials", 0xFFF0, 0xFFFF, 16, 5};
+}

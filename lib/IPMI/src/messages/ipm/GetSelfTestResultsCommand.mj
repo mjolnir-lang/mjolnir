@@ -1,0 +1,57 @@
+
+
+/// Get Self Test Results Command
+///
+/// This command directs the device to return its Self Test results, if any. A
+/// device implementing a Self Test will normally run that test on device power
+/// up as well as after Cold Reset commands. A device is allowed to update this
+/// field during operation if it has tests that run while the device is
+/// operating. Devices that do not implement a self test shall always return a
+/// `0x56` for this command.
+///
+/// While the Self Test only runs at particular times, the Get Self Test
+/// Results command can be issued any time the device is in a 'ready for
+/// commands' state.
+class GetSelfTestResultsCommand {
+    struct Response response {
+        CompletionCode completion_code;
+
+        /// `0x55` - No error. All Self Tests Passed.
+        /// `0x56` - Self Test function not implemented in this controller.
+        /// `0x57` - Corrupted or inaccessible data or devices
+        /// `0x58` - Fatal hardware error (system should consider BMC inoperative). This will indicate that the controller hardware (including associated devices such as sensor hardware or RAM) may need to be repaired or replaced.
+        /// `0xFF` - reserved.
+        /// others - Device-specific 'internal' failure. Refer to the particular device's specification for definition.
+        u8 byte1;
+
+        /// For byte 2 = `0x55`, `0x56`, `0xFF`: `0x00`
+        /// For byte 2 = `0x58`, all other: Device-specific
+        /// For byte 2 = `0x57`: self-test error bitfield. Note: returning `0x57` does not imply that all tests were run, just that a given test has failed. I.e. 1 means 'failed', 0 means 'unknown'.
+        bitfield<u8> byte2 {
+
+            /// Cannot access SEL device
+            [7] ;
+
+            /// Cannot access SDR Repository
+            [6] ;
+
+            /// Cannot access BMC FRU device
+            [5] ;
+
+            /// IPMB signal lines do not respond
+            [4] ;
+
+            /// SDR Repository empty
+            [3] ;
+
+            /// Internal Use Area of BMC FRU corrupted
+            [2] ;
+
+            /// controller update ‘boot block’ firmware corrupted
+            [1] ;
+
+            /// controller operational firmware corrupted
+            [0] ;
+        }
+    }
+}

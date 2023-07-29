@@ -1,0 +1,54 @@
+
+
+/// LD r, r'
+///
+/// Operation
+/// r = r′
+///
+/// Op Code
+/// LD
+///
+/// Operands
+/// r, r′
+///
+/// 0 1 --r-- --r'--
+///
+/// Description
+/// The contents of any register r' are loaded to any other register r. r, r' identifies any of
+/// the registers A, B, C, D, E, H, or L, assembled as follows in the object code:
+///
+/// Register  r, C
+///    A      111
+///    B      000
+///    C      001
+///    D      010
+///    E      011
+///    H      100
+///    L      101
+///
+/// M Cycles  T States  MHz E.T.
+///    1          4       1.0
+///
+/// Condition Bits Affected
+///
+/// None.
+///
+/// Example
+///
+/// If the H Register contains the number 8Ah, and the E register contains 10h, the instruction
+/// LD H, E results in both registers containing 10h.
+class Ld-r-r {
+    bitfield<u8[1]> {
+        [7:6] = 0b01;
+        [5:3] r0;
+        [2:0] r1;
+    }
+
+
+    Ld-r-r(u8 r0, u8 r1) {
+        this = {
+            .r0 = r0;
+            .r1 = r1;
+        };
+    }
+}

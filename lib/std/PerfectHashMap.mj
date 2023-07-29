@@ -1,0 +1,89 @@
+
+
+/// If you intend to mutate an object such that its hash will be changed,
+/// it must first be manually removed and then re-added.
+class PerfectHashMap<type K, type V, u32 (const K &) *HASH, u32 SIZE> {
+    K keys[SIZE]
+    V values[SIZE]
+    bool is_valid[SIZE]
+    u32 size
+
+
+    HashMap()
+
+
+    u32 size(safe) {
+        return size
+    }
+
+
+    bool is_empty(safe) {
+        return size == 0
+    }
+
+
+    bool contains(const K &key) {
+        return is_valid[HASH(key)]
+    }
+
+
+    void insert(const K &key, V value) {
+        values[HASH(key)] = value
+    }
+
+
+    void insert(const K &key, ...) {
+        values[HASH(key)] = V(...)
+    }
+
+
+    /// Insert all objects from the other map.
+    void insert(Map<K, V> other)
+
+
+    /// Insert all objects from the other map.
+    void insert(HashMap<K, V> other)
+
+
+    /// Remove the object with the given key.
+    void remove(const K &key) {
+        values[HASH(key)].destructor()
+    }
+
+
+    /// Remove all objects with the given keys.
+    void remove(const Iterable<K> &keys) {
+        for (K &key in keys) {
+            remove(key)
+        }
+    }
+
+
+    /// Return the object associated with the given key.
+    const V &' get(const K &key) {
+        return values[HASH(key)]
+    }
+
+
+    u32 count()
+    Iterator<const V &'> find(const Iterable<K> &keys)
+
+
+    /// Return the object associated with the given key.
+    V &'? {[]}(const K &key)
+
+
+    ///
+    void? {+=}(Map<K, V> other) {
+        insert(other)
+    }
+}
+
+
+impl<Iterable<const V &>> HashMap<type K, type V> {
+
+
+    HashMapIterator<const V &> iterator(safe) {
+        return HashMapIterator<const V &>(data)
+    }
+}

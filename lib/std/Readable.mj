@@ -1,0 +1,90 @@
+
+
+/// A readable object collection
+interface Readable<type T> {
+    implements Iterable<T>
+
+
+    /// Return true if there are no objects available to be read.
+    bool is_empty(safe) {
+        return size() == 0
+    }
+
+
+    /// The number of objects available to be read.
+    u32 size(safe) = 0
+
+
+    /// Read multiple objects.
+    void? read(T *data, u32 size = 1) = 0
+
+
+    /// Read the next object.
+    void? read(T &data) {
+        read(&data, 1)
+    }
+
+
+    /// return the next object.
+    T? read() {
+        T data
+        read(&data, 1)
+        return data
+    }
+
+
+    /// Skip multiple objects.
+    void? skip(u32 size = 1) = 0
+
+
+    /// A generator which consumes the objects in the readable.
+    Generator<T?> generator() {
+        bool has_next(safe) => !is_empty()
+
+        while (true) {
+            yield read()
+        }
+    }
+}
+
+
+impl<Iterable<T>> Readable<type T> {
+    Iterator<T?> Iterator() => this
+}
+
+
+impl<Iterator<T>> Readable<type T> {
+
+    // Test
+    bool has_next(safe) => !is_empty()
+    u32 size(safe) => size()
+
+    // Forward
+    T? next() => read()
+    void? skip(u32 size) => skip(size)
+
+    // Forward
+    T? {*}() => peek()
+    T? {++}() => next()
+    T? {++}(T result) {
+        result = next()
+        return this
+    }
+    void? {+=}(u32 size) => skip(size)
+
+    // Backward
+    T? {--}() => previous()
+    void? {-=}(u32 size) => back(size)
+}
+
+
+/// A readable byte collection
+interface Readable<u8> {
+
+
+    // Read a number of bytes into a string.
+    void? read(String &string, u32 size) {
+        string.resize(size)
+        read(string.data(), size)
+    }
+}

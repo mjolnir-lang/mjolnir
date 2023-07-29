@@ -1,0 +1,118 @@
+
+
+/// A readable object collection
+interface InputStream<type T> {
+    implements Iterable<type T>
+
+
+    /// Return true if there are no objects available to be read.
+    bool is_empty(safe) =>
+        size() == 0
+
+
+    /// The number of objects available to be read (or skipped over) without blocking by the next invocation of a method for this input stream.
+    u32 size(safe)
+
+
+    /// Read multiple objects.
+    Task<u32> read(T[] data)
+
+
+    /// Read the next object.
+    Task? read_async(T &data) =>
+        read_async(&data, 1)
+
+
+    u32 read(T[] data) =>
+        read_async(data).wait()
+
+
+    /// return the next object.
+    T data? read() =>
+        read(&data, 1)
+
+
+    /// Skip multiple objects.
+    Task skip_async(u32 size)
+
+
+    void skip(u32 size) =>
+        skip_async(size).wait()
+
+
+    /// A generator which consumes the objects in the readable.
+    Generator<T?> generator() {
+        bool has_next(safe) =>
+            !is_empty()
+
+        while (true) {
+            yield read()
+        }
+    }
+}
+
+
+impl<Iterable<T>> InputStream<type T> {
+    Iterator<T?> Iterator() => this
+}
+
+
+impl<Iterator<T>> InputStream<type T> {
+
+
+    // Test
+    bool has_next(safe) =>
+        !is_empty()
+
+
+    u32 size(safe) =>
+        size()
+
+
+    // Forward
+    T? next() =>
+        read()
+
+
+    void? skip(u32 size) =>
+        skip(size)
+
+
+    // Forward
+    T? {*}() =>
+        peek()
+
+
+    T? {++}() =>
+        next()
+
+
+    T? {++}(T result) {
+        result = next()
+        return this
+    }
+
+
+    void? {+=}(u32 size) =>
+        skip(size)
+
+    // Backward
+    T? {--}() =>
+        previous()
+
+
+    void? {-=}(u32 size) =>
+        back(size)
+}
+
+
+/// A readable byte collection
+interface InputStream<u8> {
+
+
+    // Read a number of bytes into a string.
+    void? read(String &string, u32 size) {
+        string.resize(size)
+        read(string.data(), size)
+    }
+}

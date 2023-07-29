@@ -1,0 +1,33 @@
+
+///
+/// Progress Support
+///
+
+
+///
+/// The base protocol offers also support to report progress in a generic fashion. This mechanism can be used to report any kind of progress including work done progress (usually used to report progress in the user interface using a progress bar) and partial result progress to support streaming of results.
+///
+/// A progress notification has the following properties:
+///
+/// Notification:
+///
+///     method: '$/progress'
+///     params: ProgressParams defined as follows:
+
+
+@api(3.15)
+type LspProgressToken = LspInteger | LspString;
+
+
+@api(3.15)
+interface LspProgressParams<T> {
+
+    /// The progress token provided by the client or server.
+    LspProgressToken token();
+
+
+    /// The progress data.
+    T value();
+}
+
+/// Progress is reported against a token. The token is different than the request ID which allows to report progress out of band and also for notification.

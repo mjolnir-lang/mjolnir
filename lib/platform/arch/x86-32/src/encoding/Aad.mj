@@ -1,0 +1,7 @@
+
+
+/// AAD - ASCII Adjust AX Before Division
+bitfield<u8[2]> AadEncoding {
+    [0] = 0xD5u;
+    [1] u8 imm8 = 0x0Au;
+}

@@ -1,0 +1,40 @@
+
+
+/// BL (immediate) [A1]
+bitfield<u32> BlA1 {
+    [31:28] Cond cond;
+    [27:24] = 0b1011u;
+    [23:0] u32 imm24;
+}
+
+
+/// BLX (immediate) [A2]
+bitfield<u32> BlxA2 {
+    [31:25] = 0b11111011u;
+    [24] bool h;
+    [23:0] u32 imm24;
+}
+
+
+/// BLX (register) [A1]
+bitfield<u32> BlA1 {
+    [31:28] Cond cond;
+    [27:4] = 0b000100101111111111110011u;
+    [3:0] u8 rm;
+}
+
+
+/// BX [A1]
+bitfield<u32> BxA1 {
+    [31:28] Cond cond;
+    [27:4] = 0b000100101111111111110001u;
+    [3:0] u8 rm;
+}
+
+
+/// BXJ [A1]
+bitfield<u32> BxjA1 {
+    [31:28] Cond cond;
+    [27:4] = 0b000100101111111111110010u;
+    [3:0] u8 rm;
+}

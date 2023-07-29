@@ -1,0 +1,229 @@
+import encoding.unicode;
+
+
+class Utf8 {
+
+
+    /// Encode a Unicode codepoint.
+    ///
+    /// U+0000   U+007F   | 0xxxxxxx
+    /// U+0080   U+07FF   | 110xxxxx 10xxxxxx
+    /// U+0800   U+FFFF   | 1110xxxx 10xxxxxx 10xxxxxx
+    /// U+10000  U+10FFFF | 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+    @shared
+    void? encode(Writable<u8> output, UnicodeCodepoint codepoint) {
+        u32 size;
+        u8 data[4];
+
+        if (codepoint < 0x80u32) {
+            size = 1;
+            data[0] = codepoint;
+        } else if (codepoint < 0x800u32) {
+            size = 2;
+            data[0] =  (codepoint >>  6)           | 0xC0u8;
+            data[1] = ( codepoint        & 0x3Fu8) | 0x80u8;
+        } else if (codepoint < 0x10000u32) {
+            size = 3;
+            data[0] =  (codepoint >> 12)           | 0xE0u8;
+            data[1] = ((codepoint >>  6) & 0x3Fu8) | 0x80u8;
+            data[2] = ( codepoint        & 0x3Fu8) | 0x80u8;
+        } else if (codepoint < 0x110000u32) {
+            size = 4;
+            data[0] =  (codepoint >> 18)           | 0xF0u8;
+            data[1] = ((codepoint >> 12) & 0x3Fu8) | 0x80u8;
+            data[2] = ((codepoint >>  6) & 0x3Fu8) | 0x80u8;
+            data[3] = ( codepoint        & 0x3Fu8) | 0x80u8;
+        } else {
+            lib_error("Invalid Unicode code point! {:#010X}", codepoint);
+        }
+
+        output.write(data, size);
+    }
+
+
+    /// Encode a Unicode codepoint.
+    ///
+    /// U+0000   U+007F   | 0xxxxxxx
+    /// U+0080   U+07FF   | 110xxxxx 10xxxxxx
+    /// U+0800   U+FFFF   | 1110xxxx 10xxxxxx 10xxxxxx
+    /// U+10000  U+10FFFF | 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+    @shared
+    void? encode(Slice<u8> data, SliceView<UnicodeCodepoint> codepoints) {
+        for (UnicodeCodepoint codepoint in codepoints) {
+            if (codepoint < 0x80u32) {
+                data[0] = codepoint;
+                data += 1;
+            } else if (codepoint < 0x800u32) {
+                data[0] =  (codepoint >>  6)           | 0xC0u8;
+                data[1] = ( codepoint        & 0x3Fu8) | 0x80u8;
+                data += 2;
+            } else if (codepoint < 0x10000u32) {
+                data[0] =  (codepoint >> 12)           | 0xE0u8;
+                data[1] = ((codepoint >>  6) & 0x3Fu8) | 0x80u8;
+                data[2] = ( codepoint        & 0x3Fu8) | 0x80u8;
+                data += 3;
+            } else if (codepoint < 0x110000u32) {
+                data[0] =  (codepoint >> 18)           | 0xF0u8;
+                data[1] = ((codepoint >> 12) & 0x3Fu8) | 0x80u8;
+                data[2] = ((codepoint >>  6) & 0x3Fu8) | 0x80u8;
+                data[3] = ( codepoint        & 0x3Fu8) | 0x80u8;
+                data += 4;
+            } else {
+                lib_error("Invalid Unicode code point! {:#010X}", codepoint);
+            }
+
+            output.write(data, size);
+        }
+    }
+
+
+    /// Decode multiple Unicode code points.
+    ///
+    /// `input` - The UTF-8 encoded source
+    /// `codepoints` - The decoded Unicode code point destination
+    @shared
+    void decode(Readable<u8> input, Slice<UnicodeCodepoint> codepoints) {
+        for (UnicodeCodepoint &codepoint in codepoints) {
+            codepoint = input.read();
+
+            if (codepoint[7] == 0) {
+                continue;
+            }
+
+            u32 continuation_byte_count;
+
+            if (codepoint[5:] == 0b110u8) {
+                codepoint[5:] = 0;
+                continuation_byte_count = 1;
+            } else if (codepoint[4:] == 0b1110u8) {
+                codepoint[4:] = 0;
+                continuation_byte_count = 2;
+            } else if (codepoint[3:] == 0b11110u8) {
+                codepoint[3:] = 0;
+                continuation_byte_count = 3;
+            } else if (codepoint[6:] == 0b10u8) {
+                lib_error("Unexpected continuation byte! ({:#04X})", codepoint);
+                fail;
+            } else {
+                lib_error("Invalid byte! ({:#04X})", codepoint);
+                fail;
+            }
+
+            if (codepoint == 0) {
+                lib_error("Overlong encoding detected!");
+                fail;
+            }
+
+            do {
+                u8 byte = input.read()
+
+                if (byte[6:] != 0b10u8) {
+                    lib_error("Non-continuation byte before the end of the character! ({:#04X})", byte);
+                    fail;
+                }
+
+                codepoint = (codepoint << 6) | byte[:6];
+            } while (--continuation_byte_count > 0);
+
+            if (!codepoint.is_valid()) {
+                lib_error("Invalid codepoint! (U+{:#06X})", codepoint);
+                fail;
+            }
+        }
+    }
+
+
+    @shared
+    UnicodeCodepoint? decode(Readable<u8> input, UnicodeCodepoint *codepoints, u32 size) {
+        decode(input, codepoints[:size]);
+    }
+
+
+    /// Decode multiple Unicode code points without error checking.
+    ///
+    /// NOTE: This should only be used if the input is guaranteed to be valid
+    /// UTF-8.
+    ///
+    /// `input` - The UTF-8 encoded source
+    /// `codepoints` - The decoded Unicode code point destination
+    @shared
+    void decode(Readable<u8> input, Slice<UnicodeCodepoint> codepoints) {
+        for (UnicodeCodepoint &codepoint in codepoints) {
+            codepoint = input.read();
+
+            if (codepoint[7] == 0) {
+                continue;
+            }
+
+            if (codepoint[5:] == 0b110u8) {
+                codepoint[5:] = 0;
+                codepoint = (codepoint << 6) | input.read()[:6];
+            } else if (codepoint[4:] == 0b1110u8) {
+                codepoint[4:] = 0;
+                codepoint = (codepoint << 6) | input.read()[:6];
+                codepoint = (codepoint << 6) | input.read()[:6];
+            } else {
+                codepoint[3:] = 0;
+                codepoint = (codepoint << 6) | input.read()[:6];
+                codepoint = (codepoint << 6) | input.read()[:6];
+                codepoint = (codepoint << 6) | input.read()[:6];
+            }
+        }
+    }
+
+
+    @shared
+    UnicodeCodepoint decode(Readable<u8> input) {
+        UnicodeCodepoint codepoint;
+        decode(input, &codepoint, 1);
+        return codepoint;
+    }
+
+
+    @shared
+    generator<UnicodeCodepoint> decode(Readable<u8> input) {
+        while (true) {
+            UnicodeCodepoint codepoint;
+            decode(input, &codepoint, 1);
+            yield codepoint;
+        }
+    }
+
+
+    @shared
+    void decode_skip(Readable<u8> input, u32 size) {
+        for (u32 i = 0; i < size; i++) {
+            u8 byte = input.read();
+
+            if (byte[7] == 0) {
+                continue;
+            }
+
+            if (byte[5:] == 0b110u8) {
+                input.skip(1);
+            } else if (byte[4:] == 0b1110u8) {
+                input.skip(2);
+            } else {
+                input.skip(3);
+            }
+        }
+    }
+
+
+    @shared
+    void decode_skip(Readable<u8> input) {
+        u8 byte = input.read();
+
+        if (byte[7] == 0) {
+            return;
+        }
+
+        if (byte[5:] == 0b110u8) {
+            input.skip(1);
+        } else if (byte[4:] == 0b1110u8) {
+            input.skip(2);
+        } else {
+            input.skip(3);
+        }
+    }
+}

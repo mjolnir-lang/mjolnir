@@ -1,0 +1,11 @@
+import protobuf.ast;
+
+
+class Comment {
+    String string;
+
+
+    Comment(String &string) {
+        this.string = String(string);
+    }
+}

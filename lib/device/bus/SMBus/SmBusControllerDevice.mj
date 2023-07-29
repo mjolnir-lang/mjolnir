@@ -1,0 +1,15 @@
+import i2c;
+
+
+/// A controller device issues commands, generates the clocks, and terminates the
+/// transfer. Depending on the transaction type, a controller in a transaction may transmit
+/// data to a target device (controller-transmitter) or it may receive data from a target
+/// device (controller-receiver).
+///
+/// A device may be designed to be a controller only or it may be a controller-target, in
+/// which it can act either as a controller device or as a target device.
+///
+/// There may be more than one controller on a SMBus.
+@api(1.0)
+class SmBusControllerDevice {
+}

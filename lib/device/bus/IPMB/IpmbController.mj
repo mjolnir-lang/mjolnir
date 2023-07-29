@@ -1,0 +1,6 @@
+import i2c;
+
+
+class IpmbController {
+    I2cController &i2c_controller;
+}

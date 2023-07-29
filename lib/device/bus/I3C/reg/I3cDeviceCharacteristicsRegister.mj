@@ -1,0 +1,22 @@
+
+
+/// Device Characteristics Register (DCR)
+///
+/// Each I3C Device that is connected to the I3C Bus shall have an associated
+/// read-only Device Characteristics Register (DCR). This read-only register
+/// describes the I3C compliant Device type (e.g., accelerometer, gyroscope,
+/// etc.) for use in Dynamic Address assignment and Common Command Codes.
+///
+/// MIPI Alliance maintains a public registry of approved and pending DCR value
+/// assignments [MIPI02].
+struct I3cDeviceCharacteristicsRegister {
+
+    /// Device ID
+    ///
+    /// 255 available codes for describing the type of sensor, or Device.
+    ///
+    /// Examples: Accelerometer, gyroscope, composite Devices.
+    ///
+    /// Default value is 0: Generic Device
+    u8 device_id;
+}

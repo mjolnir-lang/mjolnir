@@ -1,0 +1,211 @@
+
+
+@value-type
+class f80 {
+    bitfield<u32> {
+        [15:0] u32 bits;
+        [15] u8 sign;
+        [14:10] u8 biased_exponent;
+        [9:0] u32 significand;
+    }
+
+
+    f80(u8 x) {
+        
+    }
+
+
+    f80(u16 x) {
+        
+    }
+
+
+    f80(u32 x) {
+        
+    }
+
+
+    f80(u64 x) {
+        
+    }
+
+
+    f80(u128 x) {
+        
+    }
+
+
+    f80(i8 x) {
+        
+    }
+
+
+    f80(i16 x) {
+        
+    }
+
+
+    f80(i32 x) {
+        
+    }
+
+
+    f80(i64 x) {
+        
+    }
+
+
+    f80(i128 x) {
+        
+    }
+
+
+    f80(f16 x) {
+        
+    }
+
+
+    f80(f32 x) {
+        union ui32_f32 uA;
+        uint_fast32_t uiA;
+        bool sign;
+        int_fast16_t exp;
+        uint_fast32_t frac;
+        struct commonNaN commonNaN;
+        struct uint128 uiZ;
+        uint_fast16_t uiZ64;
+        uint_fast64_t uiZ0;
+        struct exp16_sig32 normExpSig;
+        union { struct extFloat80M s; extFloat80_t f; } uZ;
+
+        /*------------------------------------------------------------------------
+        *------------------------------------------------------------------------*/
+        uA.f = a;
+        uiA = uA.ui;
+        sign = signF32UI( uiA );
+        exp  = expF32UI( uiA );
+        frac = fracF32UI( uiA );
+        /*------------------------------------------------------------------------
+        *------------------------------------------------------------------------*/
+        if ( exp == 0xFF ) {
+            if ( frac ) {
+                softfloat_f32UIToCommonNaN( uiA, &commonNaN );
+                uiZ = softfloat_commonNaNToExtF80UI( &commonNaN );
+                uiZ64 = uiZ.v64;
+                uiZ0  = uiZ.v0;
+            } else {
+                uiZ64 = packToExtF80UI64( sign, 0x7FFF );
+                uiZ0  = UINT64_C( 0x8000000000000000 );
+            }
+            goto uiZ;
+        }
+        /*------------------------------------------------------------------------
+        *------------------------------------------------------------------------*/
+        if ( ! exp ) {
+            if ( ! frac ) {
+                uiZ64 = packToExtF80UI64( sign, 0 );
+                uiZ0  = 0;
+                goto uiZ;
+            }
+            normExpSig = softfloat_normSubnormalF32Sig( frac );
+            exp = normExpSig.exp;
+            frac = normExpSig.sig;
+        }
+        /*------------------------------------------------------------------------
+        *------------------------------------------------------------------------*/
+        uiZ64 = packToExtF80UI64( sign, exp + 0x3F80 );
+        uiZ0  = (uint_fast64_t) (frac | 0x00800000)<<40;
+    uiZ:
+        uZ.s.signExp = uiZ64;
+        uZ.s.signif  = uiZ0;
+        return uZ.f;
+    }
+
+
+    f80(f64 x) {
+        
+    }
+
+
+    f80(f128 x) {
+        
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+#ifdef SOFTFLOAT_FAST_INT64
+
+void f32_to_extF80M( float32_t a, extFloat80_t *zPtr )
+{
+
+    *zPtr = f32_to_extF80( a );
+
+}
+
+#else
+
+void f32_to_extF80M( float32_t a, extFloat80_t *zPtr )
+{
+    struct extFloat80M *zSPtr;
+    union ui32_f32 uA;
+    uint32_t uiA;
+    bool sign;
+    int_fast16_t exp;
+    uint32_t frac;
+    struct commonNaN commonNaN;
+    uint_fast16_t uiZ64;
+    uint32_t uiZ32;
+    struct exp16_sig32 normExpSig;
+
+    /*------------------------------------------------------------------------
+    *------------------------------------------------------------------------*/
+    zSPtr = (struct extFloat80M *) zPtr;
+    uA.f = a;
+    uiA = uA.ui;
+    sign = signF32UI( uiA );
+    exp  = expF32UI( uiA );
+    frac = fracF32UI( uiA );
+    /*------------------------------------------------------------------------
+    *------------------------------------------------------------------------*/
+    if ( exp == 0xFF ) {
+        if ( frac ) {
+            softfloat_f32UIToCommonNaN( uiA, &commonNaN );
+            softfloat_commonNaNToExtF80M( &commonNaN, zSPtr );
+            return;
+        }
+        uiZ64 = packToExtF80UI64( sign, 0x7FFF );
+        uiZ32 = 0x80000000;
+        goto uiZ;
+    }
+    /*------------------------------------------------------------------------
+    *------------------------------------------------------------------------*/
+    if ( ! exp ) {
+        if ( ! frac ) {
+            uiZ64 = packToExtF80UI64( sign, 0 );
+            uiZ32 = 0;
+            goto uiZ;
+        }
+        normExpSig = softfloat_normSubnormalF32Sig( frac );
+        exp = normExpSig.exp;
+        frac = normExpSig.sig;
+    }
+    /*------------------------------------------------------------------------
+    *------------------------------------------------------------------------*/
+    uiZ64 = packToExtF80UI64( sign, exp + 0x3F80 );
+    uiZ32 = 0x80000000 | (uint32_t) frac<<8;
+ uiZ:
+    zSPtr->signExp = uiZ64;
+    zSPtr->signif = (uint64_t) uiZ32<<32;
+
+}
+
+#endif

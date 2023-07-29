@@ -1,0 +1,28 @@
+
+
+class ApiAnnotation : public  {
+    u32 major;
+    u32 minor;
+
+
+    ApiAnnotation(
+        u32 major,
+        u32 minor
+    ) {
+        .major = major;
+        .minor = minor;
+    }
+
+
+    u32 major(safe) =>
+        major;
+
+
+    u32 minor(safe) =>
+        minor;
+}
+
+
+impl<Annotation> ApiAnnotation {
+    
+}

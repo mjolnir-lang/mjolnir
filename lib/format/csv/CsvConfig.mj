@@ -1,0 +1,8 @@
+import format;
+
+
+class CsvConfig {
+    String field_separator;
+    u32 columns;
+    bool first_line_is_heading;
+}

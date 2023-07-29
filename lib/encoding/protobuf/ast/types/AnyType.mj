@@ -1,0 +1,17 @@
+import protobuf.ast.Type;
+
+
+class AnyType {
+    BytesType bytes;
+}
+
+
+impl<Type> AnyType {
+
+}
+
+
+impl<Print> AnyType {
+    void print() {
+    }
+}

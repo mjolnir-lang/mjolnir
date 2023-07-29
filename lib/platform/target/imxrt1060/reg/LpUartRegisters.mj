@@ -1,0 +1,1269 @@
+
+
+struct LpUartRegisters {
+
+
+    // Version ID
+    //
+    // Indicates the version integrated for this instance on the chip and also specifies the inclusion and exclusion of several optional features.
+    @offset(0x00)
+    bitfield<u32> const volatile verid {
+
+        // Feature Identification Number
+        //
+        // Returns the feature set number.
+        //
+        // 1 - Standard feature set
+        // 3 - Standard feature set with MODEM and IrDA support
+        [0:16] feature
+
+        // Minor Version Number
+        //
+        // Returns the minor version number for the module specification
+        [16:24] minor
+
+        // Major Version Number
+        //
+        // Returns the major version number for the module specification.
+        [24:32] major
+    }
+
+
+    // Parameter
+    //
+    // Indicates the parameter configuration for this instance on the chip.
+    @offset(0x04)
+    bitfield<u32> const volatile param {
+
+        // Transmit FIFO Size
+        //
+        // Indicates the number of characters in the transmit FIFO, which is 2^TXFIFO.
+        [0:8] txfifo
+
+        // Receive FIFO Size
+        //
+        // Indicates the number of characters in the receive FIFO, which is 2^RXFIFO.
+        [8:16] rxfifo
+    }
+
+
+    // Global
+    @offset(0x08)
+    bitfield<u32> volatile global {
+
+        // Software Reset
+        //
+        // Specifies whether the module is reset.
+        // This field resets all internal logic and registers, except Global (GLOBAL). The reset takes effect
+        // immediately and remains asserted until you negate it. There is no minimum delay required before
+        // clearing the software reset.
+        //
+        // 0 - Not reset
+        // 1 - Reset
+        [1] rst
+    }
+
+
+    // Pin Configuration
+    @offset(0x0C)
+    bitfield<u32> volatile pincfg {
+
+        // Trigger Select
+        //
+        // Configures the input trigger usage.
+        // You must change the value of this field only when both the transmitter and receiver are disabled.
+        //
+        // 0 - Input trigger disabled
+        // 1 - Input trigger used instead of the RXD pin input
+        // 2 - Input trigger used instead of the CTS_B pin input
+        // 3 - Input trigger used to modulate the TXD pin output, which (after TXINV configuration) is internally ANDed with the input trigger
+        [0:1] trgsel
+    }
+
+
+    // Baud Rate
+    @offset(0x10)
+    bitfield<u32> volatile baud {
+
+        // Baud Rate Modulo Divisor
+        //
+        // Sets the modulo divide rate for the baud rate generator.
+        // If SBR is 1 - 8191, baud rate = baud clock ÷ ((OSR + 1) × SBR). You must update the 13-bit baud rate
+        // setting [SBR12:SBR0] only when both the transmitter and receiver are disabled (both CTRL[RE] and
+        // CTRL[TE] are 0).
+        [0:13] sbr
+
+        // Stop Bit Number Select
+        //
+        // Determines whether data characters include one or two stop bits.
+        // You must change the value of this field only when both the transmitter and receiver are disabled.
+        //
+        // 0 - One stop bit
+        // 1 - Two stop bits
+        [13] sbns
+
+        // RX Input Active Edge Interrupt Enable
+        //
+        // Enables STAT[RXEDGIF] to generate interrupt requests.
+        // Changing the value of CTRL[LOOPS] or CTRL[RSRC] when this field (RXEDGIE) is 1 can cause
+        // STAT[RXEDGIF] to become 1.
+        //
+        // 0 - Disables hardware interrupts from STAT[RXEDGIF]
+        // 1 - Requests hardware interrupts when STAT[RXEDGIF] is 1
+        [14] rxedgie
+
+        // LIN Break Detect Interrupt Enable
+        //
+        // Enables STAT[LBKDIF] to generate interrupt requests.
+        //
+        // 0 - Disables hardware interrupts from STAT[LBKDIF] (uses polling)
+        // 1 - Requests hardware interrupt when STAT[LBKDIF] is 1
+        [15] lbkdie
+
+        // Resynchronization Disable
+        //
+        // Disables resynchronization of the received data word when a data one followed by data zero transition is detected.
+        // You must change the value of this field only when the receiver is disabled.
+        //
+        // 0 - Enables resynchronization
+        // 1 - Disables resynchronization
+        [16] resyncdis
+
+        // Both Edge Sampling
+        //
+        // Enables sampling of the received data on both edges of the baud rate clock, effectively doubling the
+        // number of times the receiver samples the input data for a given OSR.
+        // This field must be 1 for OSRs between x4 and x7 and is optional for higher OSRs. You must change the
+        // value of this field only when the receiver is disabled.
+        //
+        // 0 - Receiver samples input data using the rising edge of the baud rate clock
+        // 1 - Receiver samples input data using the rising and falling edges of the baud rate clock
+        [17] bothedge
+
+        // Match Configuration
+        //
+        // Configures the match addressing mode used.
+        // You must change the value of this field only when both the transmitter and receiver are disabled.
+        //
+        // 0 - Address match wakeup
+        // 1 - Idle match wakeup
+        // 2 - Match on and match off
+        // 3 - Enables RWU on data match and match on/off for the transmitter CTS input
+        [18] matcfg
+
+        // Receiver Full DMA Enable
+        //
+        // Configures STAT[RDRF] to generate a DMA request.
+        //
+        // 0 - Disables DMA request
+        // 1 - Enables DMA request
+        [21] rdmae
+
+        // Transmitter DMA Enable
+        //
+        // Configures STAT[TDRE] to generate a DMA request.
+        //
+        // 0 - Disables DMA request
+        // 1 - Enables DMA request
+        [23] tdmae
+
+        // Oversampling Ratio (OSR)
+        //
+        // Configures the OSR of the receiver.
+        // You must change the value of this field only when both the transmitter and receiver are disabled.
+        //
+        //  0 - Results in an OSR of 16
+        //  1 - Reserved
+        //  2 - Reserved
+        //  3 - Results in an OSR of 4 (requires BAUD[BOTHEDGE] to be 1)
+        //  4 - Results in an OSR of 5 (requires BAUD[BOTHEDGE] to be 1)
+        //  5 - Results in an OSR of 6 (requires BAUD[BOTHEDGE] to be 1)
+        //  6 - Results in an OSR of 7 (requires BAUD[BOTHEDGE] to be 1)
+        //  7 - Results in an OSR of 8
+        //  8 - Results in an OSR of 9
+        //  9 - Results in an OSR of 10
+        // 10 - Results in an OSR of 11
+        // 11 - Results in an OSR of 12
+        // 12 - Results in an OSR of 13
+        // 13 - Results in an OSR of 14
+        // 14 - Results in an OSR of 15
+        // 15 - Results in an OSR of 16
+        // 16 - Results in an OSR of 17
+        // 17 - Results in an OSR of 18
+        // 18 - Results in an OSR of 19
+        // 19 - Results in an OSR of 20
+        // 20 - Results in an OSR of 21
+        // 21 - Results in an OSR of 22
+        // 22 - Results in an OSR of 23
+        // 23 - Results in an OSR of 24
+        // 24 - Results in an OSR of 25
+        // 25 - Results in an OSR of 26
+        // 26 - Results in an OSR of 27
+        // 27 - Results in an OSR of 28
+        // 28 - Results in an OSR of 29
+        // 29 - Results in an OSR of 30
+        // 30 - Results in an OSR of 31
+        // 31 - Results in an OSR of 32
+        [24:29] osr
+
+        // 10-Bit Mode Select
+        //
+        // Causes the tenth bit to be a part of the serial transmission.
+        // You must change the value of this field only when both the transmitter and receiver are disabled.
+        //
+        // 0 - Receiver and transmitter use 7-bit to 9-bit data characters
+        // 1 - Receiver and transmitter use 10-bit data characters
+        [29] m10
+
+        // Match Address Mode Enable 2
+        //
+        // Enables automatic address matching or data matching mode for MATCH[MA2]. If this field = 0, normal
+        // operation takes place.
+        //
+        // 0 - Disables
+        // 1 - Enables
+        [30] maen2
+
+        // Match Address Mode Enable 1
+        //
+        // Enables automatic address matching or data matching mode for MATCH[MA1]. If this field = 0, normal
+        // operation takes place.
+        //
+        // 0 - Disables
+        // 1 - Enables
+        [31] maen1
+    }
+
+
+    // Status
+    @offset(0x14)
+    bitfield<u32> volatile stat {
+
+        // Match 2 Flag
+        //
+        // Specifies whether the received data is equal to MATCH[MA2].
+        // This field becomes 1 whenever the next character to be read from Data (DATA) matches the value of
+        // MATCH[MA2].
+        //
+        // 0 - Not equal to MA2
+        // 1 - Equal to MA2
+        [14] ma2f
+
+        // Match 1 Flag
+        //
+        // Specifies whether the received data is equal to MATCH[MA1].
+        // This field becomes 1 whenever the next character to be read from Data (DATA) matches the value of
+        // MATCH[MA1].
+        //
+        // 0 - Not equal to MA1
+        // 1 - Equal to MA1
+        [15] ma1f
+
+        // Parity Error Flag (PF)
+        //
+        // Specifies whether a parity error is detected.
+        // This field becomes 1 whenever the next character to be read from Data (DATA) received after parity is
+        // enabled (CTRL[PE] = 1) and the parity bit in the received character does not agree with the expected
+        // parity value.
+        //
+        // 0 - No parity error detected
+        // 1 - Parity error detected
+        [16] pf
+
+        // Framing Error Flag (FE)
+        //
+        // Specifies whether a framing error is detected.
+        // This field becomes 1 whenever the next character to be read from Data (DATA) is received with logic 0
+        // detected where a stop bit was expected.
+        //
+        // 0 - No framing error detected (this does not guarantee that the framing is correct)
+        // 1 - Framing error detected
+        [17] fe
+
+        // Noise Flag (NF)
+        //
+        // Specifies whether noise is detected in the received character of Data (DATA).
+        //
+        // The advanced sampling technique used in the receiver takes three samples in each of the received bits.
+        // If any of these samples disagrees with the rest of the samples within any bit time in the frame, then noise
+        // is detected for that character. This field becomes 1 whenever the next character to be read from Data
+        // (DATA) is received with noise detected within the character.
+        //
+        // 0 - No noise detected
+        // 1 - Noise detected
+        [18] nf
+
+        // Receiver Overrun Flag
+        //
+        // Specifies whether there is receive overrun.
+        //
+        // This field becomes 1 when you cannot prevent STAT[RDRF] from overflowing with data. The field
+        // becomes 1 immediately after the stop bit is completely received for the dataword that overflows the buffer
+        // and all the other error fields (STAT[FE], STAT[NF], and STAT[PF]) are prevented from becoming 1. The
+        // data in the shift register is lost, but the data already in the LPUART data registers is not affected. If
+        // STAT[LBKDE] is enabled and a LIN break is detected, this field becomes 1 if STAT[LBKDIF] is not 0
+        // before the next data character is received.
+        //
+        // When this field is 1, no additional data is stored in the receive FIFO even if sufficient room exists.
+        //
+        // 0 - No overrun
+        // 1 - Receive overrun (new LPUART data lost)
+        [19] or
+
+        // Idle Line Flag
+        //
+        // Specifies whether an idle line is detected.
+        //
+        // This field becomes 1 when the LPUART receive line becomes idle for a full character time after a period
+        // of activity. When CTRL[ILT] = 0, the receiver starts counting idle bit times after the start bit. If the receive
+        // character is all 1s, these bit times and the stop bit time count towards the full character time of logic high,
+        // 10 to 13 bit times, needed for the receiver to detect an idle line. After CTRL[ILT] becomes 1, the receiver
+        // does not start counting idle bit times until after the stop bits. The stop bits and any logic high bit times at
+        // the end of the previous character do not count towards the full character time of logic high needed for the
+        // receiver to detect an idle line.
+        //
+        // For this field to become 0, write 1 to it. After the field becomes 0, you cannot write 1 to it again until after
+        // a new character is stored in the receive buffer or a LIN break character writes 1 to STAT[LBKDIF]. This
+        // field becomes 1 only once, even if the receive line remains idle for an extended period.
+        //
+        // 0 - No idle line detected
+        // 1 - Idle line detected
+        [20] idle
+
+        // Receive Data Register Full Flag
+        //
+        // Specifies whether the receive FIFO level is less than, equal to, or greater than the watermark.
+        //
+        // This field becomes 1 when the number of datawords in the receive buffer is greater than the number that
+        // WATER[RXWATER] indicates and the receive FIFO is enabled. To write 0 to this field, read Data (DATA)
+        // until the number of datawords in the receive FIFO is equal to or less than the number that
+        // WATER[RXWATER] indicates. When the receive FIFO is disabled, this field (RDRF) becomes 1 if the
+        // receive buffer (Data (DATA)) is full. To make this field 0, read Data (DATA).
+        //
+        // A character that is in the process of being received does not cause a change in this field until the entire
+        // character is received. Even if this field is 1, the character continues to be received until an overrun
+        // condition occurs after the entire character is received.
+        //
+        // 0 - Less than watermark
+        // 1 - Equal to or greater than watermark
+        [21] rdrf
+
+        // Transmission Complete Flag
+        //
+        // Specifies whether the transmitter is active.
+        //
+        // This field becomes 0 when a transmission is in progress or a preamble or break character is loaded. The
+        // field becomes 1 when the transmit buffer is empty and no data, preamble, or break character is being
+        // transmitted. When this happens, the transmit data output signal becomes idle (logic 1). This field
+        // becomes 0 after you write to Data (DATA) to transmit new data, queuing a preamble by first writing 0 and
+        // then writing 1 to CTRL[TE], queuing a break character by writing 1 to CTRL[SBK].
+        //
+        // 0 - Transmitter active (sending data, a preamble, or a break)
+        // 1 - Transmitter idle (transmission activity complete)
+        [22] tc
+
+        // Transmit Data Register Empty Flag
+        //
+        // Specifies whether the transmit FIFO level is greater than, equal to, or less than the watermark.
+        // After the transmit FIFO is enabled, this field becomes 1 when the number of datawords in the transmit
+        // FIFO is equal to or less than the number that WATER[TXWATER] indicates. To make the value of this
+        // field 0, write to it until the number of words in the transmit FIFO is greater than the number that
+        // WATER[TXWATER] indicates. After the transmit FIFO is disabled, this field becomes 1 to indicate that
+        // the FIFO level is less than the watermark. To make the value of this field 0, write to Data (DATA).
+        //
+        // This register is not affected by a character that is in the process of being transmitted it is updated at the
+        // start of each transmitted character.
+        //
+        // 0 - Greater than watermark
+        // 1 - Equal to or less than watermark
+        [23] tdre
+
+        // Receiver Active Flag
+        //
+        // Specifies whether the LPUART receiver is idle or active.
+        //
+        // This field becomes 1 when the receiver detects the beginning of a valid start bit, and the field becomes 0
+        // automatically when the receiver detects an idle line.
+        //
+        // 0 - Idle, waiting for a start bit
+        // 1 - Receiver active (RXD pin input not idle)
+        [24] raf
+
+        // LIN Break Detection Enable
+        //
+        // Enables LIN break detection.
+        //
+        // When the value of this field is 1, LIN break detect is enabled and the LIN break character is detected at a
+        // length of 11 bit times (if CTRL[M] = 0), 12 bit times (if CTRL[M] = 1), or 13 bit times (if BAUD[M10] = 1).
+        // When the value of this field is 0, LIN break detect is disabled and only a normal break character can be
+        // detected.
+        //
+        // This field selects a longer break character detection length. While the field is 1, receive data is not stored
+        // in the receive FIFO.
+        //
+        // NOTE: This field enables the LIN break detect circuit and disables writing receive data to FIFO.
+        // Therefore, it essentially ignores all characters except a LIN break.
+        //
+        // 0 - Disables
+        // 1 - Enables
+        [25] lbkde
+
+        // Break Character Generation Length
+        //
+        // Selects the longer transmitted break character length.
+        //
+        // The state of this field does not affect the detection of a framing error. You must change the value of this
+        // field only when the transmitter is disabled. You can send a break character by writing 1 to CTRL[SBK], or
+        // by writing the transmit FIFO when DATA[FRETSC] = 1 and DATA[R9T9] = 0.
+        //
+        // 0 - 9 to 13 bit times
+        // 1 - 12 to 15 bit times
+        [26] brk13
+
+        // Receive Wake Up Idle Detect
+        //
+        // Controls, for CTRL[RWU] on idle character detection, whether the idle character that wakes up the
+        // receiver writes 1 to STAT[IDLE].
+        //
+        // For address match wakeup, this field controls whether STAT[IDLE] = 1 when the address does not
+        // match. You must change the value of this field only when the receiver is disabled.
+        //
+        // If the value of this field = 0, during the Receive Standby state (CTRL[RWU] = 1), STAT[IDLE] does not
+        // become 1 upon detection of an idle character. During address match wakeup, STAT[IDLE] does not
+        // become 1 when an address does not match.
+        //
+        // If the value of this field = 1, during the Receive Standby state (CTRL[RWU] = 1), STAT[IDLE] becomes 1
+        // upon detection of an idle character. During address match wakeup, STAT[IDLE] becomes 1 when an
+        // address does not match.
+        //
+        // 0 - STAT[IDLE] does not become 1
+        // 1 - STAT[IDLE] becomes 1
+        [27] rwuid
+
+        // Receive Data Inversion
+        //
+        // Specifies whether receive data is inverted.
+        //
+        // Writing 1 to this field reverses the polarity of the received data input. You must change the value of this
+        // field only when the receiver is disabled.
+        //
+        // NOTE: Writing 1 to this field inverts the RXD input for all cases: data bits, start and stop bits, break, and
+        // idle.
+        //
+        // 0 - Inverted
+        // 1 - Not inverted
+        [28] rxinv
+
+        // MSB First
+        //
+        // Specifies the first bit that is transmitted after the start bit.
+        //
+        // If the value of this field = 0, LSB (bit 0) is the first bit transmitted after the start bit (which means, the first
+        // bit received after the start bit is identified as bit 0).
+        //
+        // If the value of this field = 1, MSB (identified as bit 9, bit 8, bit 7, or bit 6) is the first bit that is transmitted,
+        // after the start bit, depending on the settings of CTRL[M], CTRL[PE], and BAUD[M10].
+        //
+        // Writing 1 to this field reverses the order of the bits that are transmitted and received on the wire. This field
+        // does not affect the polarity of the bits, the location of the parity bit, or the location of the start or stop bits.
+        // You must change the value of this field only when both the transmitter and receiver are disabled.
+        //
+        // 0 - LSB
+        // 1 - MSB
+        [29] msbf
+
+        // RXD Pin Active Edge Interrupt Flag
+        //
+        // Specifies whether an active edge on the receive pin has occurred.
+        //
+        // This field becomes 1 whenever the receiver is enabled and an active edge (falling if STAT[RXINV] = 0,
+        // rising if STAT[RXINV] = 1) on the RXD pin occurs.
+        //
+        // 0 - Not occurred
+        // 1 - Occurred
+        [30] rxedgif
+
+        // LIN Break Detect Interrupt Flag
+        //
+        // Specifies whether a LIN break character is detected.
+        //
+        // This field becomes 1 when the LIN break detect circuitry is enabled and a LIN break character is
+        // detected.
+        //
+        // 0 - Not detected
+        // 1 - Detected
+        [31] lbkdif
+    }
+
+
+    // Control
+    //
+    // Controls various optional features of the LPUART system.
+    //
+    // You must write to the fields of this register only when both the transmitter and receiver are disabled.
+    @offset(0x18)
+    bitfield<u32> volatile ctrl {
+
+        // Receive Bit 8 Transmit Bit 9
+        //
+        // Contains R8 and T9 that correspond to different functions.
+        //
+        // R8 is the ninth data bit received after you configure LPUART for 9-bit or 10-bit data formats. When
+        // reading 9-bit or 10-bit data, read R8 before reading Data (DATA).
+        //
+        // T9 is the tenth data bit transmitted after you configure LPUART for 10-bit data formats. When writing 10-
+        // bit data, write T9 before writing to Data (DATA). If T9 does not need to change from its previous value,
+        // such as when it is used to generate address mark or parity, then you need not write to it each time you
+        // write to Data (DATA).
+        //
+        // NOTE: R8 is a read-only bit and T9 is a write-only bit the value read is different from the value written.
+        [31] r8t9
+
+        // Receive Bit 9 Transmit Bit 8
+        //
+        // Contains R9 and T8 that correspond to different functions.
+        //
+        // R9 is the tenth data bit received after you configure LPUART for 10-bit data formats. When reading 10-bit
+        // data, read R9 before reading Data (DATA).
+        //
+        // T8 is the ninth data bit transmitted after you configure LPUART for 9-bit or 10-bit data formats. When
+        // writing 9-bit or 10-bit data, write T8 before writing to Data (DATA). If T8 does not need to change from its
+        // previous value, such as when it is used to generate address mark or parity, then you need not write to it
+        // each time you write to Data (DATA).
+        //
+        // NOTE: R9 is a read-only field and T8 is a write-only field the value read is different from the value
+        // written.
+        [30] r9t8
+
+        // TXD Pin Direction in Single-Wire Mode
+        //
+        // Determines the direction of data at the TXD pin when LPUART is configured for a single-wire half-duplex
+        // operation, (CTRL[LOOPS] = CTRL[RSRC] = 1). When writing 0 to this field, the transmitter finishes
+        // receiving the current character (if any) before the receiver starts receiving data from the TXD pin.
+        //
+        // 0 - TXD pin is an input in Single-Wire mode
+        // 1 - TXD pin is an output in Single-Wire mode
+        [29] txdir
+
+        // Transmit Data Inversion
+        //
+        // Specifies whether transmit data is inverted.
+        //
+        // Writing 1 to this field reverses the polarity of the transmitted data output. This action inverts the TXD
+        // output for all cases: data bits, start and stop bits, break, and idle.
+        //
+        // 0 - Not inverted
+        // 1 - Inverted
+        [28] txinv
+
+        // Overrun Interrupt Enable
+        //
+        // Enables STAT[OR] to generate hardware interrupt requests. When this field is 1, a hardware interrupt is
+        // requested. Use polling when OR interrupts are disabled.
+        //
+        // 0 - Disables
+        // 1 - Enables
+        [27] orie
+
+        // Noise Error Interrupt Enable
+        //
+        // Enables STAT[NF] to generate hardware interrupt requests. When this field is 1, a hardware interrupt is
+        // requested. Use polling when NF interrupts are disabled.
+        //
+        // 0 - Disables
+        // 1 - Enables
+        [26] neie
+
+        // Framing Error Interrupt Enable
+        //
+        // Enables STAT[FE] to generate hardware interrupt requests. When this field is 1, a hardware interrupt is
+        // requested. Use polling when FE interrupts are disabled.
+        //
+        // 0 - Disables
+        // 1 - Enables
+        [25] feie
+
+        // Parity Error Interrupt Enable
+        //
+        // Enables STAT[PF] to generate hardware interrupt requests. When this field is 1, a hardware interrupt is
+        // requested. Use polling when PF interrupts are disabled.
+        //
+        // 0 - Disables
+        // 1 - Enables
+        [24] peie
+
+        // Transmit Interrupt Enable
+        //
+        // Enables STAT[TDRE] to generate interrupt requests if STAT[TDRE] = 1.
+        //
+        // 0 - Disables
+        // 1 - Enables
+        [23] tie
+
+        // Transmission Complete Interrupt Enable
+        //
+        // Enables STAT[TC] to generate interrupt requests if STAT[TC] = 1.
+        //
+        // 0 - Disables
+        // 1 - Enables
+        [22] tcie
+
+        // Receiver Interrupt Enable
+        //
+        // Enables STAT[RDRF] to generate hardware interrupt requests if STAT[RDRF] = 1.
+        //
+        // 0 - Disables
+        // 1 - Enables
+        [21] rie
+
+        // Idle Line Interrupt Enable
+        //
+        // Enables hardware interrupts.
+        //
+        // This field enables STAT[IDLE] to generate interrupt requests.
+        //
+        // 0 - Disables hardware interrupts from [IDLE] stat use polling
+        // 1 - Enables hardware interrupts when STAT[IDLE] = 1
+        [20] ilie
+
+        // Transmitter Enable
+        //
+        // Enables the LPUART transmitter.
+        //
+        // Using this field, you can also queue an idle preamble by first writing 0 and then writing 1 to this field. After
+        // this field becomes 0, the field reads 1 until the transmitter has completed the current character and the
+        // TXD pin is tristated.
+        //
+        // You can also queue a single idle character by writing to the transmit FIFO with DATA[FRETSC] = 1 and
+        // DATA[R9T9] = 1.
+        //
+        // 0 - Disables
+        // 1 - Enables
+        [19] te
+
+        // Receiver Enable
+        //
+        // Enables the LPUART receiver.
+        //
+        // After you write 0 to this field, this field becomes 1 until the receiver finishes receiving the current
+        // character (if any).
+        //
+        // 0 - Disables
+        // 1 - Enables
+        [18] re
+
+        // Receiver Wakeup Control
+        //
+        // Specifies whether the LPUART receiver in standby is waiting for a wakeup condition.
+        //
+        // You can write 1 to this field to place the LPUART receiver in a Standby state. The field becomes 0
+        // automatically when an RWU event occurs, that is, in case of an idle event when CTRL[WAKE] = 0 or an
+        // address match when CTRL[WAKE] = 1 and STAT[RWUID] = 0.
+        //
+        // NOTE: You must write 1 to this field only when CTRL[WAKE] = 0 (wakeup on idle), if the channel is
+        // currently not idle. You can determine this by the value of STAT[RAF]. If the field is 1 to wake up
+        // an idle event and the channel is already idle, LPUART, possibly, discards the data. This is
+        // because the data must be received or a LIN break is detected after an IDLE is detected before
+        // IDLE is allowed to be reasserted.
+        //
+        // 0 - Normal receiver operation
+        // 1 - LPUART receiver in standby, waiting for a wakeup condition
+        [17] rwu
+
+        // Send Break
+        //
+        // Specifies whether queue break character(s) are to be sent.
+        //
+        // Writing a 1 and then a 0 to this field queues a break character in the transmit data stream. Additional
+        // break characters of 9 to 13 bits, or 12 to 15 bits if STAT[BRK13] = 1, and bit times of logic 0 are queued
+        // as long as this field is 1. Depending on the timing when this field is 1 and 0, relative to the character
+        // currently being transmitted, a second break character may be queued before you write 0 to this field. If
+        // the time taken to write 0 to this field is too long, for example, if the field does not become 0 by the end of
+        // the first break character, a second break character is sent. This is compared to queuing a break character
+        // through the transmit FIFO that guarantees only one break character is sent.
+        //
+        // You can also queue a single break character by writing to the transmit FIFO when DATA[FRETSC] = 1
+        // and DATA[R9T9] = 0.
+        //
+        // 0 - Normal transmitter operation
+        // 1 - Queue break character(s) to be sent
+        [16] sbk
+
+        // Match 1 (MA1F) Interrupt Enable
+        //
+        // Enables the MA1F interrupt.
+        //
+        // 0 - Disables
+        // 1 - Enables
+        [15] ma1ie
+
+        // Match 2 (MA2F) Interrupt Enable
+        //
+        // Enables the MA2F interrupt.
+        //
+        // 0 - Disables
+        // 1 - Enables
+        [14] ma2ie
+
+        // 7-Bit Mode Select
+        //
+        // Specifies the data characters that the receiver and transmitter use.
+        //
+        // You must change the value of this field only after both the transmitter and receiver are disabled.
+        //
+        // 0 - 8-bit to 10-bit data characters
+        // 1 - 7-bit data characters
+        [11] m7
+
+        // Idle Configuration
+        //
+        // Configures the number of idle characters that must be received before you write 1 to STAT[IDLE].
+        //
+        // 0 - 1
+        // 1 - 2
+        // 2 - 4
+        // 3 - 8
+        // 4 - 16
+        // 5 - 32
+        // 6 - 64
+        // 7 - 128
+        [10:8] idlecfg
+
+        // Loop Mode Select
+        //
+        // Selects Loop mode.
+        //
+        // After this field becomes 1, the RXD pin is disconnected from LPUART and the transmitter output is
+        // internally connected to the receiver input. The transmitter and receiver must be enabled to use the loop
+        // function. In Loop mode or Single-Wire mode, the transmitter outputs are internally connected to the
+        // receiver input (see CTRL[RSRC]).
+        //
+        // 0 - Normal operation: RXD and TXD use separate pins
+        // 1 - Loop mode or Single-Wire mode
+        [7] loops
+
+        // Enables LPUART in Doze mode. If this field is 1, LPUART remains active when not in Doze mode.
+        //
+        // 0 - Enables
+        // 1 - Disables
+        [6] dozeen
+
+        // Receiver Source Select
+        //
+        // Determines the source of the receiver shift register input if CTRL[LOOPS] = 1.
+        //
+        // This field has no effect unless CTRL[LOOPS] = 1.
+        //
+        // If the value of this field is 0, internal Loopback mode is selected. LPUART does not use the RXD pin.
+        //
+        // If the value of this field is 1, single-wire LPUART mode is selected where the TXD pin is connected to the
+        // transmitter output and receiver input.
+        //
+        // 0 - Internal Loopback mode
+        // 1 - Single-wire mode
+        [5] rsrc
+
+        // 9-Bit Or 8-Bit Mode Select
+        //
+        // Specifies the mode that the receiver and transmitter use.
+        //
+        // 0 - 8-bit data characters
+        // 1 - 9-bit data characters
+        [4] m
+
+        // Receiver Wakeup Method Select
+        //
+        // Determines which condition wakes up LPUART when CTRL[RWU] = 1 and BAUD[MATCFG] = 0 (this
+        // field must be 1 when BAUD[MATCFG] = 11):
+        //
+        // - Address mark in the bit preceding the stop bit (or bit preceding the parity bit when parity is enabled)
+        // of the received data character
+        // - An idle condition on the receive pin input signal
+        //
+        // 0 - Configures CTRL[RWU] for idle-line wakeup
+        // 1 - Configures CTRL[RWU] with address-mark wakeup
+        [3] wake
+
+        // Idle Line Type Select
+        //
+        // Determines when the receiver starts counting logic 1s as idle character bits.
+        //
+        // The count begins either after a valid start bit or the stop bit. If the count begins after the start bit, a string
+        // of logic 1s preceding the stop bit can cause false recognition of an idle character. Beginning the count
+        // after the stop bit avoids false idle character recognition, but requires properly synchronized
+        // transmissions.
+        //
+        // NOTE: In case you write 1 to this field, a logic 0 is automatically shifted after a received stop bit,
+        // therefore resetting the idle count.
+        //
+        // 0 - After the start bit
+        // 1 - After the stop bit
+        [2] ilt
+
+        // Parity Enable
+        //
+        // Enables hardware parity generation and checking.
+        //
+        // If parity is enabled, the bit immediately before the stop bit is treated as the parity bit.
+        //
+        // 0 - Disables
+        // 1 - Enables
+        [1] pe
+
+        // Parity Type
+        //
+        // Selects the type of parity, even or odd, if parity is enabled (CTRL[PE] = 1):
+        //
+        // - Odd parity means that the total number of logic 1 bits in the data character, including the parity bit, is odd.
+        // - Even parity means that the total number of 1s in the data character, including the parity bit, is even.
+        //
+        // 0 - Even parity
+        // 1 - Odd parity
+        [0] pt
+    }
+
+
+    // Data
+    //
+    // Supports 8-bit, 16-bit, or 32-bit writes, each type of write performing a separate function.
+    // An 8-bit write to DATA[7:0] pushes {CTRL[R8T9], CTRL[R9T8], DATA[7:0]} the
+    // transmit FIFO with TSC clear. A 16-bit or 32-bit write pushes the data written into the
+    // FIFO and does not update the value of CTRL[R8T9] or CTRL[R9T8].
+    //
+    // Reads and writes of this register are also involved in the automatic flag clearing
+    // mechanisms for some of the LPUART status fields.
+    // 
+    // NOTE
+    // Reads return the contents of the read-only receive FIFO and
+    // writes go to the write-only transmit FIFO, making this register
+    // work as a set of two separate registers.
+    @offset(0x1C)
+    bitfield<u32> volatile data {
+
+        // Noisy Data Received
+        //
+        // Indicates whether the current received dataword contained in DATA[R9:R0] is received with noise.
+        //
+        // 0 - Received without noise
+        // 1 - Received with noise
+        [15] noisy
+
+        // Parity Error
+        //
+        // Indicates whether the current received dataword contained in DATA[R9:R0] is received with a parity error.
+        //
+        // 0 - Received without a parity error
+        // 1 - Received with a parity error
+        [14] paritye
+
+        // Frame Error Transmit Special Character
+        //
+        // Indicates the way the dataword is received.
+        //
+        // For reads, this field indicates that the current received dataword contained in DATA[R9:R0] is received
+        // with a frame error. For writes, the field indicates that a break or idle character is to be transmitted instead
+        // of the contents in DATA[T9:T0]. T9 indicates a break character when it is 0 and indicates an idle
+        // character when it is 1. The contents of DATA[T8:T0] must be 0.
+        //
+        // 0 - Received without a frame error on reads or transmits a normal character on writes
+        // 1 - Received with a frame error on reads or transmits an idle or break character on writes
+        [13] fretsc
+
+        // Receive Buffer Empty
+        //
+        // Indicates whether the receive buffer contains valid data.
+        //
+        // This field becomes 1 when there is no data in the receive buffer. The field does not consider data in the
+        // receive shift register.
+        //
+        // 0 - Contains valid data
+        // 1 - Contains invalid data and is empty
+        [12] rxempt
+
+        // Idle Line
+        //
+        // Indicates whether the receiver line was idle before receiving the character in DATA[9:0]. Unlike
+        // STAT[IDLE], you can write 1 to this field for the first character received when the receiver is first enabled.
+        //
+        // 0 - Received was not idle
+        // 1 - Receiver was idle
+        [11] idline
+
+        // Read Receive FIFO Bit 0-9 Or Write Transmit FIFO Bit 0-9
+        [10:0] rt
+    }
+
+
+    // Match Address
+    @offset(0x20)
+    bitfield<u32> volatile match {
+
+        // Match Address 2
+        //
+        // Is compared to input data addresses when the most significant bit is 1 and the associated Baud Rate
+        // (BAUD) field is 1.
+        //
+        // If a match occurs, the data that follows is transferred to Data (DATA). If a match fails, the data that
+        // follows is discarded. You must write to MATCH[MA1] and MATCH[MA2] only when the associated Baud
+        // Rate (BAUD) field is 0.
+        [26:16] ma2
+
+        // Match Address 1
+        //
+        // Is compared to input data addresses when the most significant bit is 1 and the associated Baud Rate
+        // (BAUD) field is 1.
+        //
+        // If a match occurs, the data that follows is transferred to Data (DATA). If a match fails, the data that
+        // follows is discarded. You must write to MATCH[MA1] and MATCH[MA2] fields only when the associated
+        // Baud Rate (BAUD) field is 0.
+        [10:0] ma1
+    }
+
+
+    /// MODEM IrDA
+    ///
+    /// Controls options for setting the MODEM configuration.
+    @offset(0x24)
+    bitfield<u32> volatile modir {
+
+        // IR Enable
+        //
+        // Enables IR modulation and demodulation.
+        //
+        // You must change the value of this field only when both the transmitter and receiver are disabled.
+        //
+        // 0 - Disables
+        // 1 - Enables
+        [18] iren
+
+        // Transmitter Narrow Pulse
+        //
+        // Indicates whether LPUART transmits a 1 ÷ OSR, 2 ÷ OSR, 3 ÷ OSR, or 4 ÷ OSR narrow pulse when the
+        //
+        // IR pulse is enabled.
+        // You must change the value of this field only when both the transmitter and receiver are disabled.
+        // The IR pulse width must be configured to less than half of the OSR. Common pulse widths are 3 ÷ 16, 1
+        // ÷ 16, 1 ÷ 32, or 1 ÷ 4 of the bit length. You can configure these by selecting the appropriate OSR and
+        // pulse width.
+        //
+        // 0 - (1 / OSR)
+        // 1 - (2 / OSR)
+        // 2 - (3 / OSR)
+        // 3 - (4 / OSR)
+        [17:16] tnp
+
+        // Receive RTS Configuration
+        //
+        // Configures the assertion and negation of the receiver's RTS_B output.
+        //
+        // The receiver's RTS_B output negates when the number of empty words in the receive FIFO is greater or
+        // equal to the value of this field. If this field is 0, the RTS_B pin negates when the receive FIFO is full. For
+        // the purpose of receive RTS_B generation, the number of words in the receive FIFO updates when a start
+        // bit is detected. This supports additional latency between RTS_B negation and the external transmitter
+        // ceasing transmission. If both receive RTS_B and address or data matching is enabled, RTS_B could
+        // assert at the end of a character if there exists no match.
+        //
+        // You must change the value of this field only when the receiver is disabled.
+        [10:8] rtswater
+
+        // Transmit CTS Source
+        //
+        // Configures the source of the CTS input.
+        //
+        // 0 - The CTS_B pin
+        // 1 - An internal connection to the receiver address match result
+        [5] txctssrc
+
+        // Transmit CTS Configuration
+        //
+        // Configures whether the CTS state or input is checked or sampled at the start of each character or only
+        // when the transmitter is idle.
+        //
+        // 0 - Sampled at the start of each character
+        // 1 - Sampled when the transmitter is idle
+        [4] txctsc
+
+        // Receiver RTS Enable
+        //
+        // Allows the RTS output to control the CTS input of the transmitting device to prevent receiver overrun.
+        //
+        // You must change the value of this field only when the receiver is disabled.
+        //
+        // If the value of this field = 0, the receiver has no effect on RTS.
+        //
+        // If the value of this field = 1, RTS is deasserted if STAT[RDRF] = 1 or a start bit is detected that causes
+        //
+        // STAT[RDRF] to become 1. RTS is asserted if STAT[RDRF] = 0 and has not detected a start bit that
+        // causes STAT[RDRF] to become 1.
+        //
+        // NOTE: Do not write 1 to both MODIR[RXRTSE] and MODIR[TXRTSE].
+        //
+        // 0 - Disables
+        // 1 - Enables
+        [3] rxrtse
+
+        // Transmitter RTS Polarity
+        //
+        // Controls the polarity of the transmitter RTS.
+        //
+        // This field does not affect the polarity of the receiver RTS that remains negated in the active-low state
+        // unless MODIR[TXRTSE] = 1. You must change the value of this field only when the transmitter is
+        // disabled.
+        //
+        // 0 - Transmitter RTS is active low
+        // 1 - Transmitter RTS is active high
+        [2] txrtspol
+
+        // Transmitter RTS Enable
+        //
+        // Controls the operation of RTS before and after a transmission.
+        //
+        // You must change the value of this field only when the transmitter is disabled. When the value of this field
+        // = 1, a character is placed into an empty transmit shift register. RTS asserts 1-bit time before the start bit
+        // is transmitted and deasserts 1-bit time after all characters in the transmitter FIFO and shift register are
+        // completely sent, including the last stop bit. If the value of this field = 0, the transmitter has no effect on
+        // RTS.
+        //
+        // 0 - Disables
+        // 1 - Enables
+        [1] txrtse
+
+        // Transmitter CTS Enable
+        //
+        // Enables the operation of the transmitter.
+        //
+        // You can write 1 to this field irrespective of the states of MODIR[TXRTSE] and MODIR[RXRTSE]. If the
+        // value of this field = 1, the transmitter checks the state of the CTS signal each time it is ready to send a
+        // character. If CTS is asserted, the character is sent. If CTS is deasserted, the signal TXD remains in the
+        // mark state and transmission is delayed until CTS is asserted. Changes in CTS, when a character is being
+        // sent, do not affect its transmission.
+        //
+        // 0 - Disables
+        // 1 - Enables
+        [0] txctse
+    }
+
+
+    // FIFO
+    //
+    // Provides you the ability to turn on and turn off the FIFO functionality.
+    //
+    // This register also provides you the size of the FIFO that has been implemented. You can
+    // read this register at any time and must write to it only when CTRL[RE] and CTRL[TE]
+    // are 0 and the FIFO is empty.
+    @offset(0x28)
+    volatile bitfield<u32> {
+
+        // Receive FIFO Buffer Depth
+        //
+        // Contains the maximum number of receive datawords that can be stored in the receive buffer before an
+        // overrun occurs.
+        //
+        // 0 - Receive FIFO buffer depth = 1 dataword
+        // 1 - Receive FIFO buffer depth = 4 datawords
+        // 2 - Receive FIFO buffer depth = 8 datawords
+        // 3 - Receive FIFO buffer depth = 16 datawords
+        // 4 - Receive FIFO buffer depth = 32 datawords
+        // 5 - Receive FIFO buffer depth = 64 datawords
+        // 6 - Receive FIFO buffer depth = 128 datawords
+        // 7 - Receive FIFO buffer depth = 256 datawords
+        [0:3] rxfifosize
+
+        // Receive FIFO Enable
+        //
+        // Enables the receive FIFO.
+        //
+        // When the value of this field = 1, the built-in FIFO structure for the receive buffer is enabled.
+        // FIFO[RXFIFOSIZE] indicates the size of the FIFO structure.
+        //
+        // If RXFE is 0, the receive buffer operates as a FIFO of depth equal to 1 dataword, regardless of the value
+        // in FIFO[RXFIFOSIZE]. Both CTRL[RE] and CTRL[TE] must be 0 before you change the value of this
+        // field.
+        //
+        // 0 - disables buffer depth is 1
+        // 1 - enables FIFO[RXFIFOSIZE] indicates the buffer depth
+        [3] rxfe
+
+        // Transmit FIFO Buffer Depth
+        //
+        // Indicates the maximum number of transmit datawords that can be stored in the transmit buffer.
+        //
+        // 0 - Transmit FIFO buffer depth = 1 dataword
+        // 1 - Transmit FIFO buffer depth = 4 datawords
+        // 2 - Transmit FIFO buffer depth = 8 datawords
+        // 3 - Transmit FIFO buffer depth = 16 datawords
+        // 4 - Transmit FIFO buffer depth = 32 datawords
+        // 5 - Transmit FIFO buffer depth = 64 datawords
+        // 6 - Transmit FIFO buffer depth = 128 datawords
+        // 7 - Transmit FIFO buffer depth = 256 datawords
+        [4:7] txfifosize
+
+        // Transmit FIFO Enable
+        //
+        // Enables the transmit FIFO.
+        //
+        // When the value of this field = 1, the built-in FIFO structure for the transmit buffer is enabled.
+        // FIFO[TXFIFOSIZE] indicates the size of the FIFO structure.
+        //
+        // If the value of this field = 0, the transmit buffer operates as a FIFO of depth equal to 1 dataword,
+        // regardless of the value in FIFO[TXFIFOSIZE]. Both CTRL[TE] and CTRL[RE] must be 0 before you
+        // change the value of this field.
+        //
+        // 0 - disables buffer depth is 1
+        // 1 - enables FIFO[TXFIFOSIZE] indicates the buffer depth
+        [7] txfe
+
+        // Receive FIFO Underflow Interrupt Enable
+        //
+        // Enables FIFO[RXUF] to generate an interrupt to the host.
+        //
+        // 0 - Disables
+        // 1 - Enables
+        [8] rxufe
+
+        // Transmit FIFO Overflow Interrupt Enable
+        //
+        // Enables FIFO[TXOF] to generate an interrupt to the host.
+        //
+        // 0 - Disables
+        // 1 - Enables
+        [9] txofe
+
+        // Receiver Idle Empty Enable
+        //
+        // Enables STAT[RDRF] to become 1 when the receiver is idle for a number of idle characters and the FIFO
+        // is not empty.
+        //
+        // 0 - Disables STAT[RDRF] to become 1 because of partially filled FIFO when the receiver is idle
+        // 1 - Enables STAT[RDRF] to become 1 because of partially filled FIFO when the receiver is idle for one character
+        // 2 - Enables STAT[RDRF] to become 1 because of partially filled FIFO when the receiver is idle for two characters
+        // 3 - Enables STAT[RDRF] to become 1 because of partially filled FIFO when the receiver is idle for four characters
+        // 4 - Enables STAT[RDRF] to become 1 because of partially filled FIFO when the receiver is idle for eight characters
+        // 5 - Enables STAT[RDRF] to become 1 because of partially filled FIFO when the receiver is idle for 16 characters
+        // 6 - Enables STAT[RDRF] to become 1 because of partially filled FIFO when the receiver is idle for 32 characters
+        // 7 - Enables STAT[RDRF] to become 1 because of partially filled FIFO when the receiver is idle for 64 characters
+        [10:13] rxiden
+
+        // Receive FIFO Flush
+        //
+        // Causes all data that is stored in the receive FIFO to be flushed.
+        //
+        // If you write 0 to this field, no flush operation occurs, and if you write 1 to this field, all data in the receive
+        // FIFO or buffer clears out.
+        //
+        // This does not affect data in the receive shift register.
+        //
+        // 0 - No effect
+        // 1 - All data is flushed out
+        [14] rxflush
+
+        // Transmit FIFO Flush
+        //
+        // Causes all data that is stored in the transmit FIFO to be flushed.
+        //
+        // If you write 0 to this field, no flush operation occurs, and if you write 1 to this field, all data in the transmit
+        // FIFO or buffer clears out.
+        //
+        // This does not affect data in the transmit shift register.
+        //
+        // 0 - No effect
+        // 1 - All data is flushed out
+        [15] txflush
+
+        // Receiver FIFO Underflow Flag
+        //
+        // Specifies whether more data has been read from the receive FIFO than was present.
+        //
+        // If the value of this field = 1, at least one receive FIFO underflow has occurred since the last time the field
+        // was cleared. If the value of this field = 0, no receive FIFO underflow has occurred since the last time the
+        // field was cleared.
+        //
+        // This field becomes 1 regardless of the value of FIFO[RXUFE]. However, an interrupt is issued to the host
+        // only if FIFO[RXUFE] = 1.
+        //
+        // 0 - No underflow
+        // 1 - Underflow
+        [16] rxuf
+
+        // Transmitter FIFO Overflow Flag
+        //
+        // Specifies whether more data has been written to the transmit FIFO than it can hold.
+        //
+        // If the value of this field = 1, at least one transmit FIFO overflow has occurred since the last time the field
+        // was cleared. If the value of this field = 0, no transmit FIFO overflow has occurred since the last time the
+        // field was cleared.
+        //
+        // This field becomes 1 regardless of the value of FIFO[TXOFE]. However, an interrupt is issued to the host
+        // only if FIFO[TXOFE] = 1.
+        //
+        // 0 - No overflow
+        // 1 - Overflow
+        [17] txof
+
+        // Receive FIFO Or Buffer Empty
+        //
+        // Specifies whether the receive buffer is empty.
+        //
+        // This field becomes 1 when there is no data in the receive FIFO or buffer. The field does not consider data
+        // in the receive shift register.
+        //
+        // 0 - Not empty
+        // 1 - Empty
+        [22] rxempt
+
+        // Transmit FIFO Or Buffer Empty
+        //
+        // Specifies whether the transmit buffer is empty.
+        //
+        // This field becomes 1 when there is no data in the transmit FIFO or buffer. The field does not consider
+        // data in the transmit shift register.
+        //
+        // 0 - Not empty
+        // 1 - Empty
+        [23] txempt
+    } fifo
+
+
+    // Watermark
+    //
+    // Provides the ability to set a programmable threshold for notification of needing additional transmit data.
+    // You may read this register at any time but must write to it only when CTRL[TE] = 1.
+    @offset(0x2C)
+    volatile bitfield<u32> {
+
+        // Transmit Watermark
+        //
+        // Generates a DMA request when the number of datawords in the transmit FIFO or buffer is equal to or
+        // less than the value of this field.
+        //
+        // For proper operation, the value of this field must be less than the size of the transmit buffer or FIFO, as
+        // indicated by FIFO[TXFIFOSIZE] and FIFO[TXFE].
+        [0:2] txwater
+
+        // Transmit Counter
+        //
+        // Indicates the number of datawords in the transmit FIFO or buffer.
+        //
+        // If a dataword is being transmitted to the transmit shift register, it is not included in the count. This value
+        // may be used in conjunction with the value of FIFO[TXFIFOSIZE] to calculate the room left in the transmit
+        // FIFO or buffer.
+        [8:11] txcount
+
+        // Receive Watermark
+        //
+        // Generates a DMA request if the number of datawords in the receive FIFO or buffer is greater than the
+        // value of this field.
+        //
+        // For proper operation, the value of this field must be less than the size of the receive FIFO or buffer, as
+        // indicated by FIFO[RXFIFOSIZE] and FIFO[RXFE].
+        [16:18] rxwater
+
+        // Receive Counter
+        //
+        // Indicates the number of datawords in the receive FIFO or buffer.
+        //
+        // If a dataword is being received in the receive shift register, it is not included in the count. This value may
+        // be used in conjunction with FIFO[RXFIFOSIZE] to calculate the room left in the receive FIFO or buffer.
+        [24:27] rxcount
+    } water
+}

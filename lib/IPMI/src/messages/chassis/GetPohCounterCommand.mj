@@ -1,0 +1,43 @@
+
+
+/// Get POH Counter Command
+///
+/// This version of IPMI provides a specification for an optional, POH (Power-
+/// On Hours) counter. The management controller automatically increments non-
+/// volatile storage at the specified rate whenever the system is powered up.
+/// It is recommended that this command be implemented in the BMC to provide a
+/// standardized location for this function.
+///
+/// Note that in a power-managed system, the definition of 'powered up' can be
+/// somewhat ambiguous. The definition used here is that the power-on hours
+/// shall accumulate whenever the system is in the operational (S0) state. An
+/// implementation may elect to increment power-on hours in the S1 and S2
+/// states as well.
+///
+/// 'Clear' or 'Set' commands are not specified for this counter. This is
+/// because the counter is most typically used for warranty tracking or
+/// replacement purposes where changing or clearing the counter would defeat
+/// the purpose.
+///
+/// The following command is used for accessing the POH Counter. This command
+/// returns the present reading of the counter, plus the number of counts per
+/// hour.
+///
+/// When the system is powered down between counts, the counter either picks up
+/// incrementing at the offset at which the power down occurred, or starts
+/// counting at 0 minutes from the last counter reading, depending on the choice
+/// of the implementer. In any case, the time does not get 'rounded up' to the
+/// next count as a result of powering down between counts.
+class GetPohCounterCommand {
+    struct Response response {
+
+        /// Completion Code
+        CompletionCode completion_code;
+
+        u8<min> minutes_per_count;
+
+        /// Counter reading. LS Byte first.
+        @le
+        u32 counter_reading;
+    }
+}

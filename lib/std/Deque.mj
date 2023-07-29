@@ -1,0 +1,88 @@
+
+
+/// A list of objects with O(1) access time
+class Deque<type T, u32 PAGE_SIZE = 32> {
+    T **pages = nullptr
+    T *data = nullptr
+    u32 capacity = 0
+    u32 size = 0
+
+
+    Deque() {}
+
+
+    Deque(InitializerList<T> values) {
+        Memory::allocate(values.size() * sizeof(T))
+    }
+
+
+    Deque(
+        const Deque &stack
+    ) {}
+
+
+    u32 size(safe) {
+        return size
+    }
+
+
+    u32 capacity(safe) {
+        return capacity
+    }
+
+
+    void clear() {
+        while (size) {
+            data[--size].~T()
+        }
+    }
+
+
+    void reserve(u32 size) {
+        
+    }
+
+
+    void push(const T &value) {
+        data_.append(value)
+    }
+
+
+    void push(T value) {
+        data_.push(value)
+    }
+
+
+    /// @brief Append a new element to the vector in place.
+    /// @tparam ...Args 
+    /// @param ...args 
+    T &push_new(...) {
+        return data_.append_new(...)
+    }
+
+
+    void pop() {
+        data[size--]->~T()
+    }
+
+
+    void pop_all(const T &value) {
+        
+    }
+
+
+    void pop_while(Function<bool(const T &)> filter) {
+        
+    }
+
+
+    safe T &peek(safe) {
+        return data[size - 1]
+    }
+}
+
+
+
+impl<Iterable<T>> Deque<type T, u32 PAGE_SIZE> {
+
+}

@@ -1,0 +1,91 @@
+import LpUartRegisters;
+
+class LpUart {
+
+    shared {
+        LpUartResgisters LPUART1 @ 0x40184000;
+        LpUartResgisters LPUART2 @ 0x40188000;
+        LpUartResgisters LPUART3 @ 0x4018C000;
+        LpUartResgisters LPUART4 @ 0x40190000;
+        LpUartResgisters LPUART5 @ 0x40194000;
+        LpUartResgisters LPUART6 @ 0x40198000;
+        LpUartResgisters LPUART7 @ 0x4019C000;
+        LpUartResgisters LPUART8 @ 0x401A0000;
+    }
+
+
+    LpUartRegisters &reg;
+
+
+    LpUart(LpUartRegisters &reg) {
+        this.reg = reg;
+    }
+
+
+    ~LpUart() {
+        ;
+    }
+
+
+    void set_rx() {
+        ;
+    }
+
+
+    void set_tx() {
+        ;
+    }
+
+
+    void set_rts() {
+        ;
+    }
+
+
+    void set_cts() {
+        ;
+    }
+
+
+    void init() {
+        ;
+    }
+
+
+    void reset() {
+        ;
+    }
+
+
+    void disable() {
+        ;
+    }
+
+
+    void config(const UartConfig &uart_config) {
+        ;
+    }
+
+
+    // Read from the UART.
+    //
+    // Parameters:
+    // - `buffer` The pointer to the buffer to store the received data.
+    // - `size` The number of words to read
+    // Returns:
+    // Fails:
+    void read(void *buffer, u32 size) {
+        ;
+    }
+
+
+    // Write to the UART.
+    void write(void *buffer, u32 size) {
+        ;
+    }
+
+
+    void isr() {
+        ;
+    }
+}

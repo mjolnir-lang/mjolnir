@@ -1,0 +1,6 @@
+
+
+/// A `Statement` is any assembler syntax statement.
+interface Statement {
+
+}

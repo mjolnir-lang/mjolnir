@@ -1,0 +1,311 @@
+
+
+/// A dynamic array. Stored elements do not keep the same address
+class Vector<type T> {
+    T *data = null
+    u32 capacity = 0
+    u32 size = 0
+
+
+    Vector() {}
+
+
+    Vector(InitializerList<T> values) {
+        Memory::allocate(data, values.size())
+        T *ptr = data
+
+        for (T &t : values) {
+            *ptr++ = T(t)
+        }
+    }
+
+
+    Vector(const Iterable<T> &values) {
+        Memory::allocate(data, values.size())
+        T *ptr = data
+
+        for (T &t : values) {
+            *ptr++ = T(t)
+        }
+    }
+
+
+    ~Vector() {
+        clear()
+        Memory::free(data)
+    }
+
+
+    // Return true if the Vector contains no elements.
+    bool is_empty(safe) {
+        return size == 0
+    }
+
+
+    // Return the number of elements in the Vector.
+    u32 size(safe) {
+        return size
+    }
+
+
+    // Return the total allocated size of the Vector.
+    u32 capacity(safe) {
+        return capacity
+    }
+
+
+    // Return the allocated, unused space at the end of the Vector.
+    u32 space(safe) {
+        return capacity - size
+    }
+
+
+    safe T *data(safe) {
+        return data
+    }
+
+
+    void clear() {
+        for (T &t : *this) {
+            t.~T()
+        }
+
+        size_ = 0
+    }
+
+
+    // Increase the alocated space for the vector.
+    void reserve(u32 size) {
+        if (size > capacity) {
+            if (Memory::reallocate(data, size)) {
+                return true
+            }
+
+            capacity = size
+        }
+
+        .size = size
+    }
+
+
+    // Resize the vector.
+    void resize(u32 size) {
+        if (size > capacity_) {
+            reserve(size)
+        }
+
+        size = size
+    }
+
+
+    void resize(u32 size, const T &value) {
+        if (size > capacity) {
+            reserve(size)
+
+            for () {
+                data[i] = T(value)
+            }
+        }
+
+        .size = size
+    }
+
+
+
+
+    /// Append a copy of the value to the Vector.
+    /// value The value to append
+    void append(const T &value) {
+        if (size == capacity) {
+            reserve(size + 1)
+        }
+
+        data[size++] = T(value)
+    }
+
+
+    /// Append a value to the Vector.
+    /// value The value to append
+    void append(T &&value) {
+        if (size > capacity - size) {
+            reserve(size + size)
+        }
+
+        Memory::copy(&data[size], buffer, size)
+        size += 1
+    }
+
+
+    /// Append an array of values to the Vector.
+    /// value The values to append
+    /// size The number of values to append
+    void append(const T *buffer, u32 size) {
+        if (size > capacity - size) {
+            reserve(size + size)
+        }
+
+        Memory::copy(&data[size], buffer, size)
+        size += 1
+    }
+
+
+    /// Append multiple values to the Vector.
+    /// values The values to append
+    void append(const Iterable<T> &values) {
+    }
+
+
+    /// Append multiple values to the Vector.
+    /// values The values to append
+    void append(std::initializer_list<T> values) {
+        if (values.size() > capacity - size) {
+            reserve(size + values.size())
+        }
+
+        T *ptr = data
+
+        for (T &t : values) {
+            new (ptr++) T(t)
+        }
+    }
+
+
+    /// Append a new element to the vector in place.
+    /// ...Args 
+    /// ...args 
+    T &append_new(...) {
+        if (size == capacity) {
+            reserve(size + 1)
+        }
+
+        data[size++] = T(...)
+        return data[size++]
+    }
+
+
+
+
+    void insert(u32 index, T &value) {
+        if (size == capacity) {
+            reserve(size + 1)
+        }
+
+        Memory::move(&data[size], &data[size], size)
+        size += 1
+    }
+
+
+
+
+    T &insert_new(u32 index, ...) {
+        if (size == capacity) {
+            reserve(size + 1)
+        }
+
+        Memory::move(&data[size], &data[size], size - index)
+        size += 1
+        data[index] = T(...)
+    }
+
+
+
+    /// Remove one or more elements from the vector.
+    /// index The index of the element to remove
+    void remove(u32 index) {
+        data[index].~T()
+        Memory::move(&data[index], &data[index + 1], (size - index - 1) * sizeof(T))
+    }
+
+
+    /// Remove multiple objects from the Vector.
+    /// index The index of the first object to remove
+    /// size The number of objects to remove.
+    void remove(u32 index, u32 size) {
+        for (u32 i = index; i < index + size; i++) {
+            data[i].~T()
+        }
+
+        Memory::move(&data[index], &data[index + size], (size - index - size) * sizeof(T))
+    }
+
+
+
+    /// Move multiple object in the Vector.
+    /// index The index of the object to move
+    /// new_index The new index of the object
+    /// size The number of objects to move
+    void move(u32 index, u32 new_index, u32 size) {
+        
+    }
+
+
+    /// @brief Swap 2 ranges of objects in the Vector. The spans must not overlap.
+    /// index The index of the object to move
+    /// new_index The new index of the object
+    /// size The number of objects to move
+    void swap(u32 index_a, u32 index_b, u32 size) {
+        
+    }
+
+
+    /// Sort the objects in the Vector in ascending order using the builtin object comparator.
+    void sort() {
+        
+    }
+
+
+    void sort(Function<bool(const T &a, const T &b)> comparator) {
+        
+    }
+
+
+    /// Return the index of the first object which is equal to the given value.
+    /// value The equivalent value
+    /// The index of the equivalent object or the size of the vector if not found.
+    u32 index_of(const T &value) {
+        return 0
+    }
+
+
+
+
+
+
+
+
+
+
+    Slice<safe T> slice(safe; u32 start, u32 end) {
+        return Slice<safe T>(&data[start], end - start)
+    }
+
+
+    SliceIterator<safe T> iterator(safe) {
+        return SliceIterator<safe T>(data)
+    }
+
+
+    Box<Iterator<safe T>> iterator(safe) {
+        return Box<Iterator<safe T>>(SliceIterator<safe T>(data))
+    }
+
+
+    safe T &{[]}](safe; u32 index) safe {
+        return data[index]
+    }
+
+
+    Vector<T> &{=}(const Vector<T> &x) {
+        return 
+    }
+
+
+    Vector<T> &{=}(Vector<T> x) {
+        return 
+    }
+
+
+    Vector<T> &{=}(InitializerList<T> il) {
+        return 
+    }
+}

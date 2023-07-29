@@ -1,0 +1,1531 @@
+///
+/// JavaScript Object Notation (JSON)
+///
+
+
+/// 
+type JsonObject = Map<String, JsonValue>;
+
+
+/// 
+type JsonArray = List<JsonValue>;
+
+
+/// 
+enum<u8> JsonValueType {
+    NULL    = 0;
+    BOOLEAN = 1;
+    NUMBER  = 2;
+    STRING  = 3;
+    ARRAY   = 4;
+    OBJECT  = 5;
+}
+
+
+/// 
+class JsonValue {
+    variant<JsonValueType type> {
+        void *nul;
+        bool boolean;
+        f64 number;
+        String string;
+        JsonArray array;
+        JsonObject object;
+    }
+
+
+    JsonValue(void *nul = null) {
+        .type = JsonValueType::NULL;
+    }
+
+
+    JsonValue(bool boolean) {
+        .type = JsonValueType::BOOLEAN;
+        .boolean = boolean;
+    }
+
+
+    /// Create a JSON number. A JSON number is always represented by an IEEE 754 binary64 value,
+    /// but it may not be NAN or +/-INF. This will only be checked at print time.
+    JsonValue(f64 number) {
+        .type = JsonValueType::NUMBER;
+        .number = number;
+    }
+
+
+    JsonValue(StringView string) {
+        .type = JsonValueType::STRING;
+        .string = string;
+    }
+
+
+    JsonValue(StringView string, u32 max) {
+        .type = JsonValueType::STRING;
+        .string = string.max(max);
+    }
+
+
+    JsonValue(JsonArray array) {
+        .type = JsonValueType::ARRAY;
+        .array = array;
+    }
+
+
+    JsonValue(JsonObject object) {
+        .type = JsonValueType::OBJECT;
+        .object = object;
+    }
+
+
+    ~JsonValue() {
+    }
+
+
+    JsonValueType type(safe) {
+        return type;
+    }
+
+
+    bool is_null(safe) {
+        return type == JsonValueType::NULL;
+    }
+
+
+    bool is_boolean(safe) {
+        return type == JsonValueType::BOOLEAN;
+    }
+
+
+    bool is_true(safe) {
+        return type == JsonValueType::BOOLEAN && boolean;
+    }
+
+
+    bool is_false(safe) {
+        return type == JsonValueType::BOOLEAN && !boolean;
+    }
+
+
+    bool is_number(safe) {
+        return type == JsonValueType::NUMBER;
+    }
+
+
+    bool is_string(safe) {
+        return type == JsonValueType::STRING;
+    }
+
+
+    bool is_array(safe) {
+        return type == JsonValueType::ARRAY;
+    }
+
+
+    bool is_object(safe) {
+        return type == JsonValueType::OBJECT;
+    }
+
+
+
+    /// Return `true` if the JSON value is valid.
+    bool verify() {
+        return is_valid();
+    }
+
+
+    /// Return `true` if the JSON value is valid.
+    bool is_valid() {
+        match (type) {
+            NULL => return true;
+            BOOLEAN => return true;
+            NUMBER => return number != f64::NAN && number != f64::INF && number != f64::NEGATIVE_INF;
+            STRING => return true;
+            ARRAY => {
+                for (JsonValue value in array) {
+                    if (value.is_valid()) {
+                        return false;
+                    }
+
+                    return true;
+                }
+            }
+            OBJECT => {
+                for (JsonValue value in object) {
+                    if (value.is_valid()) {
+                        return false;
+                    }
+
+                    return true;
+                }
+            }
+        }
+    }
+
+
+    /// Walk the JSON data structure and coerce invalid data to valid representations.
+    bool validate() {
+    }
+
+
+    /// Return true if the JSON value is truthy. Using JavaScript boolean evaluation rules,
+    /// Anything which is `null`, `false`, `0`, or an empty string is considered false, and
+    /// everything else is considered true.
+    bool truthy(safe) {
+        match (type) {
+            NULL => return false;
+            BOOLEAN => return boolean;
+            NUMBER => return number == 0.0f64;
+            STRING => return !string.is_empty();
+            ARRAY | OBJECT => return true;
+        }
+    }
+
+
+    /// Convert the JSON value to a boolean.
+    void to_boolean(safe) {
+        boolean = truthy();
+    }
+
+
+
+
+
+    /// `["compare"][3].start[17]["are"]`
+    JsonValue walk(StringView query);
+
+
+    void print(safe; String &string);
+
+
+    void? print(safe) {
+        match (this->type) {
+            NULL => string.append("null");
+            FALSE => string.append("false");
+            TRUE => string.append("true");
+            STRING => print_string(string);
+            NUMBER => print_number(number);
+            ARRAY => print_array(array);
+            OBJECT => print_object(object);
+        }
+    }
+
+
+
+    @shared
+    JsonValue? parse(StringView string);
+
+
+    @shared
+    JsonValue? parse(Readable<u8> stream);
+
+
+    @shared
+    JsonValue? parse(const Path &str) =>
+        return parse(FileSystem::open(path));
+
+
+
+
+
+
+    @private
+    void? print_string(safe; StringView value) {
+        String string = String('"');
+
+        for (u32 i = 0; i < size; i++) {
+            if (value[i] >= ' ') {
+                string.append(value[i]);
+                continue;
+            }
+
+            string.append('\');
+
+            match (value[i]) {
+            "\b" => string.append('b');
+            "\t" => string.append('t');
+            "\n" => string.append('n');
+            "\f" => string.append('f');
+            "\r" => string.append('r');
+            '"' => string.append('"');
+            "/" => string.append('/');
+            '\' => string.append('\');
+            _ => {
+                string.append('u');
+
+                for (u32 j = 16; j; j >>= 4) {
+                    string.append("0123456789ABCDEF"[(value[i] >> j) & 0xFu8]);
+                }
+            }
+            }
+        }
+
+        string.append('"');
+        return;
+    }
+
+
+    @private
+    void? print_number(safe; f64 value) {
+        if (!f64::is_normal()) {
+            string.append("null");
+            return;
+        }
+
+        string.print("{:g}", value);
+    }
+
+
+    @private
+    void? print_array(safe; const JsonArray &value) {
+        string.append("[");
+
+        for (u32 i = 0; i < value.size; i++) {
+            print(value->values[i]);
+
+            if (i + 1 < value.size) {
+                string.append(",");
+            }
+        }
+
+        string.append("]");
+    }
+
+
+    @private
+    void? print_object(safe; const JsonObject &value) {
+        string.append("{");
+
+        for (u32 i = 0; i < this->size; i++) {
+            string.print(&this->key[i]);
+            string.append(": ");
+            string.print(&this->values[i]);
+
+            if (i + 1 < this->size) {
+                string_append_u8(string, ",");
+            }
+        }
+
+        string.append("}");
+    }
+
+}
+
+
+
+
+
+
+
+
+
+/// A JsonPattern is a structure used to parse a subset of large datasets.
+///
+/// This is useful for parsing protocol objects from JSON data.
+class JsonPattern {
+
+
+    JsonPattern(StringView string, JsonValue &args...) {
+        compile();
+    }
+
+
+    /// Compile the pattern for efficient repeated use.
+    void compile() {
+        ;
+    }
+}
+
+
+
+
+
+
+class Json {
+
+
+    /// Parse JSON data using a format string.
+    ///
+    /// This is used for parsing lots of JSON data while only saving some of it.
+    ///
+    /// Format String Syntax:
+    ///     To parse a JSON object, use `Json::parse("{key1:{:s},*:{:u}}", &key1_val, "key2", &key2_val);`
+    ///     To parse a JSON array, use `Json::parse("[{:s},{:u}]", &val1, &val2);`
+    ///     For arrays of the same type, use `Json::parse("[5*{:u}]", values);`
+    ///                              OR, use `Json::parse("[**{:u}]", 5, values);`
+    ///
+    /// Format String Type Specifiers:
+    ///     o - pointer to a JSON object string (Note: `"{:*o}"` will return the number of members in the preceding format argument of type u32)
+    ///     a - pointer to a JSON array string
+    ///     s - pointer to a string. (Note: `"{:*?s}"`) ? - perform JSON character escapes.
+    ///     d, i, u - Same as printf with all length sub-specifiers (h, hh, l)
+    ///     b - boolean
+    ///
+    /// Parameters:
+    /// - `json` - The JSON string to parse
+    /// - `format` - The format string
+    /// - `args` - The format string arguments
+    ///
+    /// Fail if not all format string arguments are parsed.
+    @shared
+    void? parse(StringView data, StringView format, JsonValue &args...) {
+        return JsonValue::parse(data, format, args);
+    }
+
+
+    @shared
+    void? parse(Readable<u8> &stream, StringView format, JsonValue &args...) {
+        return JsonValue::parse(stream, format, args);
+    }
+
+
+    @shared
+    JsonValue? parse(Readable<u8> &stream) {
+        return JsonValue::parse(stream);
+    }
+
+
+    @shared
+    JsonValue? parse(StringView data) {
+        return JsonValue::parse(data);
+    }
+
+
+    /// Print a JSON value to a writable object.
+    @shared
+    void? print(Writable<u8> &stream, const JsonValue &value) {
+        JsonValue::print(stream, value);
+    }
+
+
+    /// Print a JSON string using a format string.
+    ///
+    /// This is used for printing JSON data from a template without first creating a temporary JSON data structure.
+    ///
+    /// `json` - The JSON string buffer to be written
+    /// `format` - The format string
+    /// `args` - The format string arguments
+    ///
+    /// Fail if not all format string arguments have been printed
+    ///
+    /// NOTE: Aside from the format string specifiers and characters
+    ///
+    /// Format String Syntax:
+    ///     To parse a JSON object use: parse("{key1:{:s},*:{:u}}", &key1_val, "key2", &key2_val)
+    ///     To parse a JSON array use "[{:s},{:u}]"
+    ///     To parse a JSON object use "{key:{:s},*:{:s}}"
+    ///
+    /// Format String Type Specifiers:
+    ///     o - pointer to a JSON object string
+    ///     a - pointer to a JSON array string
+    ///     s - pointer to a string. (Note: "{:*?s}") ? - perform JSON character escapes.
+    ///     d, i, u - Same as printf with all length sub-specifiers (h, hh, l)
+    ///     b - boolean
+    @shared
+    void? print(String data, StringView format, const JsonValue &args...) {
+        return JsonValue::print(string, format, args);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+u32 skip_whitespace(const u8 *str) {
+    u32 i = 0;
+    for (; str[i] == ' ' || str[i] == '\t' || str[i] == '\r' || str[i] == '\n'; i++);
+    return i;
+        // Skip leading whitespace characters.
+    while (str[i] in " " | "\t" | "\r" | "\n") {
+        i += 1;
+    }
+}
+
+
+void? string_parse(const u8 &str) {
+    string_append_u8(string, '"');
+
+    for (u32 i = 0; i < this->size; i++) {
+        if (this->str[i] >= ' ') {
+            string_append_u8(string, this->str[i]);
+            continue;
+        }
+
+        string.append('\\');
+
+        match (this->str[i]) {
+            '\b' => string.append('b');
+            '\t' => string.append('t');
+            '\n' => string.append('n');
+            '\f' => string.append('f');
+            '\r' => string.append('r');
+            '"' => string.append('"');
+            '/' => string.append('/');
+            '\\' => string.append('\\');
+            _ => {
+                string.append('u');
+                u8 num = this->str[i];
+
+                for (u32 j = 16; j; j >>= 4) {
+                    string.append("0123456789ABCDEF"[(this->str[i] >> j) & 0xFu8]);
+                }
+            }
+        }
+    }
+
+    string_append_u8(string, '"');
+}
+
+
+f64? parse_number() {
+}
+
+
+JsonArray? parse_array() {
+    u32 i = skip_whitespace(str);
+
+    if (str[i++] != '[') {
+        fail;
+    }
+
+    for (u32 n = 0; str[i] == ','; n++) {
+        i += skip_whitespace(str);
+        parse(&this->values[i], str);
+    }
+
+    if (str[i++] != ']') {
+        fail;
+    }
+}
+
+
+JsonObject? parse_object() {
+    u32 i = skip_whitespace();
+
+    if (str[i++] != "{") {
+        fail;
+    }
+
+    do {
+        i += skip_whitespace();
+        key = parse_string();
+        i += skip_whitespace();
+
+        if (str[i++] != ":") {
+            fail;
+        }
+
+        i += skip_whitespace();
+        value = parse();
+        i += skip_whitespace();
+        object.add(key, value);
+    } while (str[i] == ',');
+
+    i += skip_whitespace();
+
+    if (str[i++] != "}") {
+        fail;
+    }
+}
+
+
+JsonValue? JsonValue::parse(StringView &str) {
+    u32 i = skip_whitespace();
+
+    match (str[i]) {
+        "null" => this = NULL;
+        "false" => boolean = false;
+        "true" => boolean = true;;
+        '"' => string = JsonString::parse(str);
+        "0" => number = JsonNumber::parse(str);
+        "[" => array = JsonArray::parse(str);
+        "{" => object = JsonObject::parse(str);
+        _ => {
+            lib_bug("Invalid JSON value type!");
+            fail;
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Max size of a signed or unsigned 64 bit integer with the sign and null terminator.
+#define U64_STRING_MAX  21U
+
+
+#define KEY_MAX  64
+
+
+
+void? print_object(u8 *&json, u32 &n, const u8 *value) {
+    lib_trace("Printing object...\n");
+    u8 *str = *json;
+    u32 rem = *n;
+    u32 req = value ? strlen(value) : 4;
+
+    if (rem < req) {
+        lib_error("String full while printing array!\n");
+        fail;
+    }
+
+    str = strcat(str, value ? value : "null");
+    rem -= req;
+    *json = str;
+    *n = rem;
+}
+
+
+void? print_array(u8 *&json, u32 &n, const u8 *value) {
+    lib_trace("Printing array...\n");
+    u8 *str = *json;
+    u32 rem = *n;
+    u32 req = value ? strlen(value) : 4;
+
+    if (rem < req) {
+        lib_error("String full while printing array!\n");
+        fail;
+    }
+
+    str = strcat(str, value ? value : "null");
+    rem -= req;
+    *json = str;
+    *n = rem;
+}
+
+
+void? print_string(u8 *&json, u32 &n, const u8 *value, u32 length) {
+    lib_trace("Printing string...\n");
+    u8 *str = *json;
+    u32 rem = *n;
+    u32 i = 0;
+
+    if (value) {
+        for (; i < length; i++) {
+            switch (value[i]) {
+            case '\0':
+                *str++ = '"';
+                return;
+            case '"':
+            case '/':
+            case '\\': *str++ = '\\'; *str++ = value[i]; rem -= 2; break;
+            case '\b': *str++ = '\\'; *str++ = 'b'; rem -= 2; break;
+            case '\f': *str++ = '\\'; *str++ = 'f'; rem -= 2; break;
+            case '\n': *str++ = '\\'; *str++ = 'n'; rem -= 2; break;
+            case '\r': *str++ = '\\'; *str++ = 'b'; rem -= 2; break;
+            case '\t': *str++ = '\\'; *str++ = 'b'; rem -= 2; break;
+            default:
+                if (value[i] >= ' ' && value[i] <= '~') {
+                    *str++ = value[i];
+                } else {
+                    u8 num = value[i];
+                    *str++ = '\\';
+                    *str++ = 'u';
+
+                    for (u32 j = 0; j < 4; j++) {
+                        str[3 - j] = "0123456789ABCDEF"[num % 16];
+                        num /= 16;
+                    }
+
+                    str += 4;
+                }
+
+                break;
+            }
+
+            // Print the end double quote.
+            *str++ = '"';
+            rem -= 1;
+        }
+    } else {
+        str = strcat(str, "null");
+        rem -= 4;
+    }
+
+    lib_trace("Printed: {:s}\n", *json);
+    *json = str;
+    *n = rem;
+}
+
+
+void? print_number(u8 *&json, u32 &n, u64 value, bool is_signed) {
+    lib_trace("Printing number...\n");
+    u8 *str = *json;
+    u32 rem = *n;
+    u64 val = value;
+    bool is_negative = false;
+
+    u8 num[U64_STRING_MAX + 1];
+    num[U64_STRING_MAX] = '\0';
+    u32 i = U64_STRING_MAX - 1;
+
+    // Print the sign.
+    if (is_signed) {
+        if (val > (1UL << 63) - 1) {
+            val = -(i64) val;
+            is_negative = true;
+        }
+    }
+
+    do {
+        num[i--] = (val % 10) + '0';
+        val /= 10;
+    } while (val);
+
+    u32 req = U64_STRING_MAX - i - 1;
+
+    if (rem < req) {
+        lib_error("String full while printing number!\n");
+        fail;
+    }
+
+    // Print the sign.
+    if (is_negative) {
+        *str++ = '-';
+    }
+
+    // Print the integer magnitude.
+    str = strcat(str, num);
+    rem -= req;
+    *json = str;
+    *n = rem;
+}
+
+
+void? print_bool(u8 *&json, u32 &n, bool value) {
+    lib_trace("Printing boolean...\n");
+    u8 *str = *json;
+    u32 rem = *n;
+    u32 req = value ? 4 : 5;
+
+    if (rem < req) {
+        lib_error("String full while printing boolean!\n");
+        fail;
+    }
+
+    str = strcat(str, value ? "true" : "false");
+    rem -= req;
+    *json = str;
+    *n = rem;
+}
+
+
+void? print_value(u8 *&json, u32 &n, const u8 *&format, va_list args) {
+    lib_trace("Printing...\n");
+    u8 *str = *json;
+    const u8 *fmt = *format;
+    u32 rem = *n;
+    u64 value;
+    u32 length;
+    u32 width;
+    bool has_length;
+
+    switch (*fmt) {
+    case '%':
+
+        // Parse the string length.
+        if (*fmt == '*') {
+            has_length = true;
+            fmt += 1;
+        } else {
+            has_length = false;
+
+            if (*fmt >= '1' && *fmt <= '9') {
+                length = 0;
+
+                do {
+                    length = (10 * length) + *fmt++ - '0';
+                } while (*fmt >= '0' && *fmt <= '9');
+            } else {
+                length = rem;
+            }
+        }
+
+        // Parse the width. ({:i}, {:d}, {:u})
+        if (*fmt == 'l') {
+            width = 64;
+            fmt += 1;
+        } else if (*fmt == 'h') {
+            fmt += 1;
+
+            if (*fmt == 'h') {
+                width = 8;
+                fmt += 1;
+            } else {
+                width = 16;
+            }
+        } else {
+            width = 32;
+        }
+
+        // Parse the format specifier.
+        bool is_signed = false;
+
+        switch (*fmt++) {
+        case 'o':
+            if (has_length) {
+                lib_bug("Unexpected format flag for object! ('*')\n");
+                fail;
+            }
+
+            if (print_object(&str, &rem, va_arg(args, const u8 *))) {
+                fail;
+            }
+
+            break;
+        case 'a':
+            if (has_length) {
+                lib_bug("Unexpected format flag for array! ('*')\n");
+                fail;
+            }
+
+            if (print_array(&str, &rem, va_arg(args, const u8 *))) {
+                fail;
+            }
+
+            break;
+        case 's':
+            if (has_length) {
+                length = va_arg(args, u32);
+            }
+
+            if (print_string(&str, &rem, va_arg(args, const u8 *), length)) {
+                fail;
+            }
+
+            break;
+        case 'i':
+        case 'd':
+            is_signed = true;
+        case 'u':
+            switch (width) {
+            case 8: value = va_arg(args, u32); break;
+            case 16: value = va_arg(args, u32); break;
+            case 32: value = va_arg(args, u32); break;
+            case 64: value = va_arg(args, u64); break;
+            }
+
+            if (is_signed) {
+                switch (width) {
+                case 8: value = (i64) (i8) value; break;
+                case 16: value = (i64) (i16) value; break;
+                }
+            }
+
+            if (print_number(&str, &rem, value, is_signed)) {
+                fail;
+            }
+
+            break;
+        case 'b':
+            if (print_bool(&str, &rem, va_arg(args, u32))) {
+                fail;
+            }
+
+            break;
+        default:
+            fail;
+        }
+
+        break;
+    default:
+        if (!rem) {
+            lib_error("String full while printing!\n");
+            fail;
+        }
+
+        *str++ = *fmt++;
+        rem -= 1;
+        break;
+    }
+}
+
+
+void skip_whitespace(const u8 **json) {
+    const u8 *str = *json;
+
+    while (*str == '\t' || *str == '\n' || *str == '\r' || *str == ' ') {
+        str += 1;
+    }
+
+    *json = str;
+}
+
+
+void? skip_u8(const u8 **json, u8 ch) {
+    skip_whitespace(json);
+    const u8 *str = *json;
+
+    if (*str++ != ch) {
+        fail;
+    }
+
+    *json = str;
+}
+
+
+void? skip_string(const u8 **json) {
+    skip_whitespace(json);
+    const u8 *str = *json;
+
+    if (!string_compare_max(str, "null", 4)) {
+        str += 4;
+    } else {
+        if (skip_u8(&str, '"')) {
+            lib_error("Failed to parse start of string!\n");
+            fail;
+        }
+
+        u32 i = 0;
+
+        for (; 1; i++) {
+            if (*str == '"') {
+                str += 1;
+                break;
+            }
+
+            if (*str == '\\') {
+                str += 1;
+
+                switch (*str) {
+                case '"':
+                case '/':
+                case '\\':
+                case 'b':
+                case 'f':
+                case 'n':
+                case 'r':
+                case 't':
+                    str += 1;
+                    break;
+                case 'u':
+                    str += 1;
+
+                    for (u32 j = 0; j < 4; j++) {
+                        if (*str >= '0' && *str <= '9') {
+                        } else if (*str >= 'A' && *str <= 'F') {
+                        } else if (*str >= 'a' && *str <= 'f') {
+                        } else {
+                            lib_error("Bad escape sequence while parsing string! (\\u)\n");
+                            fail;
+                        }
+
+                        str += 1;
+                    }
+
+                    break;
+                case '\0':
+                    break;
+                default:
+                    lib_error("Bad escape sequence while parsing string! (\\{:c})\n", *str);
+                    fail;
+                }
+            } else {
+                str += 1;
+            }
+
+            if (!*str) {
+                lib_error("Failed to parse end of string!\n");
+                fail;
+            }
+        }
+    }
+
+    *json = str;
+}
+
+
+(JsonObject, u32)? parse_object(StringView &data) {
+    lib_trace("Parsing object...\n");
+    skip_whitespace(data);
+    StringView str = *data;
+    JsonObject value;
+    u32 length;
+
+    if (!str.compare_max("null", 4)) {
+        value = NULL;
+        length = 0;
+        str += 4;
+    } else {
+        value = str;
+        u32 depth = 1;
+
+        if (*str++ != '{') {
+            lib_error("Failed to parse start of object!\n");
+            fail;
+        }
+
+        length = 0;
+
+        do {
+            match (*str++) {
+            " " | "\t" | "\n" | "\r" => {}
+            "{" | "[" => depth += 1;
+            "}" | "]" => depth -= 1;
+            "," => {}
+            ":" => {
+                if (depth == 1) {
+                    *length += 1;
+                }
+            }
+            '"' => {
+                str -= 1;
+
+                if (skip_string(&str)) {
+                    lib_error("Failed to parse string while parsing object!\n");
+                    fail;
+                }
+            }
+            "\0" => {
+                lib_error("Reached end of JSON string while parsing object!\n");
+                fail;
+            }
+            }
+        } while (depth);
+    }
+
+    *data = str;
+}
+
+
+void? parse_array(const u8 *&json, const u8 **value, u32 &length) {
+    lib_trace("Parsing array...\n");
+    skip_whitespace(json);
+    const u8 *str = *json;
+
+    if (!string_compare_max(str, "null", 4)) {
+        *value = NULL;
+        *length = 0;
+        str += 4;
+    } else {
+        *value = str;
+        u32 depth = 1;
+
+        if (*str++ != "[") {
+            lib_error("Failed to parse start of array!\n");
+            fail;
+        }
+
+        skip_whitespace(&str);
+        *length = *str != "]";
+
+        do {
+            switch (*str++) {
+            case "\t":
+            case "\n":
+            case "\r":
+            case " ":
+                break;
+            case "{":
+            case "[": depth += 1; break;
+            case "}":
+            case "]": depth -= 1; break;
+            case ",":
+                if (depth == 1) {
+                    *length += 1;
+                }
+
+                break;
+            case '"':
+                str -= 1;
+
+                if (skip_string(&str)) {
+                    lib_error("Failed to parse string while parsing object!\n");
+                    fail;
+                }
+
+                break;
+            case "\0":
+                lib_error("Reached end of JSON string while parsing array!\n");
+                fail;
+            }
+        } while (depth);
+    }
+
+    *json = str;
+}
+
+
+void? parse_string(const u8 *&json, u8 *value, u32 length) {
+    lib_trace("Parsing string...\n");
+    skip_whitespace(json);
+    const u8 *str = *json;
+
+    if (!string_compare_max(str, "null", 4)) {
+        *value = "\0";
+        str += 4;
+    } else {
+        if (skip_u8(&str, '"')) {
+            lib_error("Failed to parse start of string!\n");
+            fail;
+        }
+
+        u32 i = 0;
+
+        for (; i < length - 1; i++) {
+            if (*str == '"') {
+                str += 1;
+                break;
+            }
+
+            if (*str == '\') {
+                str += 1;
+
+                match (*str) {
+                '"' | '/' | '\' => value[i] = *str; str += 1;
+                'b' => value[i] = "\b"; str += 1;
+                'f' => value[i] = "\f"; str += 1;
+                'n' => value[i] = "\n"; str += 1;
+                'r' => value[i] = "\r"; str += 1;
+                't' => value[i] = "\t"; str += 1;
+                'u' => {
+                    value[i] = 0;
+                    str += 1;
+
+                    for (u32 j = 0; j < 4; j++) {
+                        if (*str >= '0' && *str <= '9') {
+                            value[i] = (16 * value[i]) + *str - '0';
+                        } else if (*str >= 'A' && *str <= 'F') {
+                            value[i] = (16 * value[i]) + *str - 'A' + 10;
+                        } else if (*str >= 'a' && *str <= 'f') {
+                            value[i] = (16 * value[i]) + *str - 'a' + 10;
+                        } else {
+                            lib_error("Bad escape sequence while parsing string! (\\u)\n");
+                            fail;
+                        }
+
+                        str += 1;
+                    }
+                }
+                "\0" => {}
+                _ => {
+                    lib_error("Bad escape sequence while parsing string! (\\{:c})\n", *str);
+                    fail;
+                }
+                }
+            } else {
+                value[i] = *str;
+                str += 1;
+            }
+
+            if (!*str) {
+                lib_error("Failed to parse end of string!\n");
+                fail;
+            }
+        }
+
+        value[i] = '\0';
+    }
+
+    lib_trace("Parsed: {:s}\n", value);
+    *json = str;
+}
+
+
+
+void? parse_number(const u8 *&json, u64 &value, u32 width, bool is_signed) {
+    lib_trace("Parsing number...\n");
+    skip_whitespace(json);
+    const u8 *str = *json;
+
+    if (!string_compare_max(str, "null", 4)) {
+        *value = 0;
+        str += 4;
+    } else {
+        bool is_negative = false;
+
+        // Parse the sign.
+        if (*str == '-') {
+            is_negative = true;
+            str += 1;
+        }
+
+        // Parse the integer magnitude.
+        u64 num = 0;
+
+        if (*str >= '1' && *str <= '9') {
+            do {
+                num = (10 * num) + *str++ - '0';
+            } while (*str >= '0' && *str <= '9');
+        } else if (*str++ != '0') {
+            lib_error("Invalid number!\n");
+            fail;
+        }
+
+        // Parse the fraction.
+        u64 frac = 0;
+        u64 frac_size = 1;
+
+        if (*str == '.') {
+            str += 1;
+
+            do {
+                frac = (10 * frac) + *str++ - '0';
+                frac_size *= 10;
+            } while (*str >= '0' && *str <= '9');
+        }
+
+        // Parse the exponent.
+        if (*str == 'e' || *str == 'E') {
+            bool is_exp_negative = false;
+            str += 1;
+
+            // Parse the exponent sign.
+            if (*str == '-') {
+                is_exp_negative = true;
+                str += 1;
+            } else if (*str == '+') {
+                str += 1;
+            }
+
+            // Parse the exponent magnitude.
+            if (*str < '0' || *str > '9') {
+                lib_error("Invalid number exponent!\n");
+                fail;
+            }
+
+            u32 exp = 0;
+
+            do {
+                exp = (10 * exp) + *str++ - '0';
+            } while (*str >= '0' && *str <= '9');
+
+            if (exp > 19) {
+                lib_error("Number exponent is out of bounds!\n");
+                fail;
+            }
+
+            // Scale the value by the exponent.
+            if (is_exp_negative) {
+                while (exp--) {
+                    num /= 10;
+                }
+            } else {
+                frac = exp * frac_size;
+
+                while (exp--) {
+                    num *= 10;
+                }
+
+                num += frac;
+            }
+        }
+
+        // Check the value to make sure it can fit.
+        u64 max = ((u64) 1 << (width - is_signed)) - 1;
+
+        if ((is_negative && num > max + 1) || (!is_negative && num > max)) {
+            lib_error("Number is out of bounds!\n");
+            fail;
+        }
+
+        *value = is_negative ? -(i64) num : num;
+    }
+
+    *json = str;
+}
+
+
+void? parse_bool(const u8 *&json, bool &value) {
+    lib_trace("Parsing boolean...\n");
+    skip_whitespace(json);
+    const u8 *str = *json;
+
+    if (!string_compare_max(*json, "true", 4)) {
+        *value = true;
+        str += 4;
+    } else if (!string_compare_max(str, "false", 5)) {
+        *value = false;
+        str += 5;
+    } else if (!string_compare_max(str, "null", 4)) {
+        lib_warn("Coercing 'null' to 'false' while parsing boolean!\n");
+        *value = false;
+        str += 4;
+    } else {
+        lib_error("Failed to parse boolean value!\n");
+        fail;
+    }
+
+    *json = str;
+}
+
+
+void? parse_value(const u8 *&json, const u8 *&format, va_list args) {
+    lib_trace("Parsing...\n");
+    const u8 *str = *json;
+    const u8 *fmt = *format;
+    u32 *count;
+    u64 value;
+    u32 length;
+    u32 width;
+    bool has_length;
+
+    match (*fmt++) {
+    '{' => {
+        if (skip_u8(&str, '{')) {
+            lib_bug("Failed to parse start of object!\n");
+            fail;
+        }
+
+        do {
+
+            // Parse key.
+            u8 fmt_key_string[KEY_MAX];
+            u8 *fmt_key;
+            u8 key[KEY_MAX];
+
+            if (*fmt == '*') {
+                fmt_key = va_arg(args, u8 *);
+                fmt += 1;
+            } else {
+                fmt_key = fmt_key_string;
+
+                if (parse_string(&fmt, fmt_key, KEY_MAX)) {
+                    lib_bug("Failed to parse key!\n");
+                    fail;
+                }
+            }
+
+            // Check key.
+            if (parse_string(&str, key, KEY_MAX)) {
+                lib_error("Failed to parse key!\n");
+                fail;
+            }
+
+            if (string_compare(fmt_key, key)) {
+                lib_error("Failed to match key!\n");
+                fail;
+            }
+
+            // Parse colon.
+            if (*fmt++ != ':') {
+                lib_bug("Failed to parse colon!\n");
+                fail;
+            }
+
+            if (skip_u8(&str, ':')) {
+                lib_error("Failed to parse colon!\n");
+                fail;
+            }
+
+            // Parse value.
+            if (parse_value(&str, &fmt, args)) {
+                lib_error("Failed to parse value!\n");
+                fail;
+            }
+
+            // Parse comma.
+            if (*fmt == ',') {
+                if (skip_u8(&str, ',')) {
+                    lib_error("Failed to parse comma!\n");
+                    fail;
+                }
+
+                fmt += 1;
+                continue;
+            }
+        } while (*fmt && *fmt != '}');
+
+        if (!*fmt || skip_u8(&str, '}')) {
+            lib_error("Failed to parse end of object!\n");
+            fail;
+        }
+
+        fmt += 1;
+    }
+    '[' => {
+        if (skip_u8(&str, '[')) {
+            lib_bug("Failed to parse start of array!\n");
+            fail;
+        }
+
+        do {
+
+            // Parse value.
+            if (parse_value(&str, &fmt, args)) {
+                lib_error("Failed to parse value!\n");
+                fail;
+            }
+
+            // Parse comma.
+            if (*fmt == ',') {
+                if (skip_u8(&str, ',')) {
+                    lib_error("Failed to parse comma!\n");
+                    fail;
+                }
+
+                fmt += 1;
+                continue;
+            }
+
+        } while (*fmt && *fmt != ']');
+
+        if (!*fmt || skip_u8(&str, ']')) {
+            lib_error("Failed to parse end of array!\n");
+            fail;
+        }
+
+        fmt += 1;
+    }
+    '%' => {
+
+        // Parse the string length.
+        if (*fmt == '*') {
+            has_length = true;
+            fmt += 1;
+        } else {
+            has_length = false;
+
+            if (*fmt >= '1' && *fmt <= '9') {
+                length = 0;
+
+                do {
+                    length = (10 * length) + *fmt++ - '0';
+                } while (*fmt >= '0' && *fmt <= '9');
+            }
+        }
+
+        // Parse the width. ({:i}, {:d}, {:u})
+        if (*fmt == 'l') {
+            width = 64;
+            fmt += 1;
+        } else if (*fmt == 'h') {
+            fmt += 1;
+
+            if (*fmt == 'h') {
+                width = 8;
+                fmt += 1;
+            } else {
+                width = 16;
+            }
+        } else {
+            width = 32;
+        }
+
+        // Parse the format specifier.
+        bool is_signed = false;
+
+        match (*fmt++) {
+        'o' => {
+            if (has_length) {
+                count = va_arg(args, u32 *);
+            } else {
+                count = &length;
+            }
+
+            if (parse_object(&str, va_arg(args, const u8 **), count)) {
+                lib_error("Failed to parse object!\n");
+                fail;
+            }
+        }
+        'a' => {
+            if (has_length) {
+                count = va_arg(args, u32 *);
+            } else {
+                count = &length;
+            }
+
+            if (parse_array(&str, va_arg(args, const u8 **), count)) {
+                lib_error("Failed to parse array!\n");
+                fail;
+            }
+        }
+        's' => {
+            if (has_length) {
+                length = va_arg(args, u32);
+            }
+
+            if (parse_string(&str, va_arg(args, u8 *), length)) {
+                lib_error("Failed to parse string!\n");
+                fail;
+            }
+        }
+        'i' | 'd' => {
+            is_signed = true;
+        }
+        'u' => {
+            if (parse_number(&str, &value, width, is_signed)) {
+                lib_error("Failed to parse number!\n");
+                fail;
+            }
+
+            match (width) {
+                8 => *va_arg(args, u8 *) = value;
+                16 => *va_arg(args, u16 *) = value;
+                32 => *va_arg(args, u32 *) = value;
+                64 => *va_arg(args, u64 *) = value;
+            }
+        }
+        'b' => {
+            if (parse_bool(&str, va_arg(args, bool *))) {
+                lib_error("Failed to parse boolean!\n");
+                fail;
+            }
+        }
+        _ => {
+            lib_bug("Invalid format specifier! ('{:c}')\n", *(fmt - 1));
+            fail;
+        }
+        }
+    }
+    _ => {
+        lib_bug("Invalid character! ('{:c}')\n", *(fmt - 1));
+        fail;
+    }
+    }
+
+    *json = str;
+    *format = fmt;
+}

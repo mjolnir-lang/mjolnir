@@ -1,0 +1,157 @@
+
+
+class Vm {
+    Memory &mem;
+    Registers reg;
+
+
+    Vm(Memory &'memory) {
+        mem = memory;
+    }
+
+
+    void reset() {
+        mem.reset();
+        reg.reset();
+    }
+
+
+    void execute() {
+        do {
+            // Monitor signals
+            if (io.event()) {
+                ;
+            }
+
+            // The CPU execution is broken up into Instruction Fetch and Instruction Decode
+            // while Execute, Memory Access, and Writeback are done in instruction handlers
+            u8 op = mem.load(reg.pc);
+
+            match (op) {
+                Ld-dd-nn::OPCODE(0b00) => execute(Ld-dd-nn(op));
+                Ld-dd-nn::OPCODE(0b01) => execute(Ld-dd-nn(op));
+                Ld-dd-nn::OPCODE(0b10) => execute(Ld-dd-nn(op));
+                Ld-dd-nn::OPCODE(0b11) => execute(Ld-dd-nn(op));
+                Ld-ix-nn::OPCODE => execute(Ld-ix-nn(op));
+                Ld-iy-nn::OPCODE => execute(Ld-iy-nn(op));
+
+                Push-qq::OPCODE(0b00) => execute(Push-qq(op));
+                Push-qq::OPCODE(0b01) => execute(Push-qq(op));
+                Push-qq::OPCODE(0b10) => execute(Push-qq(op));
+                Push-qq::OPCODE(0b11) => execute(Push-qq(op));
+                Push-ix::OPCODE => execute(Push-ix(op));
+                Push-iy::OPCODE => execute(Push-iy(op));
+                Pop-qq::OPCODE(0b00) => execute(Pop-qq(op));
+                Pop-qq::OPCODE(0b01) => execute(Pop-qq(op));
+                Pop-qq::OPCODE(0b10) => execute(Pop-qq(op));
+                Pop-qq::OPCODE(0b11) => execute(Pop-qq(op));
+                Pop-ix::OPCODE => execute(Pop-ix(op));
+                Pop-iy::OPCODE => execute(Pop-iy(op));
+            }
+        }
+    }
+
+
+    @internal
+    void execute(Ld-dd-nn &op) {
+        match (op.dd) {
+            0b00 => reg.bc = op.nn;
+            0b01 => reg.de = op.nn;
+            0b10 => reg.hl = op.nn;
+            0b11 => reg.sp = op.nn;
+        }
+    }
+
+
+    @internal
+    void execute(Ld-ix-nn &op) {
+        reg.ix = op.nn;
+    }
+
+
+    @internal
+    void execute(Ld-iy-nn &op) {
+        reg.iy = op.nn;
+    }
+
+
+    @internal
+    void execute(Ld-hl-nn &op) {
+        reg.l = mem.load(op.nn);
+        reg.h = mem.load(op.nn);
+    }
+
+
+    @internal
+    void execute(Ld-dd-nn &op) {
+        u16 val;
+        mem.load(&val[7:0], reg.sp++);
+        mem.load(&val[15:8], reg.sp++);
+
+        match (op.qq) {
+            0b00 => val = reg.bc;
+            0b01 => val = reg.de;
+            0b10 => val = reg.hl;
+            0b11 => val = reg.af;
+        }
+    }
+
+
+    @internal
+    void execute(Push-qq &op) {
+        u16 val;
+
+        match (op.qq) {
+            0b00 => val = reg.bc;
+            0b01 => val = reg.de;
+            0b10 => val = reg.hl;
+            0b11 => val = reg.af;
+        }
+
+        mem.store(val[15:8], --reg.sp);
+        mem.store(val[7:0], --reg.sp);
+    }
+
+
+    @internal
+    void execute(Push-ix &op) {
+        mem.store(reg.ixh, --reg.sp);
+        mem.store(reg.ixl, --reg.sp);
+    }
+
+
+    @internal
+    void execute(Push-iy &op) {
+        mem.store(reg.iyh, --reg.sp);
+        mem.store(reg.iyl, --reg.sp);
+    }
+
+
+    @internal
+    void execute(Pop-qq &op) {
+        u16 val;
+        mem.load(&val[7:0], reg.sp++);
+        mem.load(&val[15:8], reg.sp++);
+
+        match (op.qq) {
+            0b00 => val = reg.bc;
+            0b01 => val = reg.de;
+            0b10 => val = reg.hl;
+            0b11 => val = reg.af;
+        }
+    }
+
+
+    @internal
+    void execute(Pop-ix &op) {
+        mem.load(&reg.ixl, reg.sp++);
+        mem.load(&reg.ixh, reg.sp++);
+    }
+
+
+    @internal
+    void execute(Pop-iy &op) {
+        mem.load(&reg.iyl, reg.sp++);
+        mem.load(&reg.iyh, reg.sp++);
+    }
+}

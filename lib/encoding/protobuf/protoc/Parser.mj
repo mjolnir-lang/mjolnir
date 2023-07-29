@@ -1,0 +1,16 @@
+import protobuf.ast;
+
+
+class Parser {
+    Scanner scanner;
+
+
+    Parser(Path &'path) {
+        scanner = Scanner(path)
+    }
+
+
+    void parse() {
+        ;
+    }
+}

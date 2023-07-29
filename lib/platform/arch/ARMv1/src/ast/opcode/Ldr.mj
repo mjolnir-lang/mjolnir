@@ -1,0 +1,9 @@
+
+
+enum LdrCond {
+    
+}
+
+class Ldr<type C, > {
+    u8 text[1];
+}

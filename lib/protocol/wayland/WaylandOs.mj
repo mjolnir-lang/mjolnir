@@ -1,0 +1,43 @@
+import system.socket;
+
+
+class WlOs {
+    i32 socket_cloexec(i32 domain, i32 type, i32 protocol);
+
+
+    i32 socket_peercred(i32 sockfd, Uid *uid, Gid *gid, Pid *pid);
+
+
+    i32 dupfd_cloexec(i32 fd, i32 minfd);
+
+
+    i32 recvmsg_cloexec(i32 sockfd, MsgHdr *msg, i32 flags);
+
+
+    i32 epoll_create_cloexec();
+
+
+    i32 accept_cloexec(i32 sockfd, struct sockaddr *addr, socklen_t *addrlen);
+
+
+    void *mremap_maymove(i32 fd, void *old_data, i32 *old_size, i32 new_size, i32 prot, i32 flags);
+}
+
+/// The following are for wayland-os.c and the unit tests.
+/// Do not use them elsewhere.
+
+#ifdef __linux__
+
+#ifndef SOCK_CLOEXEC
+const u32 SOCK_CLOEXEC = 0o2000000;
+#endif
+
+#ifndef F_DUPFD_CLOEXEC
+const u32 F_DUPFD_CLOEXEC 1030;
+#endif
+
+#ifndef MSG_CMSG_CLOEXEC
+const u32 MSG_CMSG_CLOEXEC = 0x40000000;
+#endif
+
+#endif // __linux__

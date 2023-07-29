@@ -1,0 +1,20 @@
+
+
+interface Iterator<type T> {
+
+
+    /// Return true if there are no more elements in the iterator.
+    @pure
+    bool is_empty(safe)
+
+
+    /// Return true if there are more elements in the iterator.
+    @pure
+    bool has_next(safe) =>
+        !is_empty()
+
+
+    /// Return a reference to the next element and increment the iterator.
+    @pure
+    T &next()
+}

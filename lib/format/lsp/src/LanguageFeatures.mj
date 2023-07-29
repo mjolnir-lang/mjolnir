@@ -1,0 +1,4652 @@
+/// Language Features
+/// 
+/// Language Features provide the actual smarts in the language server protocol. They are usually executed on a [text document, position] tuple. The main language feature categories are:
+/// 
+///     code comprehension features like Hover or Goto Definition.
+///     coding features like diagnostics, code complete or code actions.
+/// 
+/// Goto Declaration Request (:leftwards_arrow_with_hook:)
+/// 
+@api(3.14)
+/// 
+/// The go to declaration request is sent from the client to the server to resolve the declaration location of a symbol at a given text document position.
+/// 
+/// The result type LocationLink[] got introduced with version 3.14.0 and depends on the corresponding client capability text_document.declaration.link_support.
+/// 
+/// Client Capability:
+/// 
+///     property name (optional): text_document.declaration
+///     property type: DeclarationClientCapabilities defined as follows:
+
+struct LspDeclarationClientCapabilities {
+
+    /// Whether declaration supports dynamic registration. If this is set to
+    /// `true` the client supports the new `DeclarationRegistrationOptions`
+    /// return value for the corresponding server capability as well.
+    bool dynamic_registration;
+
+    /// The client supports additional metadata in the form of declaration links.
+    bool link_support;
+}
+
+/// Server Capability:
+/// 
+///     property name (optional): declaration_provider
+///     property type: bool | DeclarationOptions | DeclarationRegistrationOptions where DeclarationOptions is defined as follows:
+
+struct LspDeclarationOptions extends LspWorkDoneProgressOptions {
+}
+
+/// Registration Options: DeclarationRegistrationOptions defined as follows:
+
+struct LspDeclarationRegistrationOptions extends LspDeclarationOptions,
+    LspTextDocumentRegistrationOptions, LspStaticRegistrationOptions {
+}
+
+/// Request:
+/// 
+///     method: text_document/declaration
+///     params: DeclarationParams defined as follows:
+
+struct LspDeclarationParams extends LspTextDocumentPositionParams,
+    LspWorkDoneProgressParams, LspPartialResultParams {
+}
+
+/// Response:
+/// 
+///     result: Location | Location[] | LocationLink[] |null
+///     partial result: Location[] | LocationLink[]
+///     error: code and message set in case an exception happens during the declaration request.
+/// 
+/// Goto Definition Request (:leftwards_arrow_with_hook:)
+/// 
+/// The go to definition request is sent from the client to the server to resolve the definition location of a symbol at a given text document position.
+/// 
+/// The result type LocationLink[] got introduced with version 3.14.0 and depends on the corresponding client capability text_document.definition.link_support.
+/// 
+/// Client Capability:
+/// 
+///     property name (optional): text_document.definition
+///     property type: DefinitionClientCapabilities defined as follows:
+
+struct LspDefinitionClientCapabilities {
+
+    /// Whether definition supports dynamic registration.
+    bool dynamic_registration;
+
+    /// The client supports additional metadata in the form of definition links.
+    @api(3.14)
+    bool link_support;
+}
+
+/// Server Capability:
+/// 
+///     property name (optional): definition_provider
+///     property type: bool | DefinitionOptions where DefinitionOptions is defined as follows:
+
+struct LspDefinitionOptions extends LspWorkDoneProgressOptions {
+}
+
+/// Registration Options: DefinitionRegistrationOptions defined as follows:
+
+struct LspDefinitionRegistrationOptions extends
+    LspTextDocumentRegistrationOptions, LspDefinitionOptions {
+}
+
+/// Request:
+/// 
+///     method: text_document/definition
+///     params: DefinitionParams defined as follows:
+
+struct LspDefinitionParams extends LspTextDocumentPositionParams,
+    LspWorkDoneProgressParams, LspPartialResultParams {
+}
+
+/// Response:
+/// 
+///     result: Location | Location[] | LocationLink[] | null
+///     partial result: Location[] | LocationLink[]
+///     error: code and message set in case an exception happens during the definition request.
+/// 
+/// Goto Type Definition Request (:leftwards_arrow_with_hook:)
+/// 
+///     Since version 3.6.0
+/// 
+/// The go to type definition request is sent from the client to the server to resolve the type definition location of a symbol at a given text document position.
+/// 
+/// The result type LocationLink[] got introduced with version 3.14.0 and depends on the corresponding client capability text_document.type_definition.link_support.
+/// 
+/// Client Capability:
+/// 
+///     property name (optional): text_document.type_definition
+///     property type: TypeDefinitionClientCapabilities defined as follows:
+
+struct LspTypeDefinitionClientCapabilities {
+
+    /// Whether implementation supports dynamic registration. If this is set to
+    /// `true` the client supports the new `TypeDefinitionRegistrationOptions`
+    /// return value for the corresponding server capability as well.
+    bool dynamic_registration;
+
+    /// The client supports additional metadata in the form of definition links.
+    @api(3.14)
+    bool link_support;
+}
+
+/// Server Capability:
+/// 
+///     property name (optional): type_definition_provider
+///     property type: bool | TypeDefinitionOptions | TypeDefinitionRegistrationOptions where TypeDefinitionOptions is defined as follows:
+
+struct LspTypeDefinitionOptions extends LspWorkDoneProgressOptions {
+}
+
+/// Registration Options: TypeDefinitionRegistrationOptions defined as follows:
+
+struct LspTypeDefinitionRegistrationOptions extends
+    LspTextDocumentRegistrationOptions, LspTypeDefinitionOptions,
+    LspStaticRegistrationOptions {
+}
+
+/// Request:
+/// 
+///     method: text_document/type_definition
+///     params: TypeDefinitionParams defined as follows:
+
+struct LspTypeDefinitionParams extends LspTextDocumentPositionParams,
+    LspWorkDoneProgressParams, LspPartialResultParams {
+}
+
+/// Response:
+/// 
+///     result: Location | Location[] | LocationLink[] | null
+///     partial result: Location[] | LocationLink[]
+///     error: code and message set in case an exception happens during the definition request.
+/// 
+/// Goto Implementation Request (:leftwards_arrow_with_hook:)
+/// 
+///     Since version 3.6.0
+/// 
+/// The go to implementation request is sent from the client to the server to resolve the implementation location of a symbol at a given text document position.
+/// 
+/// The result type LocationLink[] got introduced with version 3.14.0 and depends on the corresponding client capability text_document.implementation.link_support.
+/// 
+/// Client Capability:
+/// 
+///     property name (optional): text_document.implementation
+///     property type: ImplementationClientCapabilities defined as follows:
+
+struct LspImplementationClientCapabilities {
+
+    /// Whether implementation supports dynamic registration. If this is set to
+    /// `true` the client supports the new `ImplementationRegistrationOptions`
+    /// return value for the corresponding server capability as well.
+    bool dynamic_registration;
+
+    /// The client supports additional metadata in the form of definition links.
+    @api(3.14)
+    bool link_support;
+}
+
+/// Server Capability:
+/// 
+///     property name (optional): implementation_provider
+///     property type: bool | ImplementationOptions | ImplementationRegistrationOptions where ImplementationOptions is defined as follows:
+
+struct LspImplementationOptions extends LspWorkDoneProgressOptions {
+}
+
+/// Registration Options: ImplementationRegistrationOptions defined as follows:
+
+struct LspImplementationRegistrationOptions extends
+    LspTextDocumentRegistrationOptions, LspImplementationOptions,
+    LspStaticRegistrationOptions {
+}
+
+/// Request:
+/// 
+///     method: text_document/implementation
+///     params: ImplementationParams defined as follows:
+
+struct LspImplementationParams extends LspTextDocumentPositionParams,
+    LspWorkDoneProgressParams, LspPartialResultParams {
+}
+
+/// Response:
+/// 
+///     result: Location | Location[] | LocationLink[] | null
+///     partial result: Location[] | LocationLink[]
+///     error: code and message set in case an exception happens during the definition request.
+/// 
+/// Find References Request (:leftwards_arrow_with_hook:)
+/// 
+/// The references request is sent from the client to the server to resolve project-wide references for the symbol denoted by the given text document position.
+/// 
+/// Client Capability:
+/// 
+///     property name (optional): text_document.references
+///     property type: ReferenceClientCapabilities defined as follows:
+
+struct LspReferenceClientCapabilities {
+
+    /// Whether references supports dynamic registration.
+    bool dynamic_registration;
+}
+
+/// Server Capability:
+/// 
+///     property name (optional): references_provider
+///     property type: bool | ReferenceOptions where ReferenceOptions is defined as follows:
+
+struct LspReferenceOptions extends LspWorkDoneProgressOptions {
+}
+
+/// Registration Options: ReferenceRegistrationOptions defined as follows:
+
+struct LspReferenceRegistrationOptions extends
+    LspTextDocumentRegistrationOptions, LspReferenceOptions {
+}
+
+/// Request:
+/// 
+///     method: text_document/references
+///     params: ReferenceParams defined as follows:
+
+struct LspReferenceParams extends LspTextDocumentPositionParams,
+    LspWorkDoneProgressParams, LspPartialResultParams {
+    LspReferenceContext context;
+}
+
+struct LspReferenceContext {
+
+    /// Include the declaration of the current symbol.
+    bool include_declaration;
+}
+
+/// Response:
+/// 
+///     result: Location[] | null
+///     partial result: Location[]
+///     error: code and message set in case an exception happens during the reference request.
+/// 
+/// Prepare Call Hierarchy Request (:leftwards_arrow_with_hook:)
+/// 
+///     Since version 3.16.0
+/// 
+/// The call hierarchy request is sent from the client to the server to return a call hierarchy for the language element of given text document positions. The call hierarchy requests are executed in two steps:
+/// 
+///     first a call hierarchy item is resolved for the given text document position
+///     for a call hierarchy item the incoming or outgoing call hierarchy items are resolved.
+/// 
+/// Client Capability:
+/// 
+///     property name (optional): text_document.call_hierarchy
+///     property type: CallHierarchyClientCapabilities defined as follows:
+
+struct LspCallHierarchyClientCapabilities {
+
+    /// Whether implementation supports dynamic registration. If this is set to
+    /// `true` the client supports the new `(TextDocumentRegistrationOptions &
+    /// StaticRegistrationOptions)` return value for the corresponding server
+    /// capability as well.
+    bool dynamic_registration;
+}
+
+/// Server Capability:
+/// 
+///     property name (optional): call_hierarchy_provider
+///     property type: bool | CallHierarchyOptions | CallHierarchyRegistrationOptions where CallHierarchyOptions is defined as follows:
+
+struct LspCallHierarchyOptions extends LspWorkDoneProgressOptions {
+}
+
+/// Registration Options: CallHierarchyRegistrationOptions defined as follows:
+
+struct LspCallHierarchyRegistrationOptions extends
+    LspTextDocumentRegistrationOptions, LspCallHierarchyOptions,
+    LspStaticRegistrationOptions {
+}
+
+/// Request:
+/// 
+///     method: text_document/prepare_call_hierarchy
+///     params: CallHierarchyPrepareParams defined as follows:
+
+struct LspCallHierarchyPrepareParams extends LspTextDocumentPositionParams,
+    LspWorkDoneProgressParams {
+}
+
+/// Response:
+/// 
+///     result: CallHierarchyItem[] | null defined as follows:
+
+struct LspCallHierarchyItem {
+
+    /// The name of this item.
+    String name;
+
+    /// The kind of this item.
+    LspSymbolKind kind;
+
+    /// Tags for this item.
+    LspSymbolTag[] tags;
+
+    /// More detail for this item, e.g. the signature of a function.
+    String detail;
+
+    /// The resource identifier of this item.
+    LspDocumentUri uri;
+
+    /// The range enclosing this symbol not including leading/trailing whitespace
+    /// but everything else, e.g. comments and code.
+    LspRange range;
+
+    /// The range that should be selected and revealed when this symbol is being
+    /// picked, e.g. the name of a function. Must be contained by the
+    /// [`range`](#CallHierarchyItem.range).
+    LspRange selection_range;
+
+    /// A data entry field that is preserved between a call hierarchy prepare and
+    /// incoming calls or outgoing calls requests.
+    unknown data;
+}
+
+///     error: code and message set in case an exception happens during the ‘text_document/prepare_call_hierarchy’ request
+/// 
+/// Call Hierarchy Incoming Calls (:leftwards_arrow_with_hook:)
+/// 
+///     Since version 3.16.0
+/// 
+/// The request is sent from the client to the server to resolve incoming calls for a given call hierarchy item. The request doesn’t define its own client and server capabilities. It is only issued if a server registers for the text_document/prepare_call_hierarchy request.
+/// 
+/// Request:
+/// 
+///     method: call_hierarchy/incoming_calls
+///     params: CallHierarchyIncomingCallsParams defined as follows:
+
+struct LspCallHierarchyIncomingCallsParams extends
+    LspWorkDoneProgressParams, LspPartialResultParams {
+    LspCallHierarchyItem item;
+}
+
+/// Response:
+/// 
+///     result: CallHierarchyIncomingCall[] | null defined as follows:
+
+struct LspCallHierarchyIncomingCall {
+
+    /// The item that makes the call.
+    LspCallHierarchyItem from;
+
+    /// The ranges at which the calls appear. This is relative to the caller
+    /// denoted by [`this.from`](#CallHierarchyIncomingCall.from).
+    LspRange[] from_ranges;
+}
+
+///     partial result: CallHierarchyIncomingCall[]
+///     error: code and message set in case an exception happens during the ‘call_hierarchy/incoming_calls’ request
+/// 
+/// Call Hierarchy Outgoing Calls (:leftwards_arrow_with_hook:)
+/// 
+///     Since version 3.16.0
+/// 
+/// The request is sent from the client to the server to resolve outgoing calls for a given call hierarchy item. The request doesn’t define its own client and server capabilities. It is only issued if a server registers for the text_document/prepare_call_hierarchy request.
+/// 
+/// Request:
+/// 
+///     method: call_hierarchy/outgoing_calls
+///     params: CallHierarchyOutgoingCallsParams defined as follows:
+
+struct LspCallHierarchyOutgoingCallsParams extends
+    LspWorkDoneProgressParams, LspPartialResultParams {
+    LspCallHierarchyItem item;
+}
+
+/// Response:
+/// 
+///     result: CallHierarchyOutgoingCall[] | null defined as follows:
+
+struct LspCallHierarchyOutgoingCall {
+
+    /// The item that is called.
+    ////
+    LspCallHierarchyItem to;
+
+    /// The range at which this item is called. This is the range relative to
+    /// the caller, e.g the item passed to `call_hierarchy/outgoing_calls` request.
+    ////
+    LspRange[] from_ranges;
+}
+
+///     partial result: CallHierarchyOutgoingCall[]
+///     error: code and message set in case an exception happens during the ‘call_hierarchy/outgoing_calls’ request
+/// 
+/// Prepare Type Hierarchy Request (:leftwards_arrow_with_hook:)
+/// 
+///     Since version 3.17.0
+/// 
+/// The type hierarchy request is sent from the client to the server to return a type hierarchy for the language element of given text document positions. Will return null if the server couldn’t infer a valid type from the position. The type hierarchy requests are executed in two steps:
+/// 
+///     first a type hierarchy item is prepared for the given text document position.
+///     for a type hierarchy item the supertype or subtype type hierarchy items are resolved.
+/// 
+/// Client Capability:
+/// 
+///     property name (optional): text_document.type_hierarchy
+///     property type: TypeHierarchyClientCapabilities defined as follows:
+
+type LspTypeHierarchyClientCapabilities = {
+
+    /// Whether implementation supports dynamic registration. If this is set to
+    /// `true` the client supports the new `(TextDocumentRegistrationOptions &
+    /// StaticRegistrationOptions)` return value for the corresponding server
+    /// capability as well.
+    bool dynamic_registration;
+};
+
+/// Server Capability:
+/// 
+///     property name (optional): type_hierarchy_provider
+///     property type: bool | TypeHierarchyOptions | TypeHierarchyRegistrationOptions where TypeHierarchyOptions is defined as follows:
+
+struct LspTypeHierarchyOptions extends LspWorkDoneProgressOptions {
+}
+
+/// Registration Options: TypeHierarchyRegistrationOptions defined as follows:
+
+struct LspTypeHierarchyRegistrationOptions extends
+    LspTextDocumentRegistrationOptions, LspTypeHierarchyOptions,
+    LspStaticRegistrationOptions {
+}
+
+/// Request:
+/// 
+///     method: ‘text_document/prepare_type_hierarchy’
+///     params: TypeHierarchyPrepareParams defined as follows:
+
+struct LspTypeHierarchyPrepareParams extends LspTextDocumentPositionParams,
+    LspWorkDoneProgressParams {
+}
+
+/// Response:
+/// 
+///     result: TypeHierarchyItem[] | null defined as follows:
+
+struct LspTypeHierarchyItem {
+
+    /// The name of this item.
+    String name;
+
+    /// The kind of this item.
+    LspSymbolKind kind;
+
+    /// Tags for this item.
+    LspSymbolTag[] tags;
+
+    /// More detail for this item, e.g. the signature of a function.
+    String detail;
+
+    /// The resource identifier of this item.
+    LspDocumentUri uri;
+
+    /// The range enclosing this symbol not including leading/trailing whitespace
+    /// but everything else, e.g. comments and code.
+    LspRange range;
+
+    /// The range that should be selected and revealed when this symbol is being
+    /// picked, e.g. the name of a function. Must be contained by the
+    /// [`range`](#TypeHierarchyItem.range).
+    LspRange selection_range;
+
+    /// A data entry field that is preserved between a type hierarchy prepare and
+    /// supertypes or subtypes requests. It could also be used to identify the
+    /// type hierarchy in the server, helping improve the performance on
+    /// resolving supertypes and subtypes.
+    LSPAny data;
+}
+
+///     error: code and message set in case an exception happens during the ‘text_document/prepare_type_hierarchy’ request
+/// 
+/// Type Hierarchy Supertypes(:leftwards_arrow_with_hook:)
+/// 
+///     Since version 3.17.0
+/// 
+/// The request is sent from the client to the server to resolve the supertypes for a given type hierarchy item. Will return null if the server couldn’t infer a valid type from item in the params. The request doesn’t define its own client and server capabilities. It is only issued if a server registers for the text_document/prepare_type_hierarchy request.
+/// 
+/// Request:
+/// 
+///     method: ‘type_hierarchy/supertypes’
+///     params: TypeHierarchySupertypesParams defined as follows:
+
+struct LspTypeHierarchySupertypesParams extends
+    LspWorkDoneProgressParams, LspPartialResultParams {
+    LspTypeHierarchyItem item;
+}
+
+/// Response:
+/// 
+///     result: TypeHierarchyItem[] | null
+///     partial result: TypeHierarchyItem[]
+///     error: code and message set in case an exception happens during the ‘type_hierarchy/supertypes’ request
+/// 
+/// Type Hierarchy Subtypes(:leftwards_arrow_with_hook:)
+/// 
+///     Since version 3.17.0
+/// 
+/// The request is sent from the client to the server to resolve the subtypes for a given type hierarchy item. Will return null if the server couldn’t infer a valid type from item in the params. The request doesn’t define its own client and server capabilities. It is only issued if a server registers for the text_document/prepare_type_hierarchy request.
+/// 
+/// Request:
+/// 
+///     method: ‘type_hierarchy/subtypes’
+///     params: TypeHierarchySubtypesParams defined as follows:
+
+struct LspTypeHierarchySubtypesParams extends
+    LspWorkDoneProgressParams, LspPartialResultParams {
+    LspTypeHierarchyItem item;
+}
+
+/// Response:
+/// 
+///     result: TypeHierarchyItem[] | null
+///     partial result: TypeHierarchyItem[]
+///     error: code and message set in case an exception happens during the ‘type_hierarchy/subtypes’ request
+/// 
+/// Document Highlights Request (:leftwards_arrow_with_hook:)
+/// 
+/// The document highlight request is sent from the client to the server to resolve a document highlights for a given text document position. For programming languages this usually highlights all references to the symbol scoped to this file. However we kept ‘text_document/document_highlight’ and ‘text_document/references’ separate requests since the first one is allowed to be more fuzzy. Symbol matches usually have a DocumentHighlightKind of Read or Write whereas fuzzy or textual matches use Textas the kind.
+/// 
+/// Client Capability:
+/// 
+///     property name (optional): text_document.document_highlight
+///     property type: DocumentHighlightClientCapabilities defined as follows:
+
+struct LspDocumentHighlightClientCapabilities {
+
+    /// Whether document highlight supports dynamic registration.
+    bool dynamic_registration;
+}
+
+/// Server Capability:
+/// 
+///     property name (optional): document_highlight_provider
+///     property type: bool | DocumentHighlightOptions where DocumentHighlightOptions is defined as follows:
+
+struct LspDocumentHighlightOptions extends LspWorkDoneProgressOptions {
+}
+
+/// Registration Options: DocumentHighlightRegistrationOptions defined as follows:
+
+struct LspDocumentHighlightRegistrationOptions extends
+    LspTextDocumentRegistrationOptions, LspDocumentHighlightOptions {
+}
+
+/// Request:
+/// 
+///     method: text_document/document_highlight
+///     params: DocumentHighlightParams defined as follows:
+
+struct LspDocumentHighlightParams extends LspTextDocumentPositionParams,
+    LspWorkDoneProgressParams, LspPartialResultParams {
+}
+
+/// Response:
+/// 
+///     result: DocumentHighlight[] | null defined as follows:
+
+
+/// A document highlight is a range inside a text document which deserves
+/// special attention. Usually a document highlight is visualized by changing
+/// the background color of its range.
+struct LspDocumentHighlight {
+
+    /// The range this highlight applies to.
+    LspRange range;
+
+    /// The highlight kind, default is DocumentHighlightKind.Text.
+    LspDocumentHighlightKind kind;
+}
+
+
+/// A document highlight kind.
+namespace LspDocumentHighlightKind {
+
+    /// A textual occurrence.
+    export const Text = 1;
+
+    /// Read-access of a symbol, like reading a variable.
+    export const Read = 2;
+
+    /// Write-access of a symbol, like writing to a variable.
+    export const Write = 3;
+}
+
+type LspDocumentHighlightKind = 1 | 2 | 3;
+
+///     partial result: DocumentHighlight[]
+///     error: code and message set in case an exception happens during the document highlight request.
+/// 
+/// Document Link Request (:leftwards_arrow_with_hook:)
+/// 
+/// The document links request is sent from the client to the server to request the location of links in a document.
+/// 
+/// Client Capability:
+/// 
+///     property name (optional): text_document.document_link
+///     property type: DocumentLinkClientCapabilities defined as follows:
+
+struct LspDocumentLinkClientCapabilities {
+
+    /// Whether document link supports dynamic registration.
+    bool dynamic_registration;
+
+    /// Whether the client supports the `tooltip` property on `DocumentLink`.
+    @api(3.15)
+    bool tooltip_support;
+}
+
+/// Server Capability:
+/// 
+///     property name (optional): document_link_provider
+///     property type: DocumentLinkOptions defined as follows:
+
+struct LspDocumentLinkOptions extends LspWorkDoneProgressOptions {
+
+    /// Document links have a resolve provider as well.
+    bool resolve_provider;
+}
+
+/// Registration Options: DocumentLinkRegistrationOptions defined as follows:
+
+struct LspDocumentLinkRegistrationOptions extends
+    LspTextDocumentRegistrationOptions, LspDocumentLinkOptions {
+}
+
+/// Request:
+/// 
+///     method: text_document/document_link
+///     params: DocumentLinkParams defined as follows:
+
+struct LspDocumentLinkParams extends LspWorkDoneProgressParams,
+    LspPartialResultParams {
+
+    /// The document to provide document links for.
+    LspTextDocumentIdentifier text_document;
+}
+
+/// Response:
+/// 
+///     result: DocumentLink[] | null.
+
+
+/// A document link is a range in a text document that links to an internal or
+/// external resource, like another text document or a web site.
+struct LspDocumentLink {
+
+    /// The range this link applies to.
+    LspRange range;
+
+    /// The uri this link points to. If missing a resolve request is sent later.
+    LspUri target;
+
+    /// The tooltip text when you hover over this link.
+    ///
+    /// If a tooltip is provided, is will be displayed in a String that includes
+    /// instructions on how to trigger the link, such as `{0} (ctrl + click)`.
+    /// The specific instructions vary depending on OS, user settings, and
+    /// localization.
+    @api(3.15)
+    LspString tooltip;
+
+    /// A data entry field that is preserved on a document link between a
+    /// DocumentLinkRequest and a DocumentLinkResolveRequest.
+    LspAny data;
+}
+
+///     partial result: DocumentLink[]
+///     error: code and message set in case an exception happens during the document link request.
+/// 
+/// Document Link Resolve Request (:leftwards_arrow_with_hook:)
+/// 
+/// The document link resolve request is sent from the client to the server to resolve the target of a given document link.
+/// 
+/// Request:
+/// 
+///     method: document_link/resolve
+///     params: DocumentLink
+/// 
+/// Response:
+/// 
+///     result: DocumentLink
+///     error: code and message set in case an exception happens during the document link resolve request.
+/// 
+/// Hover Request (:leftwards_arrow_with_hook:)
+/// 
+/// The hover request is sent from the client to the server to request hover information at a given text document position.
+/// 
+/// Client Capability:
+/// 
+///     property name (optional): text_document.hover
+///     property type: HoverClientCapabilities defined as follows:
+
+struct LspHoverClientCapabilities {
+
+    /// Whether hover supports dynamic registration.
+    bool dynamic_registration;
+
+    /// Client supports the follow content formats if the content
+    /// property refers to a `literal of type MarkupContent`.
+    /// The order describes the preferred format of the client.
+    LspMarkupKind[] content_format;
+}
+
+/// Server Capability:
+/// 
+///     property name (optional): hover_provider
+///     property type: bool | HoverOptions where HoverOptions is defined as follows:
+
+struct LspHoverOptions extends LspWorkDoneProgressOptions {
+}
+
+/// Registration Options: HoverRegistrationOptions defined as follows:
+
+struct LspHoverRegistrationOptions
+    extends LspTextDocumentRegistrationOptions, LspHoverOptions {
+}
+
+/// Request:
+/// 
+///     method: text_document/hover
+///     params: HoverParams defined as follows:
+
+struct LspHoverParams extends LspTextDocumentPositionParams,
+    LspWorkDoneProgressParams {
+}
+
+/// Response:
+/// 
+///     result: Hover | null defined as follows:
+
+
+/// The result of a hover request.
+struct LspHover {
+
+    /// The hover's content
+    LspMarkedString | LspMarkedString[] | LspMarkupContent contents;
+
+    /// An optional range is a range inside a text document
+    /// that is used to visualize a hover, e.g. by changing the background color.
+    LspRange range;
+}
+
+/// Where MarkedString is defined as follows:
+/// 
+
+/// MarkedString can be used to render human readable text. It is either a
+/// markdown String or a code-block that provides a language and a code snippet.
+/// The language identifier is semantically equal to the optional language
+/// identifier in fenced code blocks in GitHub issues.
+///
+/// The pair of a language and a value is an equivalent to markdown:
+/// ```${language}
+/// ${value}
+/// ```
+///
+/// Note that markdown Strings will be sanitized - that means html will be
+/// escaped.
+///
+@deprecated use MarkupContent instead.
+type LspMarkedString = string | { string; string } language value;
+
+///     error: code and message set in case an exception happens during the hover request.
+/// 
+/// Code Lens Request (:leftwards_arrow_with_hook:)
+/// 
+/// The code lens request is sent from the client to the server to compute code lenses for a given text document.
+/// 
+/// Client Capability:
+/// 
+///     property name (optional): text_document.code_lens
+///     property type: CodeLensClientCapabilities defined as follows:
+
+struct LspCodeLensClientCapabilities {
+
+    /// Whether code lens supports dynamic registration.
+    bool dynamic_registration;
+}
+
+/// Server Capability:
+/// 
+///     property name (optional): code_lens_provider
+///     property type: CodeLensOptions defined as follows:
+
+struct LspCodeLensOptions extends LspWorkDoneProgressOptions {
+
+    /// Code lens has a resolve provider as well.
+    bool resolve_provider;
+}
+
+/// Registration Options: CodeLensRegistrationOptions defined as follows:
+
+struct LspCodeLensRegistrationOptions extends
+    LspTextDocumentRegistrationOptions, LspCodeLensOptions {
+}
+
+/// Request:
+/// 
+///     method: text_document/code_lens
+///     params: CodeLensParams defined as follows:
+
+struct LspCodeLensParams extends LspWorkDoneProgressParams, LspPartialResultParams {
+
+    /// The document to request code lens for.
+    LspTextDocumentIdentifier text_document;
+}
+
+/// Response:
+/// 
+///     result: CodeLens[] | null defined as follows:
+
+
+/// A code lens represents a command that should be shown along with
+/// source text, like the number of references, a way to run tests, etc.
+///
+/// A code lens is _unresolved_ when no command is associated to it. For
+/// performance reasons the creation of a code lens and resolving should be done
+/// in two stages.
+struct LspCodeLens {
+
+    /// The range in which this code lens is valid. Should only span a single
+    /// line.
+    LspRange range;
+
+    /// The command this code lens represents.
+    LspCommand command;
+
+    /// A data entry field that is preserved on a code lens item between
+    /// a code lens and a code lens resolve request.
+    LSPAny data;
+}
+
+///     partial result: CodeLens[]
+///     error: code and message set in case an exception happens during the code lens request.
+/// 
+/// Code Lens Resolve Request (:leftwards_arrow_with_hook:)
+/// 
+/// The code lens resolve request is sent from the client to the server to resolve the command for a given code lens item.
+/// 
+/// Request:
+/// 
+///     method: code_lens/resolve
+///     params: CodeLens
+/// 
+/// Response:
+/// 
+///     result: CodeLens
+///     error: code and message set in case an exception happens during the code lens resolve request.
+/// 
+/// Code Lens Refresh Request (:arrow_right_hook:)
+/// 
+///     Since version 3.16.0
+/// 
+/// The workspace/code_lens/refresh request is sent from the server to the client. Servers can use it to ask clients to refresh the code lenses currently shown in editors. As a result the client should ask the server to recompute the code lenses for these editors. This is useful if a server detects a configuration change which requires a re-calculation of all code lenses. Note that the client still has the freedom to delay the re-calculation of the code lenses if for example an editor is currently not visible.
+/// 
+/// Client Capability:
+/// 
+///     property name (optional): workspace.code_lens
+///     property type: CodeLensWorkspaceClientCapabilities defined as follows:
+
+struct LspCodeLensWorkspaceClientCapabilities {
+
+    /// Whether the client implementation supports a refresh request sent from the
+    /// server to the client.
+    ///
+    /// Note that this event is global and will force the client to refresh all
+    /// code lenses currently shown. It should be used with absolute care and is
+    /// useful for situation where a server for example detect a project wide
+    /// change that requires such a calculation.
+    bool refresh_support;
+}
+
+/// Request:
+/// 
+///     method: workspace/code_lens/refresh
+///     params: none
+/// 
+/// Response:
+/// 
+///     result: void
+///     error: code and message set in case an exception happens during the ‘workspace/code_lens/refresh’ request
+/// 
+/// Folding Range Request (:leftwards_arrow_with_hook:)
+/// 
+///     Since version 3.10.0
+/// 
+/// The folding range request is sent from the client to the server to return all folding ranges found in a given text document.
+/// 
+/// Client Capability:
+/// 
+///     property name (optional): text_document.folding_range
+///     property type: FoldingRangeClientCapabilities defined as follows:
+
+struct LspFoldingRangeClientCapabilities {
+
+    /// Whether implementation supports dynamic registration for folding range
+    /// providers. If this is set to `true` the client supports the new
+    /// `FoldingRangeRegistrationOptions` return value for the corresponding
+    /// server capability as well.
+    bool dynamic_registration;
+
+    /// The maximum number of folding ranges that the client prefers to receive
+    /// per document. The value serves as a hint, servers are free to follow the
+    /// limit.
+    u32 range_limit;
+
+    /// If set, the client signals that it only supports folding complete lines.
+    /// If set, client will ignore specified `start_character` and `end_character`
+    /// properties in a FoldingRange.
+    bool line_folding_only;
+
+    /// Specific options for the folding range kind.
+    @api(3.17)
+    folding_range_kind : {
+
+        /// The folding range kind values the client supports. When this
+        /// property exists the client also guarantees that it will
+        /// handle values outside its set gracefully and falls back
+        /// to a default value when unknown.
+        ////
+        LspFoldingRangeKind[] value_set;
+    };
+
+    /// Specific options for the folding range.
+    @api(3.17)
+    folding_range: {
+
+        /// If set, the client signals that it supports setting collapsed_text on
+        /// folding ranges to display custom labels instead of the default text.
+        @api(3.17)
+        bool collapsed_text;
+    };
+}
+
+/// Server Capability:
+/// 
+///     property name (optional): folding_range_provider
+///     property type: bool | FoldingRangeOptions | FoldingRangeRegistrationOptions where FoldingRangeOptions is defined as follows:
+
+struct LspFoldingRangeOptions extends LspWorkDoneProgressOptions {
+}
+
+/// Registration Options: FoldingRangeRegistrationOptions defined as follows:
+
+struct LspFoldingRangeRegistrationOptions extends
+    LspTextDocumentRegistrationOptions, LspFoldingRangeOptions,
+    LspStaticRegistrationOptions {
+}
+
+/// Request:
+/// 
+///     method: text_document/folding_range
+///     params: FoldingRangeParams defined as follows
+
+struct LspFoldingRangeParams extends LspWorkDoneProgressParams,
+    LspPartialResultParams {
+
+    /// The text document.
+    LspTextDocumentIdentifier text_document;
+}
+
+/// Response:
+/// 
+///     result: FoldingRange[] | null defined as follows:
+
+
+/// A set of predefined range kinds.
+////
+namespace LspFoldingRangeKind {
+
+    /// Folding range for a comment
+    export const Comment = 'comment';
+
+    /// Folding range for imports or includes
+    export const Imports = 'imports';
+
+    /// Folding range for a region (e.g. `#region`)
+    export const Region = 'region';
+}
+
+
+/// The type is a String since the value set is extensible
+////
+type LspFoldingRangeKind = String;
+
+
+/// Represents a folding range. To be valid, start and end line must be bigger
+/// than zero and smaller than the number of lines in the document. Clients
+/// are free to ignore invalid ranges.
+struct LspFoldingRange {
+
+    /// The zero-based start line of the range to fold. The folded area starts
+    /// after the line's last character. To be valid, the end must be zero or
+    /// larger and smaller than the number of lines in the document.
+    u32 start_line;
+
+    /// The zero-based character offset from where the folded range starts. If
+    /// not defined, defaults to the length of the start line.
+    u32 start_character;
+
+    /// The zero-based end line of the range to fold. The folded area ends with
+    /// the line's last character. To be valid, the end must be zero or larger
+    /// and smaller than the number of lines in the document.
+    u32 end_line;
+
+    /// The zero-based character offset before the folded range ends. If not
+    /// defined, defaults to the length of the end line.
+    u32 end_character;
+
+    /// Describes the kind of the folding range such as `comment` or `region`.
+    /// The kind is used to categorize folding ranges and used by commands like
+    /// 'Fold all comments'. See [FoldingRangeKind](#FoldingRangeKind) for an
+    /// enumeration of standardized kinds.
+    LspFoldingRangeKind kind;
+
+    /// The text that the client should show when the specified range is
+    /// collapsed. If not defined or not supported by the client, a default
+    /// will be chosen by the client.
+    @api(3.17) - proposed
+    String collapsed_text;
+}
+
+///     partial result: FoldingRange[]
+///     error: code and message set in case an exception happens during the ‘text_document/folding_range’ request
+/// 
+/// Selection Range Request (:leftwards_arrow_with_hook:)
+/// 
+///     Since version 3.15.0
+/// 
+/// The selection range request is sent from the client to the server to return suggested selection ranges at an array of given positions. A selection range is a range around the cursor position which the user might be interested in selecting.
+/// 
+/// A selection range in the return array is for the position in the provided parameters at the same index. Therefore positions[i] must be contained in result[i].range. To allow for results where some positions have selection ranges and others do not, result[i].range is allowed to be the empty range at positions[i].
+/// 
+/// Typically, but not necessary, selection ranges correspond to the nodes of the syntax tree.
+/// 
+/// Client Capability:
+/// 
+///     property name (optional): text_document.selection_range
+///     property type: SelectionRangeClientCapabilities defined as follows:
+
+struct LspSelectionRangeClientCapabilities {
+
+    /// Whether implementation supports dynamic registration for selection range
+    /// providers. If this is set to `true` the client supports the new
+    /// `SelectionRangeRegistrationOptions` return value for the corresponding
+    /// server capability as well.
+    bool dynamic_registration;
+}
+
+/// Server Capability:
+/// 
+///     property name (optional): selection_range_provider
+///     property type: bool | SelectionRangeOptions | SelectionRangeRegistrationOptions where SelectionRangeOptions is defined as follows:
+
+struct LspSelectionRangeOptions extends LspWorkDoneProgressOptions {
+}
+
+/// Registration Options: SelectionRangeRegistrationOptions defined as follows:
+
+struct LspSelectionRangeRegistrationOptions extends
+    LspSelectionRangeOptions, LspTextDocumentRegistrationOptions,
+    LspStaticRegistrationOptions {
+}
+
+/// Request:
+/// 
+///     method: text_document/selection_range
+///     params: SelectionRangeParams defined as follows:
+
+struct LspSelectionRangeParams extends LspWorkDoneProgressParams,
+    LspPartialResultParams {
+
+    /// The text document.
+    LspTextDocumentIdentifier text_document;
+
+    /// The positions inside the text document.
+    LspPosition[] positions;
+}
+
+/// Response:
+/// 
+///     result: SelectionRange[] | null defined as follows:
+
+struct LspSelectionRange {
+
+    /// The [range](#Range) of this selection range.
+    LspRange range;
+
+    /// The parent selection range containing this range. Therefore
+    /// `parent.range` must contain `this.range`.
+    LspSelectionRange parent;
+}
+
+///     partial result: SelectionRange[]
+///     error: code and message set in case an exception happens during the ‘text_document/selection_range’ request
+/// 
+/// Document Symbols Request (:leftwards_arrow_with_hook:)
+/// 
+/// The document symbol request is sent from the client to the server. The returned result is either
+/// 
+///     SymbolInformation[] which is a flat list of all symbols found in a given text document. Then neither the symbol’s location range nor the symbol’s container name should be used to infer a hierarchy.
+///     DocumentSymbol[] which is a hierarchy of symbols found in a given text document.
+/// 
+/// Servers should whenever possible return DocumentSymbol since it is the richer data structure.
+/// 
+/// Client Capability:
+/// 
+///     property name (optional): text_document.document_symbol
+///     property type: DocumentSymbolClientCapabilities defined as follows:
+
+struct LspDocumentSymbolClientCapabilities {
+
+    /// Whether document symbol supports dynamic registration.
+    bool dynamic_registration;
+
+
+    /// Specific capabilities for the `SymbolKind` in the
+    /// `text_document/document_symbol` request.
+    symbol_kind: {
+
+        /// The symbol kind values the client supports. When this
+        /// property exists the client also guarantees that it will
+        /// handle values outside its set gracefully and falls back
+        /// to a default value when unknown.
+        ///
+        /// If this property is not present the client only supports
+        /// the symbol kinds from `File` to `Array` as defined in
+        /// the initial version of the protocol.
+        ////
+        LspSymbolKind[] value_set;
+    };
+
+    /// The client supports hierarchical document symbols.
+    bool hierarchical_document_symbol_support;
+
+
+    /// The client supports tags on `SymbolInformation`. Tags are supported on
+    /// `DocumentSymbol` if `hierarchical_document_symbol_support` is set to true.
+    /// Clients supporting tags have to handle unknown tags gracefully.
+    @api(3.16)
+    tag_support: {
+
+        /// The tags supported by the client.
+        ////
+        LspSymbolTag[] value_set;
+    };
+
+    /// The client supports an additional label presented in the UI when
+    /// registering a document symbol provider.
+    @api(3.16)
+    bool label_support;
+}
+
+/// Server Capability:
+/// 
+///     property name (optional): document_symbol_provider
+///     property type: bool | DocumentSymbolOptions where DocumentSymbolOptions is defined as follows:
+
+struct LspDocumentSymbolOptions extends LspWorkDoneProgressOptions {
+
+    /// A human-readable String that is shown when multiple outlines trees
+    /// are shown for the same document.
+    @api(3.16)
+    String label;
+}
+
+/// Registration Options: DocumentSymbolRegistrationOptions defined as follows:
+
+struct LspDocumentSymbolRegistrationOptions extends
+    LspTextDocumentRegistrationOptions, LspDocumentSymbolOptions {
+}
+
+/// Request:
+/// 
+///     method: text_document/document_symbol
+///     params: DocumentSymbolParams defined as follows:
+
+struct LspDocumentSymbolParams extends LspWorkDoneProgressParams,
+    LspPartialResultParams {
+
+    /// The text document.
+    LspTextDocumentIdentifier text_document;
+}
+
+/// Response:
+/// 
+///     result: DocumentSymbol[] | SymbolInformation[] | null defined as follows:
+
+
+/// A symbol kind.
+namespace LspSymbolKind {
+    export const File = 1;
+    export const Module = 2;
+    export const Namespace = 3;
+    export const Package = 4;
+    export const Class = 5;
+    export const Method = 6;
+    export const Property = 7;
+    export const Field = 8;
+    export const Constructor = 9;
+    export const Enum = 10;
+    export const struct = 11;
+    export const Function = 12;
+    export const Variable = 13;
+    export const Constant = 14;
+    export const String = 15;
+    export const Number = 16;
+    export const bool = 17;
+    export const Array = 18;
+    export const Object = 19;
+    export const Key = 20;
+    export const Null = 21;
+    export const EnumMember = 22;
+    export const Struct = 23;
+    export const Event = 24;
+    export const Operator = 25;
+    export const TypeParameter = 26;
+}
+
+type LspSymbolKind = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 | 24 | 25 | 26;
+
+
+/// Symbol tags are extra annotations that tweak the rendering of a symbol.
+@api(3.16)
+namespace LspSymbolTag {
+
+    /// Render a symbol as obsolete, usually using a strike-out.
+    export const 1 = 1 Deprecated;
+}
+
+type LspSymbolTag = 1;
+
+
+/// Represents programming constructs like variables, classes, structs etc.
+/// that appear in a document. Document symbols can be hierarchical and they
+/// have two ranges: one that encloses its definition and one that points to its
+/// most interesting range, e.g. the range of an identifier.
+////
+struct LspDocumentSymbol {
+
+    /// The name of this symbol. Will be displayed in the user struct and
+    /// therefore must not be an empty String or a string only consisting of
+    /// white spaces.
+    String name;
+
+    /// More detail for this symbol, e.g the signature of a function.
+    String detail;
+
+    /// The kind of this symbol.
+    LspSymbolKind kind;
+
+    /// Tags for this document symbol.
+    @api(3.16)
+    LspSymbolTag[] tags;
+
+
+    /// Indicates if this symbol is deprecated.
+    @deprecated Use tags instead
+    bool deprecated;
+
+    /// The range enclosing this symbol not including leading/trailing whitespace
+    /// but everything else like comments. This information is typically used to
+    /// determine if the clients cursor is inside the symbol to reveal in the
+    /// symbol in the UI.
+    LspRange range;
+
+    /// The range that should be selected and revealed when this symbol is being
+    /// picked, e.g. the name of a function. Must be contained by the `range`.
+    LspRange selection_range;
+
+    /// Children of this symbol, e.g. properties of a class.
+    LspDocumentSymbol[] children;
+}
+
+
+/// Represents information about programming constructs like variables, classes,
+/// structs etc.
+///
+/// @deprecated use DocumentSymbol or WorkspaceSymbol instead.
+////
+struct LspSymbolInformation {
+
+    /// The name of this symbol.
+    String name;
+
+    /// The kind of this symbol.
+    LspSymbolKind kind;
+
+    /// Tags for this symbol.
+    @api(3.16)
+    LspSymbolTag[] tags;
+
+    /// Indicates if this symbol is deprecated.
+    @deprecated Use tags instead
+    bool deprecated;
+
+    /// The location of this symbol. The location's range is used by a tool
+    /// to reveal the location in the editor. If the symbol is selected in the
+    /// tool the range's start information is used to position the cursor. So
+    /// the range usually spans more then the actual symbol's name and does
+    /// normally include things like visibility modifiers.
+    ///
+    /// The range doesn't have to denote a node range in the sense of an abstract
+    /// syntax tree. It can therefore not be used to re-construct a hierarchy of
+    /// the symbols.
+    LspLocation location;
+
+    /// The name of the symbol containing this symbol. This information is for
+    /// user struct purposes (e.g. to render a qualifier in the user interface
+    /// if necessary). It can't be used to re-infer a hierarchy for the document
+    /// symbols.
+    LspString container_name;
+}
+
+///     partial result: DocumentSymbol[] | SymbolInformation[]. DocumentSymbol[] and SymbolInformation[] can not be mixed. That means the first chunk defines the type of all the other chunks.
+///     error: code and message set in case an exception happens during the document symbol request.
+/// 
+/// Semantic Tokens (:leftwards_arrow_with_hook:)
+/// 
+///     Since version 3.16.0
+/// 
+/// The request is sent from the client to the server to resolve semantic tokens for a given file. Semantic tokens are used to add additional color information to a file that depends on language specific symbol information. A semantic token request usually produces a large result. The protocol therefore supports encoding tokens with numbers. In addition optional support for deltas is available.
+/// 
+/// General Concepts
+/// 
+/// Tokens are represented using one token type combined with n token modifiers. A token type is something like class or function and token modifiers are like static or async. The protocol defines a set of token types and modifiers but clients are allowed to extend these and announce the values they support in the corresponding client capability. The predefined values are:
+
+enum LspSemanticTokenTypes {
+    NAMESPACE = 'namespace',
+
+    /// Represents a generic type. Acts as a fallback for types which
+    /// can't be mapped to a specific type like class or enum.
+    ////
+    TYPE = 'type',
+    CLASS = 'class',
+    ENUM = 'enum',
+    STRUCT = 'interface',
+    STRUCT = 'struct',
+    TYPE_PARAMETER = 'type_parameter',
+    PARAMETER = 'parameter',
+    VARIABLE = 'variable',
+    PROPERTY = 'property',
+    ENUM_MEMBER = 'enum_member',
+    EVENT = 'event',
+    FUNCTION = 'function',
+    METHOD = 'method',
+    MACRO = 'macro',
+    KEYWORD = 'keyword',
+    MODIFIER = 'modifier',
+    COMMENT = 'comment',
+    STRING = 'string',
+    NUMBER = 'number',
+    REGEXP = 'regexp',
+    OPERATOR = 'operator'
+
+    @api(3.17)
+    DECORATOR = 'decorator'
+}
+
+enum LspSemanticTokenModifiers {
+    DECLARATION = 'declaration',
+    DEFINITION = 'definition',
+    READONLY = 'readonly',
+    STATIC = 'static',
+    DEPRECATED = 'deprecated',
+    ABSTRACT = 'abstract',
+    ASYNC = 'async',
+    MODIFICATION = 'modification',
+    DOCUMENTATION = 'documentation',
+    DEFAULT_LIBRARY = 'default_library'
+}
+
+/// The protocol defines an additional token format capability to allow future extensions of the format. The only format that is currently specified is relative expressing that the tokens are described using relative positions (see Integer Encoding for Tokens below).
+
+namespace LspTokenFormat {
+    export const 'relative' = 'relative' Relative;
+}
+
+type LspTokenFormat = 'relative';
+
+/// Integer Encoding for Tokens
+/// 
+/// On the capability level types and modifiers are defined using Strings. However the real encoding happens using numbers. The server therefore needs to let the client know which numbers it is using for which types and modifiers. They do so using a legend, which is defined as follows:
+
+struct LspSemanticTokensLegend {
+
+    /// The token types a server uses.
+    String[] token_types;
+
+    /// The token modifiers a server uses.
+    String[] token_modifiers;
+}
+
+/// Token types are looked up by index, so a token_type value of 1 means token_types[1]. Since a token type can have n modifiers, multiple token modifiers can be set by using bit flags, so a token_modifier value of 3 is first viewed as binary 0b00000011, which means [token_modifiers[0], token_modifiers[1]] because bits 0 and 1 are set.
+/// 
+/// There are different ways how the position of a token can be expressed in a file. Absolute positions or relative positions. The protocol for the token format relative uses relative positions, because most tokens remain stable relative to each other when edits are made in a file. This simplifies the computation of a delta if a server supports it. So each token is represented using 5 integers. A specific token i in the file consists of the following array indices:
+/// 
+///     at index 5*i - delta_line: token line number, relative to the previous token
+///     at index 5*i+1 - delta_start: token start character, relative to the previous token (relative to 0 or the previous token’s start if they are on the same line)
+///     at index 5*i+2 - length: the length of the token.
+///     at index 5*i+3 - token_type: will be looked up in SemanticTokensLegend.token_types. We currently ask that token_type < 65536.
+///     at index 5*i+4 - token_modifiers: each set bit will be looked up in SemanticTokensLegend.token_modifiers
+/// 
+/// The delta_start and the length values must be encoded using the encoding the client and server agrees on during the initialize request (see also TextDocuments). Whether a token can span multiple lines is defined by the client capability multiline_token_support. If multiline tokens are not supported and a tokens length takes it past the end of the line, it should be treated as if the token ends at the end of the line and will not wrap onto the next line.
+/// 
+/// The client capability overlapping_token_support defines whether tokens can overlap each other.
+/// 
+/// Lets look at a concrete example which uses single line tokens without overlaps for encoding a file with 3 tokens in a number array. We start with absolute positions to demonstrate how they can easily be transformed into relative positions:
+/// 
+/// { line: 2, start_char:  5, length: 3, token_type: "property",
+///     token_modifiers: ["private", "static"]
+/// },
+/// { line: 2, start_char: 10, length: 4, token_type: "type", token_modifiers: [] },
+/// { line: 5, start_char:  2, length: 7, token_type: "class", token_modifiers: [] }
+/// 
+/// First of all, a legend must be devised. This legend must be provided up-front on registration and capture all possible token types and modifiers. For the example we use this legend:
+/// 
+/// {
+///    token_types: ['property', 'type', 'class'],
+///    token_modifiers: ['private', 'static']
+/// }
+/// 
+/// The first transformation step is to encode token_type and token_modifiers as integers using the legend. As said, token types are looked up by index, so a token_type value of 1 means token_types[1]. Multiple token modifiers can be set by using bit flags, so a token_modifier value of 3 is first viewed as binary 0b00000011, which means [token_modifiers[0], token_modifiers[1]] because bits 0 and 1 are set. Using this legend, the tokens now are:
+/// 
+/// { line: 2, start_char:  5, length: 3, token_type: 0, token_modifiers: 3 },
+/// { line: 2, start_char: 10, length: 4, token_type: 1, token_modifiers: 0 },
+/// { line: 5, start_char:  2, length: 7, token_type: 2, token_modifiers: 0 }
+/// 
+/// The next step is to represent each token relative to the previous token in the file. In this case, the second token is on the same line as the first token, so the start_char of the second token is made relative to the start_char of the first token, so it will be 10 - 5. The third token is on a different line than the second token, so the start_char of the third token will not be altered:
+/// 
+/// { delta_line: 2, delta_start_char: 5, length: 3, token_type: 0, token_modifiers: 3 },
+/// { delta_line: 0, delta_start_char: 5, length: 4, token_type: 1, token_modifiers: 0 },
+/// { delta_line: 3, delta_start_char: 2, length: 7, token_type: 2, token_modifiers: 0 }
+/// 
+/// Finally, the last step is to inline each of the 5 fields for a token in a single array, which is a memory friendly representation:
+/// 
+/// // 1st token,  2nd token,  3rd token
+/// [  2,5,3,0,3,  0,5,4,1,0,  3,2,7,2,0 ]
+/// 
+/// Now assume that the user types a new empty line at the beginning of the file which results in the following tokens in the file:
+/// 
+/// { line: 3, start_char:  5, length: 3, token_type: "property",
+///     token_modifiers: ["private", "static"]
+/// },
+/// { line: 3, start_char: 10, length: 4, token_type: "type", token_modifiers: [] },
+/// { line: 6, start_char:  2, length: 7, token_type: "class", token_modifiers: [] }
+/// 
+/// Running the same transformations as above will result in the following number array:
+/// 
+/// // 1st token,  2nd token,  3rd token
+/// [  3,5,3,0,3,  0,5,4,1,0,  3,2,7,2,0]
+/// 
+/// The delta is now expressed on these number arrays without any form of interpretation what these numbers mean. This is comparable to the text document edits send from the server to the client to modify the content of a file. Those are character based and don’t make any assumption about the meaning of the characters. So [ 2,5,3,0,3, 0,5,4,1,0, 3,2,7,2,0 ] can be transformed into [ 3,5,3,0,3, 0,5,4,1,0, 3,2,7,2,0] using the following edit description: { start: 0, delete_count: 1, data: [3] } which tells the client to simply replace the first number (e.g. 2) in the array with 3.
+/// 
+/// Semantic token edits behave conceptually like text edits on documents: if an edit description consists of n edits all n edits are based on the same state Sm of the number array. They will move the number array from state Sm to Sm+1. A client applying the edits must not assume that they are sorted. An easy algorithm to apply them to the number array is to sort the edits and apply them from the back to the front of the number array.
+/// 
+/// Client Capability:
+/// 
+/// The following client capabilities are defined for semantic token requests sent from the client to the server:
+/// 
+///     property name (optional): text_document.semantic_tokens
+///     property type: SemanticTokensClientCapabilities defined as follows:
+
+struct LspSemanticTokensClientCapabilities {
+
+    /// Whether implementation supports dynamic registration. If this is set to
+    /// `true` the client supports the new `(TextDocumentRegistrationOptions &
+    /// StaticRegistrationOptions)` return value for the corresponding server
+    /// capability as well.
+    bool dynamic_registration;
+
+    /// Which requests the client supports and might send to the server
+    /// depending on the server's capability. Please note that clients might not
+    /// show semantic tokens or degrade some of the user experience if a range
+    /// or full request is advertised by the client but not provided by the
+    /// server. If for example the client capability `requests.full` and
+    /// `request.range` are both set to true but the server only provides a
+    /// range provider the client might not render a minimap correctly or might
+    /// even decide to not show any semantic tokens at all.
+    requests: {
+
+        /// The client will send the `text_document/semantic_tokens/range` request
+        /// if the server provides a corresponding handler.
+        range: bool | {
+        };
+
+        /// The client will send the `text_document/semantic_tokens/full` request
+        /// if the server provides a corresponding handler.
+        full: bool | {
+
+            /// The client will send the `text_document/semantic_tokens/full/delta`
+            /// request if the server provides a corresponding handler.
+            bool delta;
+        };
+    };
+
+    /// The token types that the client supports.
+    String[] token_types;
+
+    /// The token modifiers that the client supports.
+    String[] token_modifiers;
+
+    /// The formats the clients supports.
+    LspTokenFormat[] formats;
+
+    /// Whether the client supports tokens that can overlap each other.
+    bool overlapping_token_support;
+
+    /// Whether the client supports tokens that can span multiple lines.
+    bool multiline_token_support;
+
+    /// Whether the client allows the server to actively cancel a
+    /// semantic token request, e.g. supports returning
+    /// ErrorCodes.ServerCancelled. If a server does the client
+    /// needs to retrigger the request.
+    @api(3.17)
+    bool server_cancel_support;
+
+    /// Whether the client uses semantic tokens to augment existing
+    /// syntax tokens. If set to `true` client side created syntax
+    /// tokens and semantic tokens are both used for colorization. If
+    /// set to `false` the client only uses the returned semantic tokens
+    /// for colorization.
+    ///
+    /// If the value is `undefined` then the client behavior is not
+    /// specified.
+    @api(3.17)
+    bool augments_syntax_tokens;
+}
+
+/// Server Capability:
+/// 
+/// The following server capabilities are defined for semantic tokens:
+/// 
+///     property name (optional): semantic_tokens_provider
+///     property type: SemanticTokensOptions | SemanticTokensRegistrationOptions where SemanticTokensOptions is defined as follows:
+
+struct LspSemanticTokensOptions extends LspWorkDoneProgressOptions {
+
+    /// The legend used by the server
+    LspSemanticTokensLegend legend;
+
+    /// Server supports providing semantic tokens for a specific range
+    /// of a document.
+    range: bool | {
+    };
+
+    /// Server supports providing semantic tokens for a full document.
+    full: bool | {
+
+        /// The server supports deltas for full documents.
+        bool delta;
+    };
+}
+
+/// Registration Options: SemanticTokensRegistrationOptions defined as follows:
+
+struct LspSemanticTokensRegistrationOptions extends
+    LspTextDocumentRegistrationOptions, LspSemanticTokensOptions,
+    LspStaticRegistrationOptions {
+}
+
+/// Since the registration option handles range, full and delta requests the method used to register for semantic tokens requests is text_document/semantic_tokens and not one of the specific methods described below.
+/// 
+/// Requesting semantic tokens for a whole file
+/// 
+/// Request:
+/// 
+///     method: text_document/semantic_tokens/full
+///     params: SemanticTokensParams defined as follows:
+
+struct LspSemanticTokensParams extends LspWorkDoneProgressParams,
+    LspPartialResultParams {
+
+    /// The text document.
+    LspTextDocumentIdentifier text_document;
+}
+
+/// Response:
+/// 
+///     result: SemanticTokens | null where SemanticTokens is defined as follows:
+
+struct LspSemanticTokens {
+
+    /// An optional result id. If provided and clients support delta updating
+    /// the client will include the result id in the next semantic token request.
+    /// A server can then instead of computing all semantic tokens again simply
+    /// send a delta.
+    String result_id;
+
+    /// The actual tokens.
+    u32[] data;
+}
+
+///     partial result: SemanticTokensPartialResult defines as follows:
+
+struct LspSemanticTokensPartialResult {
+    u32[] data;
+}
+
+///     error: code and message set in case an exception happens during the ‘text_document/semantic_tokens/full’ request
+/// 
+/// Requesting semantic token delta for a whole file
+/// 
+/// Request:
+/// 
+///     method: text_document/semantic_tokens/full/delta
+///     params: SemanticTokensDeltaParams defined as follows:
+
+struct LspSemanticTokensDeltaParams extends LspWorkDoneProgressParams,
+    LspPartialResultParams {
+
+    /// The text document.
+    LspTextDocumentIdentifier text_document;
+
+    /// The result id of a previous response. The result Id can either point to
+    /// a full response or a delta response depending on what was received last.
+    String previous_result_id;
+}
+
+/// Response:
+/// 
+///     result: SemanticTokens | SemanticTokensDelta | null where SemanticTokensDelta is defined as follows:
+
+struct LspSemanticTokensDelta {
+    readonly String result_id;
+
+    /// The semantic token edits to transform a previous result into a new
+    /// result.
+    LspSemanticTokensEdit[] edits;
+}
+
+struct LspSemanticTokensEdit {
+
+    /// The start offset of the edit.
+    u32 start;
+
+    /// The count of elements to remove.
+    u32 delete_count;
+
+    /// The elements to insert.
+    u32[] data;
+}
+
+///partial result: LspSemanticTokensDeltaPartialResult defines as follows:
+
+struct LspSemanticTokensDeltaPartialResult {
+    LspSemanticTokensEdit[] edits;
+}
+
+///     error: code and message set in case an exception happens during the ‘text_document/semantic_tokens/full/delta’ request
+/// 
+/// Requesting semantic tokens for a range
+/// 
+/// There are two uses cases where it can be beneficial to only compute semantic tokens for a visible range:
+/// 
+///     for faster rendering of the tokens in the user struct when a user opens a file. In this use cases servers should also implement the text_document/semantic_tokens/full request as well to allow for flicker free scrolling and semantic coloring of a minimap.
+///     if computing semantic tokens for a full document is too expensive servers can only provide a range call. In this case the client might not render a minimap correctly or might even decide to not show any semantic tokens at all.
+/// 
+/// A server is allowed to compute the semantic tokens for a broader range than requested by the client. However if the server does the semantic tokens for the broader range must be complete and correct.
+/// 
+/// Request:
+/// 
+///     method: text_document/semantic_tokens/range
+///     params: SemanticTokensRangeParams defined as follows:
+
+struct LspSemanticTokensRangeParams extends LspWorkDoneProgressParams,
+    LspPartialResultParams {
+
+    /// The text document.
+    LspTextDocumentIdentifier text_document;
+
+    /// The range the semantic tokens are requested for.
+    LspRange range;
+}
+
+/// Response:
+/// 
+///     result: SemanticTokens | null
+///     partial result: SemanticTokensPartialResult
+///     error: code and message set in case an exception happens during the ‘text_document/semantic_tokens/range’ request
+/// 
+/// Requesting a refresh of all semantic tokens
+/// 
+/// The workspace/semantic_tokens/refresh request is sent from the server to the client. Servers can use it to ask clients to refresh the editors for which this server provides semantic tokens. As a result the client should ask the server to recompute the semantic tokens for these editors. This is useful if a server detects a project wide configuration change which requires a re-calculation of all semantic tokens. Note that the client still has the freedom to delay the re-calculation of the semantic tokens if for example an editor is currently not visible.
+/// 
+/// Client Capability:
+/// 
+///     property name (optional): workspace.semantic_tokens
+///     property type: SemanticTokensWorkspaceClientCapabilities defined as follows:
+
+struct LspSemanticTokensWorkspaceClientCapabilities {
+
+    /// Whether the client implementation supports a refresh request sent from
+    /// the server to the client.
+    ///
+    /// Note that this event is global and will force the client to refresh all
+    /// semantic tokens currently shown. It should be used with absolute care
+    /// and is useful for situation where a server for example detect a project
+    /// wide change that requires such a calculation.
+    bool refresh_support;
+}
+
+/// Request:
+/// 
+///     method: workspace/semantic_tokens/refresh
+///     params: none
+/// 
+/// Response:
+/// 
+///     result: void
+///     error: code and message set in case an exception happens during the ‘workspace/semantic_tokens/refresh’ request
+/// 
+/// Inlay Hint Request (:leftwards_arrow_with_hook:)
+/// 
+///     Since version 3.17.0
+/// 
+/// The inlay hints request is sent from the client to the server to compute inlay hints for a given [text document, range] tuple that may be rendered in the editor in place with other text.
+/// 
+/// Client Capability:
+/// 
+///     property name (optional): text_document.inlay_hint
+///     property type: InlayHintClientCapabilities defined as follows:
+
+
+/// Inlay hint client capabilities.
+@api(3.17)
+struct LspInlayHintClientCapabilities {
+
+    /// Whether inlay hints support dynamic registration.
+    bool dynamic_registration;
+
+    /// Indicates which properties a client can resolve lazily on an inlay
+    /// hint.
+    resolve_support: {
+
+        /// The properties that a client can resolve lazily.
+        String[] properties;
+    };
+}
+
+/// Server Capability:
+/// 
+///     property name (optional): inlay_hint_provider
+///     property type: InlayHintOptions defined as follows:
+
+
+/// Inlay hint options used during static registration.
+@api(3.17)
+struct LspInlayHintOptions extends LspWorkDoneProgressOptions {
+
+    /// The server provides support to resolve additional
+    /// information for an inlay hint item.
+    bool resolve_provider;
+}
+
+/// Registration Options: InlayHintRegistrationOptions defined as follows:
+
+
+/// Inlay hint options used during static or dynamic registration.
+@api(3.17)
+struct LspInlayHintRegistrationOptions extends LspInlayHintOptions,
+    LspTextDocumentRegistrationOptions, LspStaticRegistrationOptions {
+}
+
+/// Request:
+/// 
+///     method: text_document/inlay_hint
+///     params: InlayHintParams defined as follows:
+
+
+/// A parameter literal used in inlay hint requests.
+@api(3.17)
+struct LspInlayHintParams extends LspWorkDoneProgressParams {
+
+    /// The text document.
+    LspTextDocumentIdentifier text_document;
+
+    /// The visible document range for which inlay hints should be computed.
+    LspRange range;
+}
+
+/// Response:
+/// 
+///     result: InlayHint[] | null defined as follows:
+
+
+/// Inlay hint information.
+@api(3.17)
+struct LspInlayHint {
+
+    /// The position of this hint.
+    LspPosition position;
+
+    /// The label of this hint. A human readable String or an array of
+    /// InlayHintLabelPart label parts.
+    ///
+    /// *Note* that neither the String nor the label part can be empty.
+    String | LspInlayHintLabelPart[] label;
+
+    /// The kind of this hint. Can be omitted in which case the client
+    /// should fall back to a reasonable default.
+    LspInlayHintKind kind;
+
+    /// Optional text edits that are performed when accepting this inlay hint.
+    ///
+    /// *Note* that edits are expected to change the document so that the inlay
+    /// hint (or its nearest variant) is now part of the document and the inlay
+    /// hint itself is now obsolete.
+    ///
+    /// Depending on the client capability `inlay_hint.resolve_support` clients
+    /// might resolve this property late using the resolve request.
+    LspTextEdit[] text_edits;
+
+    /// The tooltip text when you hover over this item.
+    ///
+    /// Depending on the client capability `inlay_hint.resolve_support` clients
+    /// might resolve this property late using the resolve request.
+    String | LspMarkupContent tooltip;
+
+    /// Render padding before the hint.
+    ///
+    /// Note: Padding should use the editor's background color, not the
+    /// background color of the hint itself. That means padding can be used
+    /// to visually align/separate an inlay hint.
+    bool padding_left;
+
+    /// Render padding after the hint.
+    ///
+    /// Note: Padding should use the editor's background color, not the
+    /// background color of the hint itself. That means padding can be used
+    /// to visually align/separate an inlay hint.
+    bool padding_right;
+
+    /// A data entry field that is preserved on an inlay hint between
+    /// a `text_document/inlay_hint` and a `inlay_hint/resolve` request.
+    LSPAny data;
+}
+
+
+/// An inlay hint label part allows for interactive and composite labels
+/// of inlay hints.
+@api(3.17)
+struct LspInlayHintLabelPart {
+
+    /// The value of this label part.
+    String value;
+
+    /// The tooltip text when you hover over this label part. Depending on
+    /// the client capability `inlay_hint.resolve_support` clients might resolve
+    /// this property late using the resolve request.
+    String | LspMarkupContent tooltip;
+
+    /// An optional source code location that represents this
+    /// label part.
+    ///
+    /// The editor will use this location for the hover and for code navigation
+    /// features: This part will become a clickable link that resolves to the
+    /// definition of the symbol at the given location (not necessarily the
+    /// location itself), it shows the hover that shows at the given location,
+    /// and it shows a context menu with further code navigation commands.
+    ///
+    /// Depending on the client capability `inlay_hint.resolve_support` clients
+    /// might resolve this property late using the resolve request.
+    LspLocation location;
+
+    /// An optional command for this label part.
+    ///
+    /// Depending on the client capability `inlay_hint.resolve_support` clients
+    /// might resolve this property late using the resolve request.
+    LspCommand command;
+}
+
+
+/// Inlay hint kinds.
+@api(3.17)
+enum<u8> LspInlayHintKind {
+
+    /// An inlay hint that for a type annotation.
+    TYPE = 1;
+
+    /// An inlay hint that is for a parameter.
+    PARAMETER = 2;
+}
+
+
+///     error: code and message set in case an exception happens during the inlay hint request.
+/// 
+/// Inlay Hint Resolve Request (:leftwards_arrow_with_hook:)
+/// 
+///     Since version 3.17.0
+/// 
+/// The request is sent from the client to the server to resolve additional information for a given inlay hint. This is usually used to compute the tooltip, location or command properties of an inlay hint’s label part to avoid its unnecessary computation during the text_document/inlay_hint request.
+/// 
+/// Consider the clients announces the label.location property as a property that can be resolved lazy using the client capability
+/// 
+/// text_document.inlay_hint.resolve_support = { ['label.location'] } properties;
+/// 
+/// then an inlay hint with a label part without a location needs to be resolved using the inlay_hint/resolve request before it can be used.
+/// 
+/// Client Capability:
+/// 
+///     property name (optional): text_document.inlay_hint.resolve_support
+///     property { String[] type properties; }
+/// 
+/// Request:
+/// 
+///     method: inlay_hint/resolve
+///     params: InlayHint
+/// 
+/// Response:
+/// 
+///     result: InlayHint
+///     error: code and message set in case an exception happens during the completion resolve request.
+/// 
+/// Inlay Hint Refresh Request (:arrow_right_hook:)
+/// 
+///     Since version 3.17.0
+/// 
+/// The workspace/inlay_hint/refresh request is sent from the server to the client. Servers can use it to ask clients to refresh the inlay hints currently shown in editors. As a result the client should ask the server to recompute the inlay hints for these editors. This is useful if a server detects a configuration change which requires a re-calculation of all inlay hints. Note that the client still has the freedom to delay the re-calculation of the inlay hints if for example an editor is currently not visible.
+/// 
+/// Client Capability:
+/// 
+///     property name (optional): workspace.inlay_hint
+///     property type: InlayHintWorkspaceClientCapabilities defined as follows:
+
+
+/// Client workspace capabilities specific to inlay hints.
+@api(3.17)
+struct LspInlayHintWorkspaceClientCapabilities {
+
+    /// Whether the client implementation supports a refresh request sent from
+    /// the server to the client.
+    ///
+    /// Note that this event is global and will force the client to refresh all
+    /// inlay hints currently shown. It should be used with absolute care and
+    /// is useful for situation where a server for example detects a project wide
+    /// change that requires such a calculation.
+    bool refresh_support;
+}
+
+/// Request:
+/// 
+///     method: workspace/inlay_hint/refresh
+///     params: none
+/// 
+/// Response:
+/// 
+///     result: void
+///     error: code and message set in case an exception happens during the ‘workspace/inlay_hint/refresh’ request
+/// 
+/// Inline Value Request (:leftwards_arrow_with_hook:)
+/// 
+///     Since version 3.17.0
+/// 
+/// The inline value request is sent from the client to the server to compute inline values for a given text document that may be rendered in the editor at the end of lines.
+/// 
+/// Client Capability:
+/// 
+///     property name (optional): text_document.inline_value
+///     property type: InlineValueClientCapabilities defined as follows:
+
+
+/// Client capabilities specific to inline values.
+@api(3.17)
+struct LspInlineValueClientCapabilities {
+
+    /// Whether implementation supports dynamic registration for inline
+    /// value providers.
+    bool dynamic_registration;
+}
+
+/// Server Capability:
+/// 
+///     property name (optional): inline_value_provider
+///     property type: InlineValueOptions defined as follows:
+
+
+/// Inline value options used during static registration.
+@api(3.17)
+struct LspInlineValueOptions extends LspWorkDoneProgressOptions {
+}
+
+/// Registration Options: InlineValueRegistrationOptions defined as follows:
+
+
+/// Inline value options used during static or dynamic registration.
+@api(3.17)
+struct LspInlineValueRegistrationOptions extends LspInlineValueOptions,
+    LspTextDocumentRegistrationOptions, LspStaticRegistrationOptions {
+}
+
+/// Request:
+/// 
+///     method: text_document/inline_value
+///     params: InlineValueParams defined as follows:
+
+
+/// A parameter literal used in inline value requests.
+@api(3.17)
+struct LspInlineValueParams extends LspWorkDoneProgressParams {
+
+    /// The text document.
+    LspTextDocumentIdentifier text_document;
+
+    /// The document range for which inline values should be computed.
+    LspRange range;
+
+    /// Additional information about the context in which inline values were
+    /// requested.
+    LspInlineValueContext context;
+}
+
+
+@api(3.17)
+struct LspInlineValueContext {
+
+    /// The stack frame (as a DAP Id) where the execution has stopped.
+    integer frame_id;
+
+    /// The document range where execution has stopped.
+    /// Typically the end position of the range denotes the line where the
+    /// inline values are shown.
+    LspRange stopped_location;
+}
+
+/// Response:
+/// 
+///     result: InlineValue[] | null defined as follows:
+
+
+/// Provide inline value as text.
+@api(3.17)
+struct LspInlineValueText {
+
+    /// The document range for which the inline value applies.
+    LspRange range;
+
+    /// The text of the inline value.
+    LspString text;
+}
+
+
+/// Provide inline value through a variable lookup.
+///
+/// If only a range is specified, the variable name will be extracted from
+/// the underlying document.
+///
+/// An optional variable name can be used to override the extracted name.
+@api(3.17)
+struct LspInlineValueVariableLookup {
+
+    /// The document range for which the inline value applies.
+    /// The range is used to extract the variable name from the underlying
+    /// document.
+    LspRange range;
+
+    /// If specified the name of the variable to look up.
+    LspString variable_name;
+
+    /// How to perform the lookup.
+    bool case_sensitive_lookup;
+}
+
+
+/// Provide an inline value through an expression evaluation.
+///
+/// If only a range is specified, the expression will be extracted from the
+/// underlying document.
+///
+/// An optional expression can be used to override the extracted expression.
+@api(3.17)
+struct LspInlineValueEvaluatableExpression {
+
+    /// The document range for which the inline value applies.
+    /// The range is used to extract the evaluatable expression from the
+    /// underlying document.
+    LspRange range;
+
+    /// If specified the expression overrides the extracted expression.
+    String expression;
+}
+
+
+/// Inline value information can be provided by different means:
+/// - directly as a text value (class InlineValueText).
+/// - as a name to use for a variable lookup (class InlineValueVariableLookup)
+/// - as an evaluatable expression (class InlineValueEvaluatableExpression)
+/// The InlineValue types combines all inline value types into one type.
+@api(3.17)
+type LspInlineValue = LspInlineValueText | LspInlineValueVariableLookup
+    | LspInlineValueEvaluatableExpression;
+
+///     error: code and message set in case an exception happens during the inline values request.
+/// 
+/// Inline Value Refresh Request (:arrow_right_hook:)
+/// 
+///     Since version 3.17.0
+/// 
+/// The workspace/inline_value/refresh request is sent from the server to the client. Servers can use it to ask clients to refresh the inline values currently shown in editors. As a result the client should ask the server to recompute the inline values for these editors. This is useful if a server detects a configuration change which requires a re-calculation of all inline values. Note that the client still has the freedom to delay the re-calculation of the inline values if for example an editor is currently not visible.
+/// 
+/// Client Capability:
+/// 
+///     property name (optional): workspace.inline_value
+///     property type: InlineValueWorkspaceClientCapabilities defined as follows:
+
+
+/// Client workspace capabilities specific to inline values.
+@api(3.17)
+struct LspInlineValueWorkspaceClientCapabilities {
+
+    /// Whether the client implementation supports a refresh request sent from
+    /// the server to the client.
+    ///
+    /// Note that this event is global and will force the client to refresh all
+    /// inline values currently shown. It should be used with absolute care and
+    /// is useful for situation where a server for example detect a project wide
+    /// change that requires such a calculation.
+    ////
+    bool refresh_support;
+}
+
+/// Request:
+/// 
+///     method: workspace/inline_value/refresh
+///     params: none
+/// 
+/// Response:
+/// 
+///     result: void
+///     error: code and message set in case an exception happens during the ‘workspace/inline_value/refresh’ request
+/// 
+/// Monikers (:leftwards_arrow_with_hook:)
+/// 
+///     Since version 3.16.0
+/// 
+/// Language Server Index Format (LSIF) introduced the concept of symbol monikers to help associate symbols across different indexes. This request adds capability for LSP server implementations to provide the same symbol moniker information given a text document position. Clients can utilize this method to get the moniker at the current location in a file user is editing and do further code navigation queries in other services that rely on LSIF indexes and link symbols together.
+/// 
+/// The text_document/moniker request is sent from the client to the server to get the symbol monikers for a given text document position. An array of Moniker types is returned as response to indicate possible monikers at the given location. If no monikers can be calculated, an empty array or null should be returned.
+/// 
+/// Client Capabilities:
+/// 
+///     property name (optional): text_document.moniker
+///     property type: MonikerClientCapabilities defined as follows:
+
+struct LspMonikerClientCapabilities {
+
+    /// Whether implementation supports dynamic registration. If this is set to
+    /// `true` the client supports the new `(TextDocumentRegistrationOptions &
+    /// StaticRegistrationOptions)` return value for the corresponding server
+    /// capability as well.
+    ////
+    bool dynamic_registration;
+}
+
+/// Server Capability:
+/// 
+///     property name (optional): moniker_provider
+///     property type: bool | MonikerOptions | MonikerRegistrationOptions is defined as follows:
+
+struct LspMonikerOptions extends LspWorkDoneProgressOptions {
+}
+
+/// Registration Options: MonikerRegistrationOptions defined as follows:
+
+struct LspMonikerRegistrationOptions extends
+    LspTextDocumentRegistrationOptions, LspMonikerOptions {
+}
+
+/// Request:
+/// 
+///     method: text_document/moniker
+///     params: MonikerParams defined as follows:
+
+struct LspMonikerParams extends LspTextDocumentPositionParams,
+    LspWorkDoneProgressParams, LspPartialResultParams {
+}
+
+/// Response:
+/// 
+///     result: Moniker[] | null
+///     partial result: Moniker[]
+///     error: code and message set in case an exception happens during the ‘text_document/moniker’ request
+/// 
+/// Moniker is defined as follows:
+
+
+/// Moniker uniqueness level to define scope of the moniker.
+////
+enum<String> LspUniquenessLevel {
+
+    /// The moniker is only unique inside a document
+    DOCUMENT = 'document',
+
+    /// The moniker is unique inside a project for which a dump got created
+    PROJECT = 'project',
+
+    /// The moniker is unique inside the group to which a project belongs
+    GROUP = 'group',
+
+    /// The moniker is unique inside the moniker scheme.
+    SCHEME = 'scheme',
+
+    /// The moniker is globally unique
+    GLOBAL = 'global'
+}
+
+
+/// The moniker kind.
+enum<String> LspMonikerKind {
+
+    /// The moniker represent a symbol that is imported into a project
+    IMPORT = 'import',
+
+    /// The moniker represents a symbol that is exported from a project
+    EXPORT = 'export',
+
+    /// The moniker represents a symbol that is local to a project (e.g. a local
+    /// variable of a function, a class not visible outside the project, ...)
+    LOCAL = 'local'
+}
+
+
+/// Moniker definition to match LSIF 0.5 moniker definition.
+struct LspMoniker {
+
+    /// The scheme of the moniker. For example tsc or .Net
+    String scheme;
+
+    /// The identifier of the moniker. The value is opaque in LSIF however
+    /// schema owners are allowed to define the structure if they want.
+    String identifier;
+
+    /// The scope in which the moniker is unique
+    LspUniquenessLevel unique;
+
+    /// The moniker kind if known.
+    LspMonikerKind kind;
+}
+
+/// Notes
+/// 
+/// Server implementations of this method should ensure that the moniker calculation matches to those used in the corresponding LSIF implementation to ensure symbols can be associated correctly across IDE sessions and LSIF indexes.
+/// Completion Request (:leftwards_arrow_with_hook:)
+/// 
+/// The Completion request is sent from the client to the server to compute completion items at a given cursor position. Completion items are presented in the IntelliSense user struct. If computing full completion items is expensive, servers can additionally provide a handler for the completion item resolve request (‘completion_item/resolve’). This request is sent when a completion item is selected in the user interface. A typical use case is for example: the text_document/completion request doesn’t fill in the documentation property for returned completion items since it is expensive to compute. When the item is selected in the user interface then a ‘completion_item/resolve’ request is sent with the selected completion item as a parameter. The returned completion item should have the documentation property filled in. By default the request can only delay the computation of the detail and documentation properties. Since 3.16.0 the client can signal that it can resolve more properties lazily. This is done using the completion_item#resolve_support client capability which lists all properties that can be filled in during a ‘completion_item/resolve’ request. All other properties (usually sort_text, filter_text, insert_text and text_edit) must be provided in the text_document/completion response and must not be changed during resolve.
+/// 
+/// The language server protocol uses the following model around completions:
+/// 
+///     to achieve consistency across languages and to honor different clients usually the client is responsible for filtering and sorting. This has also the advantage that client can experiment with different filter and sorting models. However servers can enforce different behavior by setting a filter_text / sort_text
+///     for speed clients should be able to filter an already received completion list if the user continues typing. Servers can opt out of this using a CompletionList and mark it as is_incomplete.
+/// 
+/// A completion item provides additional means to influence filtering and sorting. They are expressed by either creating a CompletionItem with a insert_text or with a text_edit. The two modes differ as follows:
+/// 
+///     Completion item provides an insert_text / label without a text edit: in the model the client should filter against what the user has already typed using the word boundary rules of the language (e.g. resolving the word under the cursor position). The reason for this mode is that it makes it extremely easy for a server to implement a basic completion list and get it filtered on the client.
+/// 
+///     Completion Item with text edits: in this mode the server tells the client that it actually knows what it is doing. If you create a completion item with a text edit at the current cursor position no word guessing takes place and no filtering should happen. This mode can be combined with a sort text and filter text to customize two things. If the text edit is a replace edit then the range denotes the word used for filtering. If the replace changes the text it most likely makes sense to specify a filter text to be used.
+/// 
+/// Client Capability:
+/// 
+///     property name (optional): text_document.completion
+///     property type: CompletionClientCapabilities defined as follows:
+
+struct LspCompletionClientCapabilities {
+
+    /// Whether completion supports dynamic registration.
+    ////
+    bool dynamic_registration;
+
+
+    /// The client supports the following `CompletionItem` specific
+    /// capabilities.
+    ////
+    completion_item: {
+
+        /// Client supports snippets as insert text.
+        ///
+        /// A snippet can define tab stops and placeholders with `$1`, `$2`
+        /// and `${3:foo}`. `$0` defines the final tab stop, it defaults to
+        /// the end of the snippet. Placeholders with equal identifiers are
+        /// linked, that is typing in one will update others too.
+        ////
+        bool snippet_support;
+
+
+        /// Client supports commit characters on a completion item.
+        ////
+        bool commit_characters_support;
+
+
+        /// Client supports the follow content formats for the documentation
+        /// property. The order describes the preferred format of the client.
+        ////
+        LspMarkupKind[] documentation_format;
+
+
+        /// Client supports the deprecated property on a completion item.
+        ////
+        bool deprecated_support;
+
+
+        /// Client supports the preselect property on a completion item.
+        ////
+        bool preselect_support;
+
+
+        /// Client supports the tag property on a completion item. Clients
+        /// supporting tags have to handle unknown tags gracefully. Clients
+        /// especially need to preserve unknown tags when sending a completion
+        /// item back to the server in a resolve call.
+        ///
+        @api(3.15)
+        ////
+        tag_support: {
+
+            /// The tags supported by the client.
+            ////
+            LspCompletionItemTag[] value_set;
+        };
+
+
+        /// Client supports insert replace edit to control different behavior if
+        /// a completion item is inserted in the text or should replace text.
+        ///
+        @api(3.16)
+        ////
+        bool insert_replace_support;
+
+
+        /// Indicates which properties a client can resolve lazily on a
+        /// completion item. Before version 3.16.0 only the predefined properties
+        /// `documentation` and `detail` could be resolved lazily.
+        ///
+        @api(3.16)
+        ////
+        resolve_support: {
+
+            /// The properties that a client can resolve lazily.
+            ////
+            String[] properties;
+        };
+
+
+        /// The client supports the `insert_text_mode` property on
+        /// a completion item to override the whitespace handling mode
+        /// as defined by the client (see `insert_text_mode`).
+        ///
+        @api(3.16)
+        ////
+        insert_text_mode_support: {
+            LspInsertTextMode[] value_set;
+        };
+
+
+        /// The client has support for completion item label
+        /// details (see also `CompletionItemLabelDetails`).
+        ///
+        @api(3.17)
+        ////
+        bool label_details_support;
+    };
+
+    completion_item_kind: {
+
+        /// The completion item kind values the client supports. When this
+        /// property exists the client also guarantees that it will
+        /// handle values outside its set gracefully and falls back
+        /// to a default value when unknown.
+        ///
+        /// If this property is not present the client only supports
+        /// the completion items kinds from `Text` to `Reference` as defined in
+        /// the initial version of the protocol.
+        ////
+        LspCompletionItemKind[] value_set;
+    };
+
+
+    /// The client supports to send additional context information for a
+    /// `text_document/completion` request.
+    ////
+    bool context_support;
+
+
+    /// The client's default when the completion item doesn't provide a
+    /// `insert_text_mode` property.
+    ///
+    @api(3.17)
+    ////
+    LspInsertTextMode insert_text_mode;
+
+
+    /// The client supports the following `CompletionList` specific
+    /// capabilities.
+    ///
+    @api(3.17)
+    ////
+    completion_list: {
+
+        /// The client supports the following item_defaults on
+        /// a completion list.
+        ///
+        /// The value lists the supported property names of the
+        /// `CompletionList.item_defaults` object. If omitted
+        /// no properties are supported.
+        ///
+        @api(3.17)
+        ////
+        String[] item_defaults;
+    }
+}
+
+/// Server Capability:
+/// 
+///     property name (optional): completion_provider
+///     property type: CompletionOptions defined as follows:
+
+
+/// Completion options.
+////
+struct LspCompletionOptions extends LspWorkDoneProgressOptions {
+
+    /// The additional characters, beyond the defaults provided by the client (typically
+    /// [a-z_a-Z]), that should automatically trigger a completion request. For example
+    /// `.` in JavaScript represents the beginning of an object property or method and is
+    /// thus a good candidate for triggering a completion request.
+    ///
+    /// Most tools trigger a completion request automatically without explicitly
+    /// requesting it using a keyboard shortcut (e.g. Ctrl+Space). Typically they
+    /// do so when the user starts to type an identifier. For example if the user
+    /// types `c` in a JavaScript file code complete will automatically pop up
+    /// present `console` besides others as a completion item. Characters that
+    /// make up identifiers don't need to be listed here.
+    ////
+    String[] trigger_characters;
+
+
+    /// The list of all possible characters that commit a completion. This field
+    /// can be used if clients don't support individual commit characters per
+    /// completion item. See client capability
+    /// `completion.completion_item.commit_characters_support`.
+    ///
+    /// If a server provides both `all_commit_characters` and commit characters on
+    /// an individual completion item the ones on the completion item win.
+    ///
+    @api(3.2)
+    ////
+    String[] all_commit_characters;
+
+
+    /// The server provides support to resolve additional
+    /// information for a completion item.
+    ////
+    bool resolve_provider;
+
+
+    /// The server supports the following `CompletionItem` specific
+    /// capabilities.
+    ///
+    @api(3.17)
+    ////
+    completion_item: {
+
+        /// The server has support for completion item label
+        /// details (see also `CompletionItemLabelDetails`) when receiving
+        /// a completion item in a resolve call.
+        ///
+        @api(3.17)
+        ////
+        bool label_details_support;
+    }
+}
+
+/// Registration Options: CompletionRegistrationOptions options defined as follows:
+
+struct LspCompletionRegistrationOptions
+    extends LspTextDocumentRegistrationOptions, LspCompletionOptions {
+}
+
+/// Request:
+/// 
+///     method: text_document/completion
+///     params: CompletionParams defined as follows:
+
+struct LspCompletionParams extends LspTextDocumentPositionParams,
+    LspWorkDoneProgressParams, LspPartialResultParams {
+
+    /// The completion context. This is only available if the client specifies
+    /// to send this using the client capability
+    /// `completion.context_support === true`
+    ////
+    LspCompletionContext context;
+}
+
+
+/// How a completion was triggered
+////
+namespace LspCompletionTriggerKind {
+
+    /// Completion was triggered by typing an identifier (24x7 code
+    /// complete), manual invocation (e.g Ctrl+Space) or via API.
+    ////
+    export const 1 = 1 Invoked;
+
+
+    /// Completion was triggered by a trigger character specified by
+    /// the `trigger_characters` properties of the
+    /// `CompletionRegistrationOptions`.
+    ////
+    export const 2 = 2 TriggerCharacter;
+
+
+    /// Completion was re-triggered as the current completion list is incomplete.
+    ////
+    export const 3 = 3 TriggerForIncompleteCompletions;
+}
+type LspCompletionTriggerKind = 1 | 2 | 3;
+
+
+/// Contains additional information about the context in which a completion
+/// request is triggered.
+////
+struct LspCompletionContext {
+
+    /// How the completion was triggered.
+    ////
+    LspCompletionTriggerKind trigger_kind;
+
+
+    /// The trigger character (a single character) that has trigger code
+    /// complete. Is undefined if
+    /// `trigger_kind !== CompletionTriggerKind.TriggerCharacter`
+    ////
+    String trigger_character;
+}
+
+/// Response:
+/// 
+///     result: CompletionItem[] | CompletionList | null. If a CompletionItem[] is provided it is interpreted to be complete. So it is the same as { is_incomplete: false, items }
+
+
+/// Represents a collection of [completion items](#CompletionItem) to be
+/// presented in the editor.
+////
+struct LspCompletionList {
+
+    /// This list is not complete. Further typing should result in recomputing
+    /// this list.
+    ///
+    /// Recomputed lists have all their items replaced (not appended) in the
+    /// incomplete completion sessions.
+    ////
+    bool is_incomplete;
+
+
+    /// In many cases the items of an actual completion result share the same
+    /// value for properties like `commit_characters` or the range of a text
+    /// edit. A completion list can therefore define item defaults which will
+    /// be used if a completion item itself doesn't specify the value.
+    ///
+    /// If a completion list specifies a default value and a completion item
+    /// also specifies a corresponding value the one from the item is used.
+    ///
+    /// Servers are only allowed to return default values if the client
+    /// signals support for this via the `completion_list.item_defaults`
+    /// capability.
+    ///
+    @api(3.17)
+    ////
+    item_defaults: {
+
+        /// A default commit character set.
+        ///
+        @api(3.17)
+        ////
+        String[] commit_characters;
+
+
+        /// A default edit range
+        ///
+        @api(3.17)
+        ////
+        edit_range: LspRange | {
+            LspRange insert;
+            LspRange replace;
+        };
+
+
+        /// A default insert text format
+        ///
+        @api(3.17)
+        ////
+        LspInsertTextFormat insert_text_format;
+
+
+        /// A default insert text mode
+        ///
+        @api(3.17)
+        ////
+        LspInsertTextMode insert_text_mode;
+
+
+        /// A default data value.
+        ///
+        @api(3.17)
+        ////
+        LSPAny data;
+    }
+
+
+    /// The completion items.
+    ////
+    LspCompletionItem[] items;
+}
+
+
+/// Defines whether the insert text in a completion item should be interpreted as
+/// plain text or a snippet.
+////
+namespace LspInsertTextFormat {
+
+    /// The primary text to be inserted is treated as a plain String.
+    ////
+    export const PlainText = 1;
+
+
+    /// The primary text to be inserted is treated as a snippet.
+    ///
+    /// A snippet can define tab stops and placeholders with `$1`, `$2`
+    /// and `${3:foo}`. `$0` defines the final tab stop, it defaults to
+    /// the end of the snippet. Placeholders with equal identifiers are linked,
+    /// that is typing in one will update others too.
+    ////
+    export const Snippet = 2;
+}
+
+type LspInsertTextFormat = 1 | 2;
+
+
+/// Completion item tags are extra annotations that tweak the rendering of a
+/// completion item.
+///
+@api(3.15)
+////
+namespace LspCompletionItemTag {
+
+    /// Render a completion as obsolete, usually using a strike-out.
+    ////
+    export const Deprecated = 1;
+}
+
+type LspCompletionItemTag = 1;
+
+
+/// A special text edit to provide an insert and a replace operation.
+///
+@api(3.16)
+////
+struct LspInsertReplaceEdit {
+
+    /// The String to be inserted.
+    ////
+    String new_text;
+
+
+    /// The range if the insert is requested
+    ////
+    Range insert;
+
+
+    /// The range if the replace is requested.
+    ////
+    Range replace;
+}
+
+
+/// How whitespace and indentation is handled during completion
+/// item insertion.
+///
+@api(3.16)
+////
+namespace LspInsertTextMode {
+
+    /// The insertion or replace Strings is taken as it is. If the
+    /// value is multi line the lines below the cursor will be
+    /// inserted using the indentation defined in the String value.
+    /// The client will not apply any kind of adjustments to the
+    /// String.
+    ////
+    export const 1 = 1 as_is;
+
+
+    /// The editor adjusts leading whitespace of new lines so that
+    /// they match the indentation up to the cursor of the line for
+    /// which the item is accepted.
+    ///
+    /// Consider a line like this: <2tabs><cursor><3tabs>foo. Accepting a
+    /// multi line completion item is indented using 2 tabs and all
+    /// following lines inserted will be indented using 2 tabs as well.
+    ////
+    export const 2 = 2 adjust_indentation;
+}
+
+type LspInsertTextMode = 1 | 2;
+
+
+/// Additional details for a completion item label.
+///
+@api(3.17)
+////
+struct LspCompletionItemLabelDetails {
+
+
+    /// An optional String which is rendered less prominently directly after
+    /// {@link CompletionItem.label label}, without any spacing. Should be
+    /// used for function signatures or type annotations.
+    ////
+    String detail;
+
+
+    /// An optional String which is rendered less prominently after
+    /// {@link CompletionItemLabelDetails.detail}. Should be used for fully qualified
+    /// names or file path.
+    ////
+    String description;
+}
+
+struct LspCompletionItem {
+
+
+    /// The label of this completion item.
+    ///
+    /// The label property is also by default the text that
+    /// is inserted when selecting this completion.
+    ///
+    /// If label details are provided the label itself should
+    /// be an unqualified name of the completion item.
+    ////
+    String label;
+
+
+    /// Additional details for the label
+    ///
+    @api(3.17)
+    ////
+    LspCompletionItemLabelDetails label_details;
+
+
+
+    /// The kind of this completion item. Based of the kind
+    /// an icon is chosen by the editor. The standardized set
+    /// of available values is defined in `CompletionItemKind`.
+    ////
+    LspCompletionItemKind kind;
+
+
+    /// Tags for this completion item.
+    ///
+    @api(3.15)
+    ////
+    LspCompletionItemTag[] tags;
+
+
+    /// A human-readable String with additional information
+    /// about this item, like type or symbol information.
+    ////
+    String detail;
+
+
+    /// A human-readable String that represents a doc-comment.
+    ////
+    String | LspMarkupContent documentation;
+
+
+    /// Indicates if this item is deprecated.
+    ///
+    /// @deprecated Use `tags` instead if supported.
+    ////
+    bool deprecated;
+
+
+    /// Select this item when showing.
+    ///
+    /// *Note* that only one completion item can be selected and that the
+    /// tool / client decides which item that is. The rule is that the *first*
+    /// item of those that match best is selected.
+    ////
+    bool preselect;
+
+
+    /// A String that should be used when comparing this item
+    /// with other items. When omitted the label is used
+    /// as the sort text for this item.
+    ////
+    String sort_text;
+
+
+    /// A String that should be used when filtering a set of
+    /// completion items. When omitted the label is used as the
+    /// filter text for this item.
+    ////
+    String filter_text;
+
+
+    /// A String that should be inserted into a document when selecting
+    /// this completion. When omitted the label is used as the insert text
+    /// for this item.
+    ///
+    /// The `insert_text` is subject to interpretation by the client side.
+    /// Some tools might not take the String literally. For example
+    /// VS Code when code complete is requested in this example
+    /// `con<cursor position>` and a completion item with an `insert_text` of
+    /// `console` is provided it will only insert `sole`. Therefore it is
+    /// recommended to use `text_edit` instead since it avoids additional client
+    /// side interpretation.
+    ////
+    String insert_text;
+
+
+    /// The format of the insert text. The format applies to both the
+    /// `insert_text` property and the `new_text` property of a provided
+    /// `text_edit`. If omitted defaults to `InsertTextFormat.PlainText`.
+    ///
+    /// Please note that the insert_text_format doesn't apply to
+    /// `additional_text_edits`.
+    ////
+    LspInsertTextFormat insert_text_format;
+
+
+    /// How whitespace and indentation is handled during completion
+    /// item insertion. If not provided the client's default value depends on
+    /// the `text_document.completion.insert_text_mode` client capability.
+    ///
+    @api(3.16)
+    @api(3.17) - support for `text_document.completion.insert_text_mode`
+    ////
+    LspInsertTextMode insert_text_mode;
+
+
+    /// An edit which is applied to a document when selecting this completion.
+    /// When an edit is provided the value of `insert_text` is ignored.
+    ///
+    /// *Note:* The range of the edit must be a single line range and it must
+    /// contain the position at which completion has been requested.
+    ///
+    /// Most editors support two different operations when accepting a completion
+    /// item. One is to insert a completion text and the other is to replace an
+    /// existing text with a completion text. Since this can usually not be
+    /// predetermined by a server it can report both ranges. Clients need to
+    /// signal support for `InsertReplaceEdit`s via the
+    /// `text_document.completion.completion_item.insert_replace_support` client
+    /// capability property.
+    ///
+    /// *Note 1:* The text edit's range as well as both ranges from an insert
+    /// replace edit must be a [single line] and they must contain the position
+    /// at which completion has been requested.
+    /// *Note 2:* If an `InsertReplaceEdit` is returned the edit's insert range
+    /// must be a prefix of the edit's replace range, that means it must be
+    /// contained and starting at the same position.
+    ///
+    @api(3.16) additional type `InsertReplaceEdit`
+    ////
+    LspTextEdit | LspInsertReplaceEdit text_edit;
+
+
+    /// The edit text used if the completion item is part of a CompletionList and
+    /// CompletionList defines an item default for the text edit range.
+    ///
+    /// Clients will only honor this property if they opt into completion list
+    /// item defaults using the capability `completion_list.item_defaults`.
+    ///
+    /// If not provided and a list's default range is provided the label
+    /// property is used as a text.
+    ///
+    @api(3.17)
+    ////
+    String text_edit_text;
+
+
+    /// An optional array of additional text edits that are applied when
+    /// selecting this completion. Edits must not overlap (including the same
+    /// insert position) with the main edit nor with themselves.
+    ///
+    /// Additional text edits should be used to change text unrelated to the
+    /// current cursor position (for example adding an import statement at the
+    /// top of the file if the completion item will insert an unqualified type).
+    ////
+    LspTextEdit[] additional_text_edits;
+
+
+    /// An optional set of characters that when pressed while this completion is
+    /// active will accept it first and then type that character. *Note* that all
+    /// commit characters should have `length=1` and that superfluous characters
+    /// will be ignored.
+    ////
+    String[] commit_characters;
+
+
+    /// An optional command that is executed *after* inserting this completion.
+    /// *Note* that additional modifications to the current document should be
+    /// described with the additional_text_edits-property.
+    ////
+    LspCommand command;
+
+
+    /// A data entry field that is preserved on a completion item between
+    /// a completion and a completion resolve request.
+    ////
+    LSPAny data;
+}
+
+
+/// The kind of a completion entry.
+////
+namespace LspCompletionItemKind {
+    export const Text = 1;
+    export const Method = 2;
+    export const Function = 3;
+    export const Constructor = 4;
+    export const Field = 5;
+    export const Variable = 6;
+    export const Class = 7;
+    export const struct = 8;
+    export const Module = 9;
+    export const Property = 10;
+    export const Unit = 11;
+    export const Value = 12;
+    export const Enum = 13;
+    export const Keyword = 14;
+    export const Snippet = 15;
+    export const Color = 16;
+    export const File = 17;
+    export const Reference = 18;
+    export const Folder = 19;
+    export const EnumMember = 20;
+    export const Constant = 21;
+    export const Struct = 22;
+    export const Event = 23;
+    export const Operator = 24;
+    export const TypeParameter = 25;
+}
+
+type LspCompletionItemKind = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 | 24 | 25;
+
+///     partial result: CompletionItem[] or CompletionList followed by CompletionItem[]. If the first provided result item is of type CompletionList subsequent partial results of CompletionItem[] add to the items property of the CompletionList.
+///     error: code and message set in case an exception happens during the completion request.
+/// 
+/// Completion items support snippets (see InsertTextFormat.Snippet). The snippet format is as follows:
+/// Snippet Syntax
+/// 
+/// The body of a snippet can use special constructs to control cursors and the text being inserted. The following are supported features and their syntaxes:
+/// Tab stops
+/// 
+/// With tab stops, you can make the editor cursor move inside a snippet. Use $1, $2 to specify cursor locations. The number is the order in which tab stops will be visited, whereas $0 denotes the final cursor position. Multiple tab stops are linked and updated in sync.
+/// Placeholders
+/// 
+/// Placeholders are tab stops with values, like ${1:foo}. The placeholder text will be inserted and selected such that it can be easily changed. Placeholders can be nested, like ${1:another ${2:placeholder}}.
+/// Choice
+/// 
+/// Placeholders can have choices as values. The syntax is a comma separated enumeration of values, enclosed with the pipe-character, for example ${1|one,two,three|}. When the snippet is inserted and the placeholder selected, choices will prompt the user to pick one of the values.
+/// Variables
+/// 
+/// With $name or ${name:default} you can insert the value of a variable. When a variable isn’t set, its default or the empty String is inserted. When a variable is unknown (that is, its name isn’t defined) the name of the variable is inserted and it is transformed into a placeholder.
+/// 
+/// The following variables can be used:
+/// 
+///     TM_sELECTED_tEXT The currently selected text or the empty String
+///     TM_cURRENT_lINE The contents of the current line
+///     TM_cURRENT_wORD The contents of the word under cursor or the empty String
+///     TM_lINE_iNDEX The zero-index based line number
+///     TM_lINE_nUMBER The one-index based line number
+///     TM_fILENAME The filename of the current document
+///     TM_fILENAME_bASE The filename of the current document without its extensions
+///     TM_dIRECTORY The directory of the current document
+///     TM_fILEPATH The full file path of the current document
+/// 
+/// Variable Transforms
+/// 
+/// Transformations allow you to modify the value of a variable before it is inserted. The definition of a transformation consists of three parts:
+/// 
+///     A regular expression that is matched against the value of a variable, or the empty String when the variable cannot be resolved.
+///     A “format String” that allows to reference matching groups from the regular expression. The format string allows for conditional inserts and simple modifications.
+///     Options that are passed to the regular expression.
+/// 
+/// The following example inserts the name of the current file without its ending, so from foo.txt it makes foo.
+/// 
+/// ${TM_fILENAME/(.*)\..+$/$1/}
+///   |           |         | |
+///   |           |         | |-> no options
+///   |           |         |
+///   |           |         |-> references the contents of the first
+///   |           |             capture group
+///   |           |
+///   |           |-> regex to capture everything before
+///   |               the final `.suffix`
+///   |
+///   |-> resolves to the filename
+/// 
+/// Grammar
+/// 
+/// Below is the EBNF (extended Backus-Naur form) for snippets. With \ (backslash), you can escape $, } and \. Within choice elements, the backslash also escapes comma and pipe characters.
+/// 
+/// any         ::= tabstop | placeholder | choice | variable | text
+/// tabstop     ::= '$' int | '${' int '}'
+/// placeholder ::= '${' int ':' any '}'
+/// choice      ::= '${' int '|' text (',' text)* '|}'
+/// variable    ::= '$' var | '${' var }'
+///                 | '${' var ':' any '}'
+///                 | '${' var '/' regex '/' (format | text)+ '/' options '}'
+/// format      ::= '$' int | '${' int '}'
+///                 | '${' int ':' '/upcase' | '/downcase' | '/capitalize' '}'
+///                 | '${' int ':+' if '}'
+///                 | '${' int ':' if ':' else '}'
+///                 | '${' int ':-' else '}' | '${' int ':' else '}'
+/// regex       ::= Regular Expression value (ctor-String)
+/// options     ::= Regular Expression option (ctor-options)
+/// var         ::= [_a-z_a-Z] [_a-z_a-Z0-9]*
+/// int         ::= [0-9]+
+/// text        ::= .*
+/// if            ::= text
+/// else        ::= text
+/// 
+/// Completion Item Resolve Request (:leftwards_arrow_with_hook:)
+/// 
+/// The request is sent from the client to the server to resolve additional information for a given completion item.
+/// 
+/// Request:
+/// 
+///     method: completion_item/resolve
+///     params: CompletionItem
+/// 
+/// Response:
+/// 
+///     result: CompletionItem
+///     error: code and message set in case an exception happens during the completion resolve request.
+/// 
+/// PublishDiagnostics Notification (:arrow_left:)
+/// 
+/// Diagnostics notification are sent from the server to the client to signal results of validation runs.
+/// 
+/// Diagnostics are “owned” by the server so it is the server’s responsibility to clear them if necessary. The following rule is used for VS Code servers that generate diagnostics:
+/// 
+///     if a language is single file only (for example HTML) then diagnostics are cleared by the server when the file is closed. Please note that open / close events don’t necessarily reflect what the user sees in the user struct. These events are ownership events. So with the current version of the specification it is possible that problems are not cleared although the file is not visible in the user interface since the client has not closed the file yet.
+///     if a language has a project system (for example C#) diagnostics are not cleared when a file closes. When a project is opened all diagnostics for all files are recomputed (or read from a cache).
+/// 
+/// When a file changes it is the server’s responsibility to re-compute diagnostics and push them to the client. If the computed set is empty it has to push the empty array to clear former diagnostics. Newly pushed diagnostics always replace previously pushed diagnostics. There is no merging that happens on the client side.
+/// 
+/// See also the Diagnostic section.
+/// 
+/// Client Capability:
+/// 
+///     property name (optional): text_document.publish_diagnostics
+///     property type: PublishDiagnosticsClientCapabilities defined as follows:
+
+struct LspPublishDiagnosticsClientCapabilities {
+
+    /// Whether the clients accepts diagnostics with related information.
+    ////
+    bool related_information;
+
+    /// Client supports the tag property to provide meta data about a diagnostic.
+    /// Clients supporting tags have to handle unknown tags gracefully.
+    @api(3.15)
+    tag_support: {
+
+        /// The tags supported by the client.
+        ////
+        LspDiagnosticTag[] value_set;
+    };
+
+    /// Whether the client interprets the version property of the
+    /// `text_document/publish_diagnostics` notification's parameter.
+    @api(3.15)
+    bool version_support;
+
+    /// Client supports a code_description property
+    @api(3.16)
+    bool code_description_support;
+
+    /// Whether code action supports the `data` property which is
+    /// preserved between a `text_document/publish_diagnostics` and
+    /// `text_document/code_action` request.
+    @api(3.16)
+    bool data_support;
+}
+
+/// Notification:
+/// 
+///     method: text_document/publish_diagnostics
+///     params: PublishDiagnosticsParams defined as follows:
+
+struct LspPublishDiagnosticsParams {
+
+    /// The URI for which diagnostic information is reported.
+    LspDocumentUri uri;
+
+    /// Optional the version number of the document the diagnostics are published
+    /// for.
+    @api(3.15)
+    integer version;
+
+    /// An array of diagnostic information items.
+    ////
+    LspDiagnostic[] diagnostics;
+}
+
+/// Pull Diagnostics
+/// 
+/// Diagnostics are currently published by the server to the client using a notification. This model has the advantage that for workspace wide diagnostics the server has the freedom to compute them at a server preferred point in time. On the other hand the approach has the disadvantage that the server can’t prioritize the computation for the file in which the user types or which are visible in the editor. Inferring the client’s UI state from the text_document/did_open and text_document/did_change notifications might lead to false positives since these notifications are ownership transfer notifications.
+/// 
+/// The specification therefore introduces the concept of diagnostic pull requests to give a client more control over the documents for which diagnostics should be computed and at which point in time.
+/// 
+/// Client Capability:
+/// 
+///     property name (optional): text_document.diagnostic
+///     property type: DiagnosticClientCapabilities defined as follows:
+
+
+/// Client capabilities specific to diagnostic pull requests.
+@api(3.17)
+struct LspDiagnosticClientCapabilities {
+
+    /// Whether implementation supports dynamic registration. If this is set to
+    /// `true` the client supports the new
+    /// `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
+    /// return value for the corresponding server capability as well.
+    bool dynamic_registration;
+
+    /// Whether the clients supports related documents for document diagnostic
+    /// pulls.
+    bool related_document_support;
+}
+
+/// Server Capability:
+/// 
+///     property name (optional): diagnostic_provider
+///     property type: DiagnosticOptions defined as follows:
+
+
+/// Diagnostic options.
+@api(3.17)
+struct LspDiagnosticOptions extends LspWorkDoneProgressOptions {
+
+    /// An optional identifier under which the diagnostics are
+    /// managed by the client.
+    String identifier;
+
+    /// Whether the language has inter file dependencies meaning that
+    /// editing code in one file can result in a different diagnostic
+    /// set in another file. Inter file dependencies are common for
+    /// most programming languages and typically uncommon for linters.
+    bool inter_file_dependencies;
+
+    /// The server provides support for workspace diagnostics as well.
+    bool workspace_diagnostics;
+}
+
+/// Registration Options: DiagnosticRegistrationOptions options defined as follows:
+
+
+/// Diagnostic registration options.
+///
+@api(3.17)
+////
+struct LspDiagnosticRegistrationOptions extends
+    LspTextDocumentRegistrationOptions, LspDiagnosticOptions,
+    LspStaticRegistrationOptions {
+}
+
+/// Document Diagnostics(:leftwards_arrow_with_hook:)
+/// 
+/// The text document diagnostic request is sent from the client to the server to ask the server to compute the diagnostics for a given document. As with other pull requests the server is asked to compute the diagnostics for the currently synced version of the document.
+/// 
+/// Request:
+/// 
+///     method: ‘text_document/diagnostic’.
+///     params: DocumentDiagnosticParams defined as follows:
+
+
+/// Parameters of the document diagnostic request.
+///
+@api(3.17)
+////
+struct LspDocumentDiagnosticParams extends LspWorkDoneProgressParams,
+    LspPartialResultParams {
+
+    /// The text document.
+    LspTextDocumentIdentifier text_document;
+
+    /// The additional identifier  provided during registration.
+    String identifier;
+
+    /// The result id of a previous response if provided.
+    String previous_result_id;
+}
+
+/// Response:
+/// 
+///     result: DocumentDiagnosticReport defined as follows:
+
+
+/// The result of a document diagnostic pull request. A report can
+/// either be a full report containing all diagnostics for the
+/// requested document or a unchanged report indicating that nothing
+/// has changed in terms of diagnostics in comparison to the last
+/// pull request.
+@api(3.17)
+type LspDocumentDiagnosticReport = LspRelatedFullDocumentDiagnosticReport
+    | LspRelatedUnchangedDocumentDiagnosticReport;
+
+
+/// The document diagnostic report kinds.
+@api(3.17)
+namespace LspDocumentDiagnosticReportKind {
+
+    /// A diagnostic report with a full
+    /// set of problems.
+    export const Full = 'full';
+
+    /// A report indicating that the last
+    /// returned report is still accurate.
+    export const Unchanged = 'unchanged';
+}
+
+type LspDocumentDiagnosticReportKind = 'full' | 'unchanged';
+
+
+/// A diagnostic report with a full set of problems.
+@api(3.17)
+struct LspFullDocumentDiagnosticReport {
+
+    /// A full document diagnostic report.
+    LspDocumentDiagnosticReportKind.Full kind;
+
+    /// An optional result id. If provided it will
+    /// be sent on the next diagnostic request for the
+    /// same document.
+    String result_id;
+
+    /// The actual items.
+    LspDiagnostic[] items;
+}
+
+
+/// A diagnostic report indicating that the last returned
+/// report is still accurate.
+@api(3.17)
+struct LspUnchangedDocumentDiagnosticReport {
+
+    /// A document diagnostic report indicating
+    /// no changes to the last result. A server can
+    /// only return `unchanged` if result ids are
+    /// provided.
+    LspDocumentDiagnosticReportKind.Unchanged kind;
+
+
+    /// A result id which will be sent on the next
+    /// diagnostic request for the same document.
+    String result_id;
+}
+
+
+/// A full diagnostic report with a set of related documents.
+@api(3.17)
+struct LspRelatedFullDocumentDiagnosticReport extends
+    LspFullDocumentDiagnosticReport {
+
+    /// Diagnostics of related documents. This information is useful
+    /// in programming languages where code in a file A can generate
+    /// diagnostics in a file B which A depends on. An example of
+    /// such a language is C/C++ where marco definitions in a file
+    /// a.cpp and result in errors in a header file b.hpp.
+    @api(3.17)
+    related_documents: {
+        [uri: String LspDocumentUri////]:
+            LspFullDocumentDiagnosticReport | LspUnchangedDocumentDiagnosticReport;
+    };
+}
+
+
+/// An unchanged diagnostic report with a set of related documents.
+@api(3.17)
+struct LspRelatedUnchangedDocumentDiagnosticReport extends
+    LspUnchangedDocumentDiagnosticReport {
+
+    /// Diagnostics of related documents. This information is useful
+    /// in programming languages where code in a file A can generate
+    /// diagnostics in a file B which A depends on. An example of
+    /// such a language is C/C++ where marco definitions in a file
+    /// a.cpp and result in errors in a header file b.hpp.
+    @api(3.17)
+    related_documents: {
+        [uri: String LspDocumentUri////]:
+            LspFullDocumentDiagnosticReport | LspUnchangedDocumentDiagnosticReport;
+    };
+}
+
+    partial result: The first literal send need to be a DocumentDiagnosticReport followed by n DocumentDiagnosticReportPartialResult literals defined as follows:
+
+
+/// A partial result for a document diagnostic report.
+@api(3.17)
+struct LspDocumentDiagnosticReportPartialResult {
+    related_documents: {
+        [uri: String LspDocumentUri////]:
+            LspFullDocumentDiagnosticReport | LspUnchangedDocumentDiagnosticReport;
+    };
+}
+
+    error: code and message set in case an exception happens during the diagnostic request. A server is also allowed to return an error with code ServerCancelled indicating that the server can’t compute the result right now. A server can return a DiagnosticServerCancellationData data to indicate whether the client should re-trigger the request. If no data is provided it defaults to { retrigger_request: true }:
+
+
+/// Cancellation data returned from a diagnostic request.
+@api(3.17)
+struct LspDiagnosticServerCancellationData {
+    bool retrigger_request;
+}
+
+/// Workspace Diagnostics(:leftwards_arrow_with_hook:)
+/// 
+/// The workspace diagnostic request is sent from the client to the server to ask the server to compute workspace wide diagnostics which previously where pushed from the server to the client. In contrast to the document diagnostic request the workspace request can be long running and is not bound to a specific workspace or document state. If the client supports streaming for the workspace diagnostic pull it is legal to provide a document diagnostic report multiple times for the same document URI. The last one reported will win over previous reports.
+/// 
+/// If a client receives a diagnostic report for a document in a workspace diagnostic request for which the client also issues individual document diagnostic pull requests the client needs to decide which diagnostics win and should be presented. In general:
+/// 
+///     diagnostics for a higher document version should win over those from a lower document version (e.g. note that document versions are steadily increasing)
+///     diagnostics from a document pull should win over diagnostics form a workspace pull if no version information is provided.
+/// 
+/// Request:
+/// 
+///     method: ‘workspace/diagnostic’.
+///     params: WorkspaceDiagnosticParams defined as follows:
+
+
+/// Parameters of the workspace diagnostic request.
+@api(3.17)
+struct LspWorkspaceDiagnosticParams extends LspWorkDoneProgressParams,
+    LspPartialResultParams {
+
+    /// The additional identifier provided during registration.
+    String identifier;
+
+    /// The currently known diagnostic reports with their
+    /// previous result ids.
+    LspPreviousResultId[] previous_result_ids;
+}
+
+
+/// A previous result id in a workspace pull request.
+@api(3.17)
+struct LspPreviousResultId {
+
+    /// The URI for which the client knows a
+    /// result id.
+    LspDocumentUri uri;
+
+    /// The value of the previous result id.
+    String value;
+}
+
+/// Response:
+/// 
+///     result: WorkspaceDiagnosticReport defined as follows:
+
+
+/// A workspace diagnostic report.
+@api(3.17)
+struct LspWorkspaceDiagnosticReport {
+    LspWorkspaceDocumentDiagnosticReport[] items;
+}
+
+
+/// A full document diagnostic report for a workspace diagnostic result.
+@api(3.17)
+struct LspWorkspaceFullDocumentDiagnosticReport extends
+    LspFullDocumentDiagnosticReport {
+
+    /// The URI for which diagnostic information is reported.
+    LspDocumentUri uri;
+
+    /// The version number for which the diagnostics are reported.
+    /// If the document is not marked as open `null` can be provided.
+    integer | null version;
+}
+
+
+/// An unchanged document diagnostic report for a workspace diagnostic result.
+@api(3.17)
+struct LspWorkspaceUnchangedDocumentDiagnosticReport extends
+    LspUnchangedDocumentDiagnosticReport {
+
+    /// The URI for which diagnostic information is reported.
+    LspDocumentUri uri;
+
+    /// The version number for which the diagnostics are reported.
+    /// If the document is not marked as open `null` can be provided.
+    integer | null version;
+};
+
+
+/// A workspace diagnostic document report.
+@api(3.17)
+type LspWorkspaceDocumentDiagnosticReport =
+    LspWorkspaceFullDocumentDiagnosticReport
+    | LspWorkspaceUnchangedDocumentDiagnosticReport;
+
+    partial result: The first literal send need to be a WorkspaceDiagnosticReport followed by n DocumentDiagnosticReportPartialResult literals defined as follows:
+
+
+/// A partial result for a workspace diagnostic report.
+@api(3.17)
+struct LspWorkspaceDiagnosticReportPartialResult {
+    LspWorkspaceDocumentDiagnosticReport[] items;
+}
+
+///     error: code and message set in case an exception happens during the diagnostic request. A server is also allowed to return and error with code ServerCancelled indicating that the server can’t compute the result right now. A server can return a DiagnosticServerCancellationData data to indicate whether the client should re-trigger the request. If no data is provided it defaults to { retrigger_request: true }:
+/// 
+/// Diagnostics Refresh(:arrow_right_hook:)
+/// 
+/// The workspace/diagnostic/refresh request is sent from the server to the client. Servers can use it to ask clients to refresh all needed document and workspace diagnostics. This is useful if a server detects a project wide configuration change which requires a re-calculation of all diagnostics.
+/// 
+/// Client Capability:
+/// 
+///     property name (optional): workspace.diagnostics
+///     property type: DiagnosticWorkspaceClientCapabilities defined as follows:
+
+
+/// Workspace client capabilities specific to diagnostic pull requests.
+@api(3.17)
+struct LspDiagnosticWorkspaceClientCapabilities {
+
+    /// Whether the client implementation supports a refresh request sent from
+    /// the server to the client.
+    ///
+    /// Note that this event is global and will force the client to refresh all
+    /// pulled diagnostics currently shown. It should be used with absolute care
+    /// and is useful for situation where a server for example detects a project
+    /// wide change that requires such a calculation.
+    bool refresh_support;
+}
+
+/// Request:
+/// 
+///     method: workspace/diagnostic/refresh
+///     params: none
+/// 
+/// Response:
+/// 
+///     result: void
+///     error: code and message set in case an exception happens during the ‘workspace/diagnostic/refresh’ request
+/// 
+/// Implementation Considerations
+/// 
+/// Generally the language server specification doesn’t enforce any specific client implementation since those usually depend on how the client UI behaves. However since diagnostics can be provided on a document and workspace level here are some tips:
+/// 
+///     a client should pull actively for the document the users types in.
+///     if the server signals inter file dependencies a client should also pull for visible documents to ensure accurate diagnostics. However the pull should happen less frequently.
+///     if the server signals workspace pull support a client should also pull for workspace diagnostics. It is recommended for clients to implement partial result progress for the workspace pull to allow servers to keep the request open for a long time. If a server closes a workspace diagnostic pull request the client should re-trigger the request.
+/// 
+/// Signature Help Request (:leftwards_arrow_with_hook:)
+/// 
+/// The signature help request is sent from the client to the server to request signature information at a given cursor position.
+/// 
+/// Client Capability:
+/// 
+///     property name (optional): text_document.signature_help
+///     property type: SignatureHelpClientCapabilities defined as follows:
+
+struct LspSignatureHelpClientCapabilities {
+
+    /// Whether signature help supports dynamic registration.
+    bool dynamic_registration;
+
+    /// The client supports the following `SignatureInformation`
+    /// specific properties.
+    signature_information: {
+
+        /// Client supports the follow content formats for the documentation
+        /// property. The order describes the preferred format of the client.
+        LspMarkupKind[] documentation_format;
+
+        /// Client capabilities specific to parameter information.
+        parameter_information: {
+
+            /// The client supports processing label offsets instead of a
+            /// simple label String.
+            @api(3.14)
+            bool label_offset_support;
+        };
+
+        /// The client supports the `active_parameter` property on
+        /// `SignatureInformation` literal.
+        @api(3.16)
+        bool active_parameter_support;
+    };
+
+    /// The client supports to send additional context information for a
+    /// `text_document/signature_help` request. A client that opts into
+    /// context_support will also support the `retrigger_characters` on
+    /// `SignatureHelpOptions`.
+    @api(3.15)
+    bool context_support;
+}
+
+/// Server Capability:
+/// 
+///     property name (optional): signature_help_provider
+///     property type: SignatureHelpOptions defined as follows:
+
+struct LspSignatureHelpOptions extends LspWorkDoneProgressOptions {
+
+    /// The characters that trigger signature help
+    /// automatically.
+    String[] trigger_characters;
+
+    /// List of characters that re-trigger signature help.
+    ///
+    /// These trigger characters are only active when signature help is already
+    /// showing. All trigger characters are also counted as re-trigger
+    /// characters.
+    @api(3.15)
+    String[] retrigger_characters;
+}
+
+/// Registration Options: SignatureHelpRegistrationOptions defined as follows:
+
+struct LspSignatureHelpRegistrationOptions
+    extends LspTextDocumentRegistrationOptions, LspSignatureHelpOptions {
+}
+
+/// Request:
+/// 
+///     method: text_document/signature_help
+///     params: SignatureHelpParams defined as follows:
+
+struct LspSignatureHelpParams extends LspTextDocumentPositionParams,
+    LspWorkDoneProgressParams {
+
+    /// The signature help context. This is only available if the client
+    /// specifies to send this using the client capability
+    /// `text_document.signature_help.context_support === true`
+    @api(3.15)
+    LspSignatureHelpContext context;
+}
+
+
+/// How a signature help was triggered.
+@api(3.15)
+namespace LspSignatureHelpTriggerKind {
+
+    /// Signature help was invoked manually by the user or by a command.
+    export const 1 = 1 Invoked;
+
+    /// Signature help was triggered by a trigger character.
+    export const 2 = 2 TriggerCharacter;
+
+    /// Signature help was triggered by the cursor moving or by the document
+    /// content changing.
+    export const 3 = 3 ContentChange;
+}
+type LspSignatureHelpTriggerKind = 1 | 2 | 3;
+
+
+/// Additional information about the context in which a signature help request
+/// was triggered.
+///
+@api(3.15)
+////
+struct LspSignatureHelpContext {
+
+    /// Action that caused signature help to be triggered.
+    LspSignatureHelpTriggerKind trigger_kind;
+
+    /// Character that caused signature help to be triggered.
+    ///
+    /// This is undefined when trigger_kind !==
+    /// SignatureHelpTriggerKind.TriggerCharacter
+    String trigger_character;
+
+
+    /// `true` if signature help was already showing when it was triggered.
+    ///
+    /// Retriggers occur when the signature help is already active and can be
+    /// caused by actions such as typing a trigger character, a cursor move, or
+    /// document content changes.
+    bool is_retrigger;
+
+
+    /// The currently active `SignatureHelp`.
+    ///
+    /// The `active_signature_help` has its `SignatureHelp.active_signature` field
+    /// updated based on the user navigating through available signatures.
+    LspSignatureHelp active_signature_help;
+}
+
+/// Response:
+/// 
+///     result: SignatureHelp | null defined as follows:
+
+
+/// Signature help represents the signature of something
+/// callable. There can be multiple signature but only one
+/// active and only one active parameter.
+////
+struct LspSignatureHelp {
+
+    /// One or more signatures. If no signatures are available the signature help
+    /// request should return `null`.
+    LspSignatureInformation[] signatures;
+
+
+    /// The active signature. If omitted or the value lies outside the
+    /// range of `signatures` the value defaults to zero or is ignore if
+    /// the `SignatureHelp` as no signatures.
+    ///
+    /// Whenever possible implementors should make an active decision about
+    /// the active signature and shouldn't rely on a default value.
+    ///
+    /// In future version of the protocol this property might become
+    /// mandatory to better express this.
+    u32 active_signature;
+
+    /// The active parameter of the active signature. If omitted or the value
+    /// lies outside the range of `signatures[active_signature].parameters`
+    /// defaults to 0 if the active signature has parameters. If
+    /// the active signature has no parameters it is ignored.
+    /// In future version of the protocol this property might become
+    /// mandatory to better express the active parameter if the
+    /// active signature does have any.
+    u32 active_parameter;
+}
+
+
+/// Represents the signature of something callable. A signature
+/// can have a label, like a function-name, a doc-comment, and
+/// a set of parameters.
+struct LspSignatureInformation {
+
+    /// The label of this signature. Will be shown in
+    /// the UI.
+    String label;
+
+    /// The human-readable doc-comment of this signature. Will be shown
+    /// in the UI but can be omitted.
+    String | LspMarkupContent documentation;
+
+    /// The parameters of this signature.
+    LspParameterInformation[] parameters;
+
+    /// The index of the active parameter.
+    ///
+    /// If provided, this is used in place of `SignatureHelp.active_parameter`.
+    @api(3.16)
+    u32 active_parameter;
+}
+
+
+/// Represents a parameter of a callable-signature. A parameter can
+/// have a label and a doc-comment.
+////
+struct LspParameterInformation {
+
+    /// The label of this parameter information.
+    ///
+    /// Either a String or an inclusive start and exclusive end offsets within
+    /// its containing signature label. (see SignatureInformation.label). The
+    /// offsets are based on a UTF-16 String representation as `Position` and
+    /// `Range` does.
+    ///
+    /// *Note*: a label of type String should be a substring of its containing
+    /// signature label. Its intended use case is to highlight the parameter
+    /// label part in the `SignatureInformation.label`.
+    String | [u32, u32] label;
+
+    /// The human-readable doc-comment of this parameter. Will be shown
+    /// in the UI but can be omitted.
+    String | LspMarkupContent documentation;
+}
+
+///     error: code and message set in case an exception happens during the signature help request.
+/// 
+/// Code Action Request (:leftwards_arrow_with_hook:)
+/// 
+/// The code action request is sent from the client to the server to compute commands for a given text document and range. These commands are typically code fixes to either fix problems or to beautify/refactor code. The result of a text_document/code_action request is an array of Command literals which are typically presented in the user struct. To ensure that a server is useful in many clients the commands specified in a code actions should be handled by the server and not by the client (see workspace/execute_command and ServerCapabilities.execute_command_provider). If the client supports providing edits with a code action then that mode should be used.
+/// 
+/// Since version 3.16.0: a client can offer a server to delay the computation of code action properties during a ‘text_document/code_action’ request:
+/// 
+/// This is useful for cases where it is expensive to compute the value of a property (for example the edit property). Clients signal this through the code_action.resolve_support capability which lists all properties a client can resolve lazily. The server capability code_action_provider.resolve_provider signals that a server will offer a code_action/resolve route. To help servers to uniquely identify a code action in the resolve request, a code action literal can optional carry a data property. This is also guarded by an additional client capability code_action.data_support. In general, a client should offer data support if it offers resolve support. It should also be noted that servers shouldn’t alter existing attributes of a code action in a code_action/resolve request.
+/// 
+///     Since version 3.8.0: support for CodeAction literals to enable the following scenarios:
+/// 
+///     the ability to directly return a workspace edit from the code action request. This avoids having another server roundtrip to execute an actual code action. However server providers should be aware that if the code action is expensive to compute or the edits are huge it might still be beneficial if the result is simply a command and the actual edit is only computed when needed.
+///     the ability to group code actions using a kind. Clients are allowed to ignore that information. However it allows them to better group code action for example into corresponding menus (e.g. all refactor code actions into a refactor menu).
+/// 
+/// Clients need to announce their support for code action literals (e.g. literals of type CodeAction) and code action kinds via the corresponding client capability code_action.code_action_literal_support.
+/// 
+/// Client Capability:
+/// 
+///     property name (optional): text_document.code_action
+///     property type: CodeActionClientCapabilities defined as follows:
+
+struct LspCodeActionClientCapabilities {
+
+    /// Whether code action supports dynamic registration.
+    bool dynamic_registration;
+
+    /// The client supports code action literals as a valid
+    /// response of the `text_document/code_action` request.
+    @api(3.8)
+    code_action_literal_support: {
+
+        /// The code action kind is supported with the following value
+        /// set.
+        code_action_kind: {
+
+            /// The code action kind values the client supports. When this
+            /// property exists the client also guarantees that it will
+            /// handle values outside its set gracefully and falls back
+            /// to a default value when unknown.
+            LspCodeActionKind[] value_set;
+        };
+    };
+
+
+    /// Whether code action supports the `is_preferred` property.
+    @api(3.15)
+    bool is_preferred_support;
+
+
+    /// Whether code action supports the `disabled` property.
+    ///
+    @api(3.16)
+    ////
+    bool disabled_support;
+
+
+    /// Whether code action supports the `data` property which is
+    /// preserved between a `text_document/code_action` and a
+    /// `code_action/resolve` request.
+    ///
+    @api(3.16)
+    ////
+    bool data_support;
+
+
+
+    /// Whether the client supports resolving additional code action
+    /// properties via a separate `code_action/resolve` request.
+    ///
+    @api(3.16)
+    ////
+    resolve_support: {
+
+        /// The properties that a client can resolve lazily.
+        ////
+        String[] properties;
+    };
+
+
+    /// Whether the client honors the change annotations in
+    /// text edits and resource operations returned via the
+    /// `CodeAction#edit` property by for example presenting
+    /// the workspace edit in the user struct and asking
+    /// for confirmation.
+    ///
+    @api(3.16)
+    ////
+    bool honors_change_annotations;
+}
+
+/// Server Capability:
+/// 
+///     property name (optional): code_action_provider
+///     property type: bool | CodeActionOptions where CodeActionOptions is defined as follows:
+
+struct LspCodeActionOptions extends LspWorkDoneProgressOptions {
+
+    /// CodeActionKinds that this server may return.
+    ///
+    /// The list of kinds may be generic, such as `CodeActionKind.Refactor`,
+    /// or the server may list out every specific kind they provide.
+    ////
+    LspCodeActionKind[] code_action_kinds;
+
+
+    /// The server provides support to resolve additional
+    /// information for a code action.
+    ///
+    @api(3.16)
+    ////
+    bool resolve_provider;
+}
+
+/// Registration Options: CodeActionRegistrationOptions defined as follows:
+
+struct LspCodeActionRegistrationOptions extends
+    LspTextDocumentRegistrationOptions, LspCodeActionOptions {
+}
+
+/// Request:
+/// 
+///     method: text_document/code_action
+///     params: CodeActionParams defined as follows:
+
+
+/// Params for the CodeActionRequest
+////
+struct LspCodeActionParams extends LspWorkDoneProgressParams,
+    LspPartialResultParams {
+
+    /// The document in which the command was invoked.
+    ////
+    LspTextDocumentIdentifier text_document;
+
+
+    /// The range for which the command was invoked.
+    ////
+    LspRange range;
+
+
+    /// Context carrying additional information.
+    ////
+    LspCodeActionContext context;
+}
+
+
+/// The kind of a code action.
+///
+/// Kinds are a hierarchical list of identifiers separated by `.`,
+/// e.g. `"refactor.extract.function"`.
+///
+/// The set of kinds is open and client needs to announce the kinds it supports
+/// to the server during initialization.
+////
+type LspCodeActionKind = String;
+
+
+/// A set of predefined code action kinds.
+////
+namespace LspCodeActionKind {
+
+
+    /// Empty kind.
+    ////
+    export const CodeActionKind = '' Empty;
+
+
+    /// Base kind for quickfix actions: 'quickfix'.
+    ////
+    export const CodeActionKind = 'quickfix' QuickFix;
+
+
+    /// Base kind for refactoring actions: 'refactor'.
+    ////
+    export const CodeActionKind = 'refactor' Refactor;
+
+
+    /// Base kind for refactoring extraction actions: 'refactor.extract'.
+    ///
+    /// Example extract actions:
+    ///
+    /// - Extract method
+    /// - Extract function
+    /// - Extract variable
+    /// - Extract struct from class
+    /// - ...
+    ////
+    export const CodeActionKind = 'refactor.extract' RefactorExtract;
+
+
+    /// Base kind for refactoring inline actions: 'refactor.inline'.
+    ///
+    /// Example inline actions:
+    ///
+    /// - Inline function
+    /// - Inline variable
+    /// - Inline constant
+    /// - ...
+    ////
+    export const CodeActionKind = 'refactor.inline' RefactorInline;
+
+
+    /// Base kind for refactoring rewrite actions: 'refactor.rewrite'.
+    ///
+    /// Example rewrite actions:
+    ///
+    /// - Convert JavaScript function to class
+    /// - Add or remove parameter
+    /// - Encapsulate field
+    /// - Make method static
+    /// - Move method to base class
+    /// - ...
+    ////
+    export const CodeActionKind = 'refactor.rewrite' RefactorRewrite;
+
+
+    /// Base kind for source actions: `source`.
+    ///
+    /// Source code actions apply to the entire file.
+    ////
+    export const CodeActionKind = 'source' Source;
+
+
+    /// Base kind for an organize imports source action:
+    /// `source.organize_imports`.
+    ////
+    export const SourceOrganizeImports: CodeActionKind =
+        'source.organize_imports';
+
+
+    /// Base kind for a 'fix all' source action: `source.fix_all`.
+    ///
+    /// 'Fix all' actions automatically fix errors that have a clear fix that
+    /// do not require user input. They should not suppress errors or perform
+    /// unsafe fixes such as generating new types or classes.
+    ///
+    @api(3.17)
+    ////
+    export const CodeActionKind = 'source.fix_all' SourceFixAll;
+}
+
+
+/// Contains additional diagnostic information about the context in which
+/// a code action is run.
+////
+struct LspCodeActionContext {
+
+    /// An array of diagnostics known on the client side overlapping the range
+    /// provided to the `text_document/code_action` request. They are provided so
+    /// that the server knows which errors are currently presented to the user
+    /// for the given range. There is no guarantee that these accurately reflect
+    /// the error state of the resource. The primary parameter
+    /// to compute code actions is the provided range.
+    ////
+    LspDiagnostic[] diagnostics;
+
+
+    /// Requested kind of actions to return.
+    ///
+    /// Actions not of this kind are filtered out by the client before being
+    /// shown. So servers can omit computing them.
+    ////
+    LspCodeActionKind[] only;
+
+
+    /// The reason why code actions were requested.
+    ///
+    @api(3.17)
+    ////
+    LspCodeActionTriggerKind trigger_kind;
+}
+
+
+/// The reason why code actions were requested.
+///
+@api(3.17)
+////
+namespace LspCodeActionTriggerKind {
+
+    /// Code actions were explicitly requested by the user or by an extension.
+    ////
+    export const 1 = 1 Invoked;
+
+
+    /// Code actions were requested automatically.
+    ///
+    /// This typically happens when current selection in a file changes, but can
+    /// also be triggered when file content changes.
+    ////
+    export const 2 = 2 Automatic;
+}
+
+type LspCodeActionTriggerKind = 1 | 2;
+
+/// Response:
+/// 
+///     result: (Command | CodeAction)[] | null where CodeAction is defined as follows:
+
+
+/// A code action represents a change that can be performed in code, e.g. to fix
+/// a problem or to refactor code.
+///
+/// A CodeAction must set either `edit` and/or a `command`. If both are supplied,
+/// the `edit` is applied first, then the `command` is executed.
+////
+struct LspCodeAction {
+
+
+    /// A short, human-readable, title for this code action.
+    ////
+    String title;
+
+
+    /// The kind of the code action.
+    ///
+    /// Used to filter code actions.
+    ////
+    LspCodeActionKind kind;
+
+
+    /// The diagnostics that this code action resolves.
+    ////
+    LspDiagnostic[] diagnostics;
+
+
+    /// Marks this as a preferred action. Preferred actions are used by the
+    /// `auto fix` command and can be targeted by keybindings.
+    ///
+    /// A quick fix should be marked preferred if it properly addresses the
+    /// underlying error. A refactoring should be marked preferred if it is the
+    /// most reasonable choice of actions to take.
+    ///
+    @api(3.15)
+    ////
+    bool is_preferred;
+
+
+    /// Marks that the code action cannot currently be applied.
+    ///
+    /// Clients should follow the following guidelines regarding disabled code
+    /// actions:
+    ///
+    /// - Disabled code actions are not shown in automatic lightbulbs code
+    ///   action menus.
+    ///
+    /// - Disabled actions are shown as faded out in the code action menu when
+    ///   the user request a more specific type of code action, such as
+    ///   refactorings.
+    ///
+    /// - If the user has a keybinding that auto applies a code action and only
+    ///   a disabled code actions are returned, the client should show the user
+    ///   an error message with `reason` in the editor.
+    ///
+    @api(3.16)
+    ////
+    disabled: {
+
+
+        /// Human readable description of why the code action is currently
+        /// disabled.
+        ///
+        /// This is displayed in the code actions UI.
+        ////
+        String reason;
+    };
+
+
+    /// The workspace edit this code action performs.
+    ////
+    LspWorkspaceEdit edit;
+
+
+    /// A command this code action executes. If a code action
+    /// provides an edit and a command, first the edit is
+    /// executed and then the command.
+    ////
+    LspCommand command;
+
+
+    /// A data entry field that is preserved on a code action between
+    /// a `text_document/code_action` and a `code_action/resolve` request.
+    ///
+    @api(3.16)
+    ////
+    LSPAny data;
+}
+
+///     partial result: (Command | CodeAction)[]
+///     error: code and message set in case an exception happens during the code action request.
+/// 
+/// Code Action Resolve Request (:leftwards_arrow_with_hook:)
+/// 
+///     Since version 3.16.0
+/// 
+/// The request is sent from the client to the server to resolve additional information for a given code action. This is usually used to compute the edit property of a code action to avoid its unnecessary computation during the text_document/code_action request.
+/// 
+/// Consider the clients announces the edit property as a property that can be resolved lazy using the client capability
+/// 
+/// text_document.code_action.resolve_support = { ['edit'] } properties;
+/// 
+/// then a code action
+/// 
+/// {
+///     "title": "Do Foo"
+/// }
+/// 
+/// needs to be resolved using the code_action/resolve request before it can be applied.
+/// 
+/// Client Capability:
+/// 
+///     property name (optional): text_document.code_action.resolve_support
+///     property { String[] type properties; }
+/// 
+/// Request:
+/// 
+///     method: code_action/resolve
+///     params: CodeAction
+/// 
+/// Response:
+/// 
+///     result: CodeAction
+///     error: code and message set in case an exception happens during the code action resolve request.
+/// 
+/// Document Color Request (:leftwards_arrow_with_hook:)
+/// 
+///     Since version 3.6.0
+/// 
+/// The document color request is sent from the client to the server to list all color references found in a given text document. Along with the range, a color value in RGB is returned.
+/// 
+/// Clients can use the result to decorate color references in an editor. For example:
+/// 
+///     Color boxes showing the actual color next to the reference
+///     Show a color picker when a color reference is edited
+/// 
+/// Client Capability:
+/// 
+///     property name (optional): text_document.color_provider
+///     property type: DocumentColorClientCapabilities defined as follows:
+
+struct LspDocumentColorClientCapabilities {
+
+    /// Whether document color supports dynamic registration.
+    ////
+    bool dynamic_registration;
+}
+
+/// Server Capability:
+/// 
+///     property name (optional): color_provider
+///     property type: bool | DocumentColorOptions | DocumentColorRegistrationOptions where DocumentColorOptions is defined as follows:
+
+struct LspDocumentColorOptions extends LspWorkDoneProgressOptions {
+}
+
+/// Registration Options: DocumentColorRegistrationOptions defined as follows:
+
+struct LspDocumentColorRegistrationOptions extends
+    LspTextDocumentRegistrationOptions, LspStaticRegistrationOptions,
+    LspDocumentColorOptions {
+}
+
+/// Request:
+/// 
+///     method: text_document/document_color
+///     params: DocumentColorParams defined as follows
+
+struct LspDocumentColorParams extends LspWorkDoneProgressParams,
+    LspPartialResultParams {
+
+    /// The text document.
+    ////
+    LspTextDocumentIdentifier text_document;
+}
+
+/// Response:
+/// 
+///     result: ColorInformation[] defined as follows:
+
+struct LspColorInformation {
+
+    /// The range in the document where this color appears.
+    ////
+    LspRange range;
+
+
+    /// The actual color value for this color range.
+    ////
+    LspColor color;
+}
+
+
+/// Represents a color in RGBA space.
+////
+struct LspColor {
+
+
+    /// The red component of this color in the range [0-1].
+    ////
+    readonly decimal red;
+
+
+    /// The green component of this color in the range [0-1].
+    ////
+    readonly decimal green;
+
+
+    /// The blue component of this color in the range [0-1].
+    ////
+    readonly decimal blue;
+
+
+    /// The alpha component of this color in the range [0-1].
+    ////
+    readonly decimal alpha;
+}
+
+///     partial result: ColorInformation[]
+///     error: code and message set in case an exception happens during the ‘text_document/document_color’ request
+/// 
+/// Color Presentation Request (:leftwards_arrow_with_hook:)
+/// 
+///     Since version 3.6.0
+/// 
+/// The color presentation request is sent from the client to the server to obtain a list of presentations for a color value at a given location. Clients can use the result to
+/// 
+///     modify a color reference.
+///     show in a color picker and let users pick one of the presentations
+/// 
+/// This request has no special capabilities and registration options since it is send as a resolve request for the text_document/document_color request.
+/// 
+/// Request:
+/// 
+///     method: text_document/color_presentation
+///     params: ColorPresentationParams defined as follows
+
+struct LspColorPresentationParams extends LspWorkDoneProgressParams,
+    LspPartialResultParams {
+
+    /// The text document.
+    ////
+    LspTextDocumentIdentifier text_document;
+
+
+    /// The color information to request presentations for.
+    ////
+    LspColor color;
+
+
+    /// The range where the color would be inserted. Serves as a context.
+    ////
+    LspRange range;
+}
+
+/// Response:
+/// 
+///     result: ColorPresentation[] defined as follows:
+
+struct LspColorPresentation {
+
+    /// The label of this color presentation. It will be shown on the color
+    /// picker header. By default this is also the text that is inserted when
+    /// selecting this color presentation.
+    ////
+    String label;
+
+    /// An [edit](#TextEdit) which is applied to a document when selecting
+    /// this presentation for the color. When omitted the
+    /// [label](#ColorPresentation.label) is used.
+    ////
+    LspTextEdit text_edit;
+
+    /// An optional array of additional [text edits](#TextEdit) that are applied
+    /// when selecting this color presentation. Edits must not overlap with the
+    /// main [edit](#ColorPresentation.text_edit) nor with themselves.
+    ////
+    LspTextEdit[] additional_text_edits;
+}
+
+///     partial result: ColorPresentation[]
+///     error: code and message set in case an exception happens during the ‘text_document/color_presentation’ request
+/// 
+/// Document Formatting Request (:leftwards_arrow_with_hook:)
+/// 
+/// The document formatting request is sent from the client to the server to format a whole document.
+/// 
+/// Client Capability:
+/// 
+///     property name (optional): text_document.formatting
+///     property type: DocumentFormattingClientCapabilities defined as follows:
+
+struct LspDocumentFormattingClientCapabilities {
+
+    /// Whether formatting supports dynamic registration.
+    bool dynamic_registration;
+}
+
+/// Server Capability:
+/// 
+///     property name (optional): document_formatting_provider
+///     property type: bool | DocumentFormattingOptions where DocumentFormattingOptions is defined as follows:
+
+struct LspDocumentFormattingOptions extends LspWorkDoneProgressOptions {
+}
+
+/// Registration Options: DocumentFormattingRegistrationOptions defined as follows:
+
+struct LspDocumentFormattingRegistrationOptions extends
+    LspTextDocumentRegistrationOptions, LspDocumentFormattingOptions {
+}
+
+/// Request:
+/// 
+///     method: text_document/formatting
+///     params: DocumentFormattingParams defined as follows
+
+struct LspDocumentFormattingParams extends LspWorkDoneProgressParams {
+
+    /// The document to format.
+    LspTextDocumentIdentifier text_document;
+
+    /// The format options.
+    LspFormattingOptions options;
+}
+
+
+/// Value-object describing what options formatting should use.
+////
+struct LspFormattingOptions {
+
+    /// Size of a tab in spaces.
+    u32 tab_size;
+
+    /// Prefer spaces over tabs.
+    bool insert_spaces;
+
+    /// Trim trailing whitespace on a line.
+    @api(3.15)
+    bool trim_trailing_whitespace;
+
+    /// Insert a newline character at the end of the file if one does not exist.
+    @api(3.15)
+    bool insert_final_newline;
+
+    /// Trim all newlines after the final newline at the end of the file.
+    @api(3.15)
+    bool trim_final_newlines;
+
+    /// Signature for further properties.
+    [String]: bool | integer | string key;
+}
+
+/// Response:
+/// 
+///     result: TextEdit[] | null describing the modification to the document to be formatted.
+///     error: code and message set in case an exception happens during the formatting request.
+/// 
+/// Document Range Formatting Request (:leftwards_arrow_with_hook:)
+/// 
+/// The document range formatting request is sent from the client to the server to format a given range in a document.
+/// 
+/// Client Capability:
+/// 
+///     property name (optional): text_document.range_formatting
+///     property type: DocumentRangeFormattingClientCapabilities defined as follows:
+
+struct LspDocumentRangeFormattingClientCapabilities {
+
+    /// Whether formatting supports dynamic registration.
+    bool dynamic_registration;
+}
+
+/// Server Capability:
+/// 
+///     property name (optional): document_range_formatting_provider
+///     property type: bool | DocumentRangeFormattingOptions where DocumentRangeFormattingOptions is defined as follows:
+
+struct LspDocumentRangeFormattingOptions extends
+    LspWorkDoneProgressOptions {
+}
+
+/// Registration Options: DocumentFormattingRegistrationOptions defined as follows:
+
+struct LspDocumentRangeFormattingRegistrationOptions extends
+    LspTextDocumentRegistrationOptions, LspDocumentRangeFormattingOptions {
+}
+
+/// Request:
+/// 
+///     method: text_document/range_formatting,
+///     params: DocumentRangeFormattingParams defined as follows:
+
+struct LspDocumentRangeFormattingParams extends LspWorkDoneProgressParams {
+
+    /// The document to format.
+    LspTextDocumentIdentifier text_document;
+
+    /// The range to format
+    LspRange range;
+
+    /// The format options
+    LspFormattingOptions options;
+}
+
+/// Response:
+/// 
+///     result: TextEdit[] | null describing the modification to the document to be formatted.
+///     error: code and message set in case an exception happens during the range formatting request.
+/// 
+/// Document on Type Formatting Request (:leftwards_arrow_with_hook:)
+/// 
+/// The document on type formatting request is sent from the client to the server to format parts of the document during typing.
+/// 
+/// Client Capability:
+/// 
+///     property name (optional): text_document.on_type_formatting
+///     property type: DocumentOnTypeFormattingClientCapabilities defined as follows:
+
+struct LspDocumentOnTypeFormattingClientCapabilities {
+
+    /// Whether on type formatting supports dynamic registration.
+    bool dynamic_registration;
+}
+
+/// Server Capability:
+/// 
+///     property name (optional): document_on_type_formatting_provider
+///     property type: DocumentOnTypeFormattingOptions defined as follows:
+
+struct LspDocumentOnTypeFormattingOptions {
+
+    /// A character on which formatting should be triggered, like `{`.
+    String first_trigger_character;
+
+    /// More trigger characters.
+    String[] more_trigger_character;
+}
+
+/// Registration Options: DocumentOnTypeFormattingRegistrationOptions defined as follows:
+
+struct LspDocumentOnTypeFormattingRegistrationOptions extends
+    LspTextDocumentRegistrationOptions, LspDocumentOnTypeFormattingOptions {
+}
+
+/// Request:
+/// 
+///     method: text_document/on_type_formatting
+///     params: DocumentOnTypeFormattingParams defined as follows:
+
+struct LspDocumentOnTypeFormattingParams {
+
+    /// The document to format.
+    LspTextDocumentIdentifier text_document;
+
+    /// The position around which the on type formatting should happen.
+    /// This is not necessarily the exact position where the character denoted
+    /// by the property `ch` got typed.
+    LspPosition position;
+
+    /// The character that has been typed that triggered the formatting
+    /// on type request. That is not necessarily the last character that
+    /// got inserted into the document since the client could auto insert
+    /// characters as well (e.g. like automatic brace completion).
+    String ch;
+
+    /// The formatting options.
+    LspFormattingOptions options;
+}
+
+/// Response:
+/// 
+///     result: TextEdit[] | null describing the modification to the document.
+///     error: code and message set in case an exception happens during the range formatting request.
+/// 
+/// Rename Request (:leftwards_arrow_with_hook:)
+/// 
+/// The rename request is sent from the client to the server to ask the server to compute a workspace change so that the client can perform a workspace-wide rename of a symbol.
+/// 
+/// Client Capability:
+/// 
+///     property name (optional): text_document.rename
+///     property type: RenameClientCapabilities defined as follows:
+
+enum<u8> LspPrepareSupportDefaultBehavior {
+
+    /// The client's default behavior is to select the identifier
+    /// according to the language's syntax rule.
+    IDENTIFIER = 1;
+}
+
+type LspPrepareSupportDefaultBehavior = 1;
+
+struct LspRenameClientCapabilities {
+
+    /// Whether rename supports dynamic registration.
+    bool dynamic_registration;
+
+    /// Client supports testing for validity of rename operations
+    /// before execution.
+    @api(3.12)
+    bool prepare_support;
+
+    /// Client supports the default behavior result
+    /// (`{ default_behavior: bool }`).
+    ///
+    /// The value indicates the default behavior used by the
+    /// client.
+    @api(3.16)
+    LspPrepareSupportDefaultBehavior prepare_support_default_behavior;
+
+    /// Whether the client honors the change annotations in
+    /// text edits and resource operations returned via the
+    /// rename request's workspace edit by for example presenting
+    /// the workspace edit in the user struct and asking
+    /// for confirmation.
+    @api(3.16)
+    bool honors_change_annotations;
+}
+
+/// Server Capability:
+/// 
+///     property name (optional): rename_provider
+///     property type: bool | RenameOptions where RenameOptions is defined as follows:
+/// 
+/// RenameOptions may only be specified if the client states that it supports prepare_support in its initial initialize request.
+
+struct LspRenameOptions extends LspWorkDoneProgressOptions {
+
+    /// Renames should be checked and tested before being executed.
+    bool prepare_provider;
+}
+
+/// Registration Options: RenameRegistrationOptions defined as follows:
+
+struct LspRenameRegistrationOptions extends
+    LspTextDocumentRegistrationOptions, LspRenameOptions {
+}
+
+/// Request:
+/// 
+///     method: text_document/rename
+///     params: RenameParams defined as follows
+
+struct LspRenameParams extends LspTextDocumentPositionParams,
+    LspWorkDoneProgressParams {
+
+    /// The new name of the symbol. If the given name is not valid the
+    /// request must return a [ResponseError](#ResponseError) with an
+    /// appropriate message set.
+    String new_name;
+}
+
+/// Response:
+/// 
+///     result: WorkspaceEdit | null describing the modification to the workspace. null should be treated the same was as WorkspaceEdit with no changes (no change was required).
+///     error: code and message set in case when rename could not be performed for any reason. Examples include: there is nothing at given position to rename (like a space), given symbol does not support renaming by the server or the code is invalid (e.g. does not compile).
+/// 
+/// Prepare Rename Request (:leftwards_arrow_with_hook:)
+/// 
+///     Since version 3.12.0
+/// 
+/// The prepare rename request is sent from the client to the server to setup and test the validity of a rename operation at a given location.
+/// 
+/// Request:
+/// 
+///     method: text_document/prepare_rename
+///     params: PrepareRenameParams defined as follows:
+
+struct LspPrepareRenameParams extends LspTextDocumentPositionParams, LspWorkDoneProgressParams {
+}
+
+/// Response:
+/// 
+///     result: Range | { range: Range, placeholder: String } | { default_behavior: bool } | null describing a Range of the string to rename and optionally a placeholder text of the string content to be renamed. If { default_behavior: bool } is returned (since 3.16) the rename position is valid and the client should use its default behavior to compute the rename range. If null is returned then it is deemed that a ‘text_document/rename’ request is not valid at the given position.
+///     error: code and message set in case the element can’t be renamed. Clients should show the information in their user struct.
+/// 
+/// Linked Editing Range(:leftwards_arrow_with_hook:)
+/// 
+///     Since version 3.16.0
+/// 
+/// The linked editing request is sent from the client to the server to return for a given position in a document the range of the symbol at the position and all ranges that have the same content. Optionally a word pattern can be returned to describe valid contents. A rename to one of the ranges can be applied to all other ranges if the new content is valid. If no result-specific word pattern is provided, the word pattern from the client’s language configuration is used.
+/// 
+/// Client Capabilities:
+/// 
+///     property name (optional): text_document.linked_editing_range
+///     property type: LinkedEditingRangeClientCapabilities defined as follows:
+
+struct LspLinkedEditingRangeClientCapabilities {
+
+    /// Whether the implementation supports dynamic registration.
+    /// If this is set to `true` the client supports the new
+    /// `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
+    /// return value for the corresponding server capability as well.
+    bool dynamic_registration;
+}
+
+/// Server Capability:
+/// 
+///     property name (optional): linked_editing_range_provider
+///     property type: bool | LinkedEditingRangeOptions | LinkedEditingRangeRegistrationOptions defined as follows:
+
+struct LspLinkedEditingRangeOptions extends LspWorkDoneProgressOptions {
+}
+
+/// Registration Options: LinkedEditingRangeRegistrationOptions defined as follows:
+
+struct LspLinkedEditingRangeRegistrationOptions extends
+    LspTextDocumentRegistrationOptions, LspLinkedEditingRangeOptions,
+    LspStaticRegistrationOptions {
+}
+
+/// Request:
+/// 
+///     method: text_document/linked_editing_range
+///     params: LinkedEditingRangeParams defined as follows:
+
+struct LspLinkedEditingRangeParams extends LspTextDocumentPositionParams,
+    LspWorkDoneProgressParams {
+}
+
+/// Response:
+/// 
+///     result: LinkedEditingRanges | null defined as follows:
+
+struct LspLinkedEditingRanges {
+
+    /// A list of ranges that can be renamed together. The ranges must have
+    /// identical length and contain identical text content. The ranges cannot
+    /// overlap.
+    LspRange[] ranges;
+
+    /// An optional word pattern (regular expression) that describes valid
+    /// contents for the given ranges. If no pattern is provided, the client
+    /// configuration's word pattern will be used.
+    String word_pattern;
+}
+
+///     error: code and message set in case an exception happens during the ‘text_document/linked_editing_range’ request

@@ -1,0 +1,29 @@
+
+
+/// An `Annotation` is a source code annotation attatched to AST objects.
+class Annotation {
+    StringView name;
+    Vector<AnnotationParameter *> parameters;
+}
+
+
+enum<Annotation> Annotation {
+
+    // `@api(MAJOR.MINOR)`
+    API;
+
+    // `@deprecated(MAJOR)`
+    DEPRECATED;
+
+    // `@internal`
+    INTERNAL;
+
+    // `@shared`
+    SHARED;
+
+    // `@debug`
+    DEBUG;
+
+    // `@ignored`
+    IGNORED;
+}

@@ -1,0 +1,6 @@
+
+
+/// This logical device represents the functions associated with queuing up and processing alerts, and alert policies that determine which destinations an alert will be sent to.
+interface IpmiAlertProcessingDevice {
+
+}

@@ -1,0 +1,26 @@
+
+
+interface I3cGadget {
+
+
+    I3cAddress address(safe);
+
+
+    /// Return the capabilities information. Not every I2C controller will implementa all capabilities.
+    /// This is provided to allow software to determine what is available.
+    I3cCapabilities capabilities(safe);
+
+
+    Task<u32> on_read(u8 *data, u32 size);
+
+
+    Task<u32> on_read(Slice<u8> data) =>
+        read(data.data(), data.size());
+
+
+    Task<u32> on_write(const u8 *data, u32 size);
+
+
+    Task<u32> on_write(Slice<const u8> data) =>
+        write(data.data(), data.size());
+}

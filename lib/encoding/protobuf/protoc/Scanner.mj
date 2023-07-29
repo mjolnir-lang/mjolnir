@@ -1,0 +1,16 @@
+import protobuf.ast.Token;
+
+
+class Scanner {
+    Path &path;
+
+
+    Scanner(Path &'path) {
+        this.path = path;
+    }
+
+
+    Token &next()? {
+        ;
+    }
+}

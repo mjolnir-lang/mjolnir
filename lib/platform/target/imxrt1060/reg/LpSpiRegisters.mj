@@ -1,0 +1,805 @@
+
+
+struct LpSpiRegisters {
+
+
+    // Version ID
+    //
+    // Contains version numbers for the module design and feature set.
+    @offset(0x00)
+    const volatile bitfield<u32> {
+
+        // Module Identification Number
+        //
+        // Indicates the feature set number.
+        //
+        // 4 - Standard feature set supporting a 32-bit shift register. All other values are reserved.
+        [0:16] FEATURE;
+
+        // Minor Version Number
+        //
+        // Indicates the minor version number for the module specification.
+        [16:24] MINOR;
+
+        // Major Version Number
+        //
+        // Indicates the major version number for the module specification.
+        [24:32] MAJOR;
+    } VERID;
+
+
+    // Parameter
+    //
+    // Contains:
+    //
+    // - Number of PCS pins
+    // - Receive FIFO size
+    // - Transmit FIFO size
+    @offset(0x04)
+    const volatile bitfield<u32> {
+
+        // Transmit FIFO Size
+        //
+        // Indicates the maximum number of words in the transmit FIFO. The maximum number of words is 2TXFIFO.
+        [0:8] TXFIFO;
+
+        // Receive FIFO Size
+        //
+        // Indicates the maximum number of words in the receive FIFO. The maximum number of words is 2RXFIFO.
+        [8:16] RXFIFO;
+
+        // PCS Number
+        //
+        // Indicates the number of PCS pins supported.
+        [16:24] PCSNUM;
+    } PARAM;
+
+
+    // Control
+    //
+    // Contains fields that control module operation.
+    @offset(0x08)
+    volatile bitfield<u32> {
+
+        // Module Enable
+        //
+        // After writing 0, MEN remains set until the LPSPI has completed the current transfer and is idle.
+        //
+        // After writing 0, MEN remains set until the LPSPI has completed the current transfer and is idle.
+        // 0 - Disable
+        // 1 - Enable
+        [0] MEN;
+
+        // Software Reset
+        //
+        // Resets all internal logic and registers, except Control (CR). The reset takes effect immediately and
+        // remains asserted until you write 0 to it. There is no minimum delay required before clearing the software
+        // reset by writing 0.
+        //
+        // 0 - Not reset
+        // 1 - Reset
+        [1] RST;
+
+        // Doze Mode Enable
+        //
+        // Enables LPSPI when the chip is in Doze mode.
+        //
+        // Update this field only when the LPSPI module is disabled (MEN = 0).
+        //
+        // 0 - Enable
+        // 1 - Disable
+        [2] DOZEN;
+
+        // Debug Enable
+        //
+        // Enables LPSPI in when the CPU is in Debug mode. When this field is 0, LPSPI is disabled when the CPU
+        // is halted; the PCS pin is deasserted after the transmit FIFO is empty regardless of the state of Transmit
+        // Command (TCR).
+        //
+        // Update this field only when the LPSPI module is disabled (MEN = 0).
+        //
+        // 0 - Disable
+        // 1 - Enable
+        [3] DBGEN;
+
+        // Reset Transmit FIFO
+        //
+        // Deletes all entries in the transmit FIFO. This field always reads 0.
+        //
+        // 0 - No effect
+        // 1 - Reset
+        [8] RTF;
+
+        // Reset Receive FIFO
+        //
+        // Deletes all entries in the receive FIFO. This field always reads zero.
+        //
+        // 0 - No effect
+        // 1 - Reset
+        [9] RRF;
+    } CR;
+
+
+    // Status
+    //
+    // Contains data flow status.
+    @offset(0x14)
+    volatile bitfield<u32> {
+
+        // Transmit Data Flag
+        //
+        // Indicates that the number of words in the transmit FIFO is equal to or less than the value in
+        // FCR[TXWATER].
+        //
+        // 0 - Transmit data not requested
+        // 1 - Transmit data is requested
+        [0] TDF;
+
+        // Receive Data Flag
+        //
+        // Indicates that the number of words in the receive FIFO is greater than the value in FCR[RXWATER].
+        //
+        // 0 - Receive data not ready
+        // 1 - Receive data is ready
+        [1] RDF;
+
+        // Word Complete Flag
+        //
+        // Indicates that the last bit of a received word is sampled.
+        //
+        // 0 - Not complete
+        // 1 - Complete
+        [8] WCF;
+
+        // Frame Complete Flag
+        //
+        // Indicates that a frame transfer has completed, when the PCS deasserts.
+        //
+        // 0 - Not complete
+        // 1 - Complete
+        [9] FCF;
+
+        // Transfer Complete Flag
+        //
+        // In Master mode, indicates that all transfers have completed and that LPSPI has returned to Idle state and
+        // the transmit FIFO is empty.
+        //
+        // 0 - Not complete
+        // 1 - Complete
+        [10] TCF;
+
+        // Transmit Error Flag
+        //
+        // Indicates a Transmit FIFO underrun error. When this flag is set:
+        //
+        // 1. End the transfer.
+        // 2. Clear this flag.
+        // 3. Restart the transfer from the beginning.
+        //
+        // 0 - No underrun
+        // 1 - Underrun
+        [11] TEF;
+
+        // Receive Error Flag
+        //
+        // Indicates a receive FIFO overflow error. When this flag is set:
+        //
+        // 1. End the transfer.
+        // 2. Empty the Receive FIFO.
+        // 3. Clear this flag.
+        // 4. Restart the transfer from the beginning.
+        //
+        // 0 - No overflow
+        // 1 - Overflow
+        [12] REF;
+
+        // Data Match Flag
+        //
+        // Indicates that received data matches DMR0[MATCH0] and/or DMR1[MATCH1] (as configured by
+        // CFGR1[MATCFG]).
+        //
+        // 0 - No match
+        // 1 - Match
+        [13] DMF;
+
+        // Module Busy Flag
+        //
+        // In Master mode, indicates that there is data to transmit and LPSPI is able to transmit (for example, HREQ
+        // is asserted). It deasserts after the PCS pin deasserts and the LPSPI master has waited half the
+        // CCR[DBT] time with no new data to transmit.
+        //
+        // Slave mode asserts this flag when LPSPI is enabled and PCS is asserted.
+        //
+        // 0 - LPSPI is idle
+        // 1 - LPSPI is busy
+        [24] MBF;
+    } SR;
+
+
+    // Interrupt Enable
+    //
+    // Enables interrupts based on data flow and errors.
+    @offset(0x18)
+    volatile bitfield<u32> {
+
+        // Transmit Data Interrupt Enable
+        //
+        // 0 - Disable
+        // 1 - Enable
+        [0] TDIE;
+
+        // Receive Data Interrupt Enable
+        //
+        // 0 - Disable
+        // 1 - Enable
+        [1] RDIE;
+
+        // Word Complete Interrupt Enable
+        //
+        // 0 - Disable
+        // 1 - Enable
+        [8] WCIE;
+
+        // Frame Complete Interrupt Enable
+        //
+        // 0 - Disable
+        // 1 - Enable
+        [9] FCIE;
+
+        // Transfer Complete Interrupt Enable
+        //
+        // 0 - Disable
+        // 1 - Enable
+        [10] TCIE;
+
+        // Transmit Error Interrupt Enable
+        //
+        // 0 - Disable
+        // 1 - Enable
+        [11] TEIE;
+
+        // Receive Error Interrupt Enable
+        //
+        // 0 - Disable
+        // 1 - Enable
+        [12] REIE;
+
+        // Data Match Interrupt Enable
+        //
+        // 0 - Disable
+        // 1 - Enable
+        [13] DMIE;
+    } IER;
+
+
+    // DMA Enable
+    //
+    // Enables DMA data flow.
+    @offset(0x1C)
+    volatile bitfield<u32> {
+
+        // Transmit Data DMA Enable
+        //
+        // 0 - Disable
+        // 1 - Enable
+        [0] TDDE;
+
+        // Receive Data DMA Enable
+        //
+        // 0 - Disable
+        // 1 - Enable
+        [1] RDDE;
+    } DER;
+
+
+    // Configuration 0 
+    //
+    // Includes fields to configure LPSPI.
+    @offset(0x20)
+    volatile bitfield<u32> {
+
+        // Host Request Enable
+        //
+        // In Master mode, allows LPSPI to start a new SPI bus transfer only if the host request input is asserted.
+        // When LPSPI is busy, the host request input is ignored.
+        //
+        // 0 - Disable
+        // 1 - Enable
+        [0] HREN;
+
+        // Host Request Polarity
+        //
+        // Specifies the polarity of the HREQ pin.
+        //
+        // 0 - Active high if CFGR1[PCSPOL] bit 1 is 0
+        // 1 - Active low if CFGR1[PCSPOL] bit 1 is 0
+        [1] HRPOL;
+
+        // Host Request Select
+        //
+        // Specifies the source of the host request input. When the host request function is enabled with the HREQ
+        // pin, the PCS[1] function is disabled.
+        //
+        // 0 - HREQ pin
+        // 1 - Input trigger
+        [2] HRSEL;
+
+        // Circular FIFO Enable
+        //
+        // When enabled, the transmit FIFO read pointer is saved to a temporary register. The transmit FIFO is
+        // emptied as in normal operation, but when LPSPI is idle and the transmit FIFO is empty, the read pointer
+        // value is restored from the temporary register.
+        //
+        // This restoring of the read pointer causes the contents of the transmit FIFO to be cycled through
+        // repeatedly.
+        //
+        // NOTE: The read pointer is restored for as long as this field is 1. Writing additional words to the FIFO
+        // when this field is 1 adds them to the end of the FIFO, up to the size of the transmit FIFO.
+        //
+        // 0 - Disable
+        // 1 - Enable
+        [8] CIRFIFO;
+
+        // Receive Data Match Only
+        //
+        // When enabled, all received data that does not cause the Data Match Flag (SR[DMF]) to assert is
+        // discarded.
+        //
+        // - Write 1 to this field when LPSPI is idle and SR[DMF] = 0.
+        // - After SR[DMF] = 1, this field is ignored.
+        // - To ensure that no receive data is lost when disabling RDMO, write 0 to this field before clearing
+        // SR[DMF].
+        //
+        // See CFGR1[MATCFG] for the received data matching options. When disabled, all received data is stored
+        // in the receive FIFO.
+        //
+        // 0 - Disable
+        // 1 - Enable
+        [9] RDMO;
+    } CFGR0;
+
+
+    // Configuration 1 
+    //
+    // Includes fields to configure LPSPI. Write to this register only when LPSPI is disabled.
+    @offset(0x24)
+    volatile bitfield<u32> {
+
+        // Master Mode
+        //
+        // Specifies the LPSPI operating mode—either Master or Slave. This field directly controls the direction of
+        // the SCK and PCS pins.
+        //
+        // 0 - Slave mode
+        // 1 - Master mode
+        [0] MASTER;
+
+        // Sample Point
+        //
+        // Specifies the SCK clock edge on which LSPI, when in Master mode, samples input data. Writing 1 to this
+        // field causes LSPI to sample input data on a delayed loopback SCK clock edge, which improves the setup
+        // time when sampling data (see Clock loopback). In this configuration. The input data setup time in Master
+        // mode is equal to the input data setup time in Slave mode.
+        //
+        // In Slave mode, this field is ignored.
+        //
+        // 0 - SCK edge
+        // 1 - Delayed SCK edge
+        [1] SAMPLE;
+
+        // Automatic PCS
+        //
+        // Enables automatic PCS generation. For correct operation in Slave mode, LPSPI requires the PCS signal
+        // to deassert between frames. Writing 1 to this field generates an internal PCS signal at the end of each
+        // transfer word when TCR[CPHA] = 1.
+        //
+        // When this field is 1, SCK must remain idle for at least 4 LPSPI functional clock cycles, divided by the
+        // prescaler selected (see TCR[PRESCALE]) between each word, to ensure correct operation.
+        //
+        // This field is ignored in Master mode.
+        //
+        // 0 - Disable
+        // 1 - Enable
+        [2] AUTOPCS;
+
+        // No Stall
+        //
+        // Disables a normal operating feature that causes LSPI, when in Master mode, to stall transfers when the
+        // transmit FIFO is empty. This feature prevents transmit FIFO underruns. Writing 1 to this field disables this
+        // functionality.
+        //
+        // 0 - Disable
+        // 1 - Enable
+        [3] NOSTALL;
+
+        // Peripheral Chip Select Polarity
+        //
+        // Specifies the polarity of each PCS pin. Bit n in this field (the least-significant bit is bit 0) corresponds to
+        // PCS[n].
+        //
+        // For each PCSPOL bit:
+        //
+        // 0 - PCS[n] pin is active low
+        // 1 - PCS[n] pin is active high
+        //
+        // NOTE: The entire PCSPOL field is not fully supported in every LPSPI module instance. See the LSPI
+        // chip-specific information.
+        [8:12] PCSPOL;
+
+        // Match Configuration
+        //
+        // Specifies the condition that causes SR[DMF] to assert.
+        //
+        // | Condition | Description |
+        // | --------- | ----------- |
+        // | Match first data word with compare word                   | Match if first data word equals MATCH0 logically ORed with MATCH1 `first_data_word == (MATCH0 || MATCH1)` |
+        // | Match any data word with compare word                     | Match if any data word equals MATCH0 logically ORed with MATCH1 `any_data_word == (MATCH0 || MATCH1)` |
+        // | Sequential match, first data word                         | Match if first data word equals MATCH0, and second data word equals MATCH1 `(first_data_word == MATCH0) && (second_data_word == MATCH1)` |
+        // | Sequential match, any data word                           | Match if any data word equals MATCH0, and the next data word equals MATCH1 `(any_data_word == MATCH0) && (next_data_word == MATCH1)` |
+        // | Match first data word (masked) with compare word (masked) | Match if first data word logically ANDed with MATCH1 equals MATCH0 logically ANDed with MATCH1 `(first_data_word && MATCH1) == (MATCH0 && MATCH1)` |
+        // | Match any data word (masked) with compare word (masked)   | Match if any data word logically ANDed with MATCH1 equals MATCH0 logically ANDed with MATCH1 `(any_data_word && MATCH1) == (MATCH0 && MATCH1)` |
+        //
+        // 0 - Match is disabled
+        // 1 - Reserved
+        // 2 - Match first data word with compare word
+        // 3 - Match any data word with compare word
+        // 4 - Sequential match, first data word
+        // 5 - Sequential match, any data word
+        // 6 - Match first data word (masked) with compare word (masked)
+        // 7 - Match any data word (masked) with compare word (masked)
+        [16:19] MATCFG;
+
+        // Pin Configuration
+        //
+        // Specifies the pins used for input and output data during serial transfers.
+        //
+        // NOTE: When performing parallel transfers, this field must be 00b.
+        //
+        // 0 - SIN is used for input data; SOUT is used for output data.
+        // 1 - SIN is used for both input and output data. Only half-duplex serial transfers are supported.
+        // 2 - SOUT is used for both input and output data. Only half-duplex serial transfers are supported.
+        // 3 - SOUT is used for input data; SIN is used for output data.
+        [24:26] PINCFG;
+
+        // Output Configuration
+        //
+        // Specifies whether the output data is 3-stated between accesses (when PCS is deasserted). When
+        // performing half-duplex transfers, this field must be 1.
+        //
+        // 0 - Output data retains last value.
+        // 1 - Output data is 3-stated.
+        [26] OUTCFG;
+
+        // Peripheral Chip Select Configuration
+        //
+        // Specifies the PCS pin configuration. When performing parallel transfers, this field must be configured to
+        // enable the desired transfer.
+        //
+        // 0 - PCS[3:2] are configured for chip select function
+        // 1 - PCS[3:2] are configured for half-duplex 4-bit transfers (PCS[3:2] = DATA[3:2])
+        [27] PCSCFG;
+    } CFGR1;
+
+
+    // Data Match 0
+    //
+    // Specifies match data to be used when data matching is enabled. See CFGR1[MATCFG] for the received data matching options.
+    //
+    // NOTE Do not change the value in this register while CFGR0[RDMO] = 1.
+    @offset(0x30)
+    volatile bitfield<u32> {
+
+        // Match 0 Value
+        //
+        // MATCH0 value to be compared against received data.
+        [0:32] MATCH0;
+    } DMR0;
+
+
+    // Data Match 1
+    //
+    // Specifies match data to be used when data matching is enabled. See CFGR1[MATCFG] for the received data matching options.
+    //
+    // NOTE Do not change the value in this register while CFGR0[RDMO] = 1.
+    @offset(0x34)
+    volatile bitfield<u32> {
+
+        //Match 1 Value
+        //
+        // MATCH1 value to be compared against received data.
+        [0:32] MATCH1;
+    } DMR1;
+
+
+    // Clock Configuration
+    //
+    // Contains clock configuration fields. These fields are only used in Master mode and you can only change them when LPSPI is disabled (CR[MEN] = 0).
+    @offset(0x40)
+    volatile bitfield<u32> {
+
+        // SCK Divider
+        //
+        // In Master mode, configures the divide ratio of the SCK pin.
+        //
+        // - The SCK period is equal to (SCKDIV + 2) cycles of LPSPI functional clock divided by the prescaler selected (see TCR[PRESCALE]).
+        // - The minimum SCK period is 2 cycles.
+        // - If the SCK period is an odd number of cycles, then the first half of the SCK period is 1 cycle longer than the second half of the SCK period.
+        [0:8] SCKDIV;
+
+        // Delay Between Transfers
+        //
+        // In Master mode:
+        //
+        // - Configures the delay from the PCS negation to the next PCS assertion.
+        //     - The delay is equal to (DBT + 2) cycles of the LPSPI functional clock divided by the prescaler selected (see TCR[PRESCALE]).
+        //     - The minimum delay is 2 cycles.
+        //     - Half of the delay occurs before PCS assertion and the other half of the delay occurs after PCS negation. If the command word is updated between 2 transfers, then the command word is updated halfway between the PCS negation of the last transfer and PCS assertion of the next transfer.
+        //     - The command word sets which PCS signal is used (of PCS[3:0]}, the polarity/phase of the SCK signal, and the prescaler selected.
+        // - Configures the delay from the last SCK edge of a transfer word and the first SCK edge of the next transfer word, in a continuous transfer.
+        //     - The delay is equal to (DBT + 1) cycles of the LPSPI functional clock divided by the prescaler selected (see TCR[PRESCALE]).
+        //     - The minimum delay is 1 cycle.
+        [8:16] DBT;
+
+        // PCS-to-SCK Delay
+        //
+        // In Master mode: configures the delay from the PCS assertion to the first SCK edge.
+        //
+        // - The delay is equal to (PCSSCK + 1) cycles of the LPSPI functional clock divided by the prescaler selected (see TCR[PRESCALE]).
+        // - The minimum delay is 1 cycle.
+        [16:24] PCSSCK;
+
+        // SCK-to-PCS Delay
+        //
+        // In Master mode: configures the delay from the last SCK edge to the PCS negation.
+        //
+        // - The delay is equal to (SCKPCS + 1) cycles of the LPSPI functional clock divided by the prescaler selected (see TCR[PRESCALE]).
+        // - The minimum delay is 1 cycle.
+        [24:32] SCKPCS;
+    } CCR;
+
+
+    // FIFO Control
+    //
+    // Contains the receive FIFO and transmit FIFO watermark values.
+    @offset(0x58)
+    volatile bitfield<u32> {
+
+        // Transmit FIFO Watermark
+        //
+        // Causes LPSPI to set the Transmit Data Flag (SR[TDF]) when the number of words in the transmit FIFO is
+        // equal or less than TXWATER. Writing a value equal or greater than the FIFO size truncates the written
+        // value.
+        [0:4] TXWATER;
+
+        // Receive FIFO Watermark
+        //
+        // Causes LPSPI to set the Receive Data Flag (SR[RDF]) when the number of words in the receive FIFO is
+        // greater than RXWATER. Writing a value equal or greater than the FIFO size truncates the written value.
+        [16:20] RXWATER;
+    } FCR;
+
+
+    // FIFO Status
+    //
+    // Contains fields that indicate the number of words currently stored in the receive FIFO and transmit FIFO.
+    @offset(0x5C)
+    const volatile bitfield<u32> {
+
+        // Transmit FIFO Count
+        //
+        // Indicates the number of words currently stored in the transmit FIFO.
+        [0:5] TXCOUNT;
+
+        // Receive FIFO Count
+        //
+        // Indicates the number of words currently stored in the receive FIFO.
+        [16:21] RXCOUNT;
+    } FSR;
+
+
+    // Transmit Command
+    //
+    // Writes to either this register or Transmit Data (TDR) push the data into the transmit
+    // FIFO, in the order written. Only write to this register using 32-bit writes. Writes are
+    // tagged and cause the command register to update, after that entry reaches the top of the
+    // FIFO and the LPSPI is enabled. This allows changes to the command word and the
+    // transmit data itself to be interleaved. That is, the writes to the two registers can be
+    // interleaved (write command word, then data word, then command word, and so on).
+    // Changing the command word causes all subsequent SPI bus transfers to be performed
+    // using the new command word.
+    //
+    // - In Master mode, writing a new command word does not initiate a new transfer,
+    // unless TXMSK is 1. Transfers are initiated by transmit data in the transmit FIFO, or
+    // by a new command word (with TXMSK = 1). Hardware writes 0 to TXMSK when
+    // the PCS deasserts.
+    // - In Master mode, if the command word is changed before an existing frame has
+    // completed, then the existing frame terminates and the command word then updates.
+    // The command word can be changed during a continuous transfer, if CONTC of the
+    // new command word is 1 and the command word is written on a frame size boundary.
+    // - In Slave mode, the command word should be changed only when LPSPI is idle and
+    // there is no SPI bus transfer.
+    //
+    // Avoid resetting the Transmit FIFO after writing to the Transmit Command Register, wait
+    // for the command register to update from the FIFO first.
+    //
+    // Avoid register reading problems: Reading the Transmit Command Register returns the
+    // current state of the command register. Reading the Transmit Command Register at the
+    // same time that the Transmit Command Register is loaded from the transmit FIFO, can
+    // return an incorrect Transmit Command Register value. It is recommended to:
+    //
+    // - Read the Transmit Command Register when the transmit FIFO is empty,
+    // - Read the Transmit Command Register more than once and then compare the returned values.
+    @offset(0x60)
+    volatile bitfield<u32> {
+
+        // Frame Size
+        //
+        // Configures the frame size in number of bits equal to (FRAMESZ + 1).
+        //
+        // - The minimum frame size is 8 bits
+        // - The minimum word size is 2 bits; a frame size of 33 bits is not supported.
+        // - If the frame size is larger than 32 bits, then the frame is divided into multiple words of 32 bits; each word is loaded from the transmit FIFO and stored in the receive FIFO separately.
+        // - If the size of the frame is not divisible by 32, then the last load of the transmit FIFO and store of the receive FIFO contains the remainder bits. For example, a 72-bit transfer consists of 3 words: the first and second words are 32 bits, and the third word is 8 bits.
+        [0:12] FRAMESZ;
+
+        // Transfer Width
+        //
+        // Configures serial (1-bit) or parallel transfers. For half-duplex parallel transfers, either Receive Data Mask
+        // (RXMSK) or Transmit Data Mask (TXMSK) must be 1.
+        //
+        // 0 - 1-bit transfer
+        // 1 - 2-bit transfer
+        // 2 - 4-bit transfer
+        // 3 - Reserved
+        [16:18] WIDTH;
+
+        // Transmit Data Mask
+        //
+        // Masks transmit data (no data is loaded from transmit FIFO and the output pin is 3-stated). In Master
+        // mode, TXMSK initiates a new transfer which cannot be aborted by another command word. TXMSK
+        // automatically transitions to 0 at the end of the transfer.
+        //
+        // 0 - Normal transfer
+        // 1 - Mask transmit data
+        [18] TXMSK;
+
+        // Receive Data Mask
+        //
+        // Masks receive data (receive data is not stored in receive FIFO).
+        //
+        // 0 - Normal transfer
+        // 1 - Receive data is masked
+        [19] RXMSK;
+
+        // Continuing Command
+        //
+        // In Master mode, this field enables the command word to be changed within a continuous transfer.
+        //
+        // - The initial command word must enable continuous transfer (CONT = 1).
+        // - The continuing command must have CONTC = 1.
+        // - The continuing command word must be loaded on a frame size boundary.
+        //
+        // For example, if the continuous transfer has a frame size of 64-bits, then a continuing command word
+        // must be loaded on a 64-bit boundary.
+        //
+        // 0 - Command word for start of new transfer
+        // 1 - Command word for continuing transfer
+        [20] CONTC;
+
+        // Continuous Transfer
+        //
+        // - In Master mode, CONT keeps the PCS asserted at the end of the frame size, until a command word is received that starts a new frame.
+        // - In Slave mode, when CONT is enabled, LPSPI only transmits the first FRAMESZ bits; after which LPSPI transmits received data (assuming a 32-bit shift register) until the next PCS negation.
+        //
+        // 0 - Continuous transfer is disabled
+        // 1 - Continuous transfer is enabled
+        [21] CONT;
+
+        // Byte Swap
+        //
+        // Swaps the contents of [31:24] with [7:0] and [23:16] with [15:8] for each transmit data word read from the
+        // FIFO and for each received data word stored to the FIFO (or compared with match registers).
+        //
+        // 0 - Disabled
+        // 1 - Enabled
+        [22] BYSW;
+
+        // LSB First
+        //
+        // 0 - Data is transferred MSB first
+        // 1 - Data is transferred LSB first
+        [23] LSBF;
+
+        // Peripheral Chip Select
+        //
+        // Configures the peripheral chip select used for the transfer. The Peripheral Chip Select field is only
+        // updated when PCS deasserted.
+        //
+        // The entire PCS field is not fully supported in every LPSPI module instance. See the chip-specificLPSPI information.
+        //
+        // 0 - Transfer using PCS[0]
+        // 1 - Transfer using PCS[1]
+        // 2 - Transfer using PCS[2]
+        // 3 - Transfer using PCS[3]
+        [24:26] PCS;
+
+        // Prescaler Value
+        //
+        // For all SPI bus transfers, this value is applied to Clock Configuration (CCR) clock. This field can only be
+        // updated when PCS deasserted.
+        //
+        // 0 - Divide by 1
+        // 1 - Divide by 2
+        // 2 - Divide by 4
+        // 3 - Divide by 8
+        // 4 - Divide by 16
+        // 5 - Divide by 32
+        // 6 - Divide by 64
+        // 7 - Divide by 128
+        [27:30] PRESCALE;
+
+        // Clock Phase
+        //
+        // This field can only be updated when PCS deasserted.
+        //
+        // 0 - Captured. Data is captured on the leading edge of SCK and changed on the following edge of SCK
+        // 1 - Changed. Data is changed on the leading edge of SCK and captured on the following edge of SCK
+        [30] CPHA;
+
+        // Clock Polarity
+        //
+        // Specifies the value of SCK when it is idle. This field can only be updated when PCS deasserted.
+        //
+        // 0 - Inactive low
+        // 1 - Inactive high
+        [31] CPOL;
+    } TCR;
+
+
+    // Transmit Data
+    //
+    // Writes to either Transmit Command (TCR) or this register push the data into the transmit FIFO, in the order that the data is written. You can write to TDR using 32-, 16-, or 8-bit writes, but each write pushes data into the FIFO with zero pushed in unwritten bytes.
+    @offset(0x64)
+    volatile bitfield<u32> {
+
+        // Transmit Data
+        //
+        // Both 8- and 16-bit writes of transmit data zero-extend the data written and push the data into the transmit
+        // FIFO. To zero-extend 8- and 16-bit writes (to 32 bits), means that the higher order (most significant)
+        // empty parts of the 8-bit and 16-bit writes are filled with zeroes.
+        [0:32] DATA;
+    } TDR;
+
+
+    // Receive Status
+    //
+    // Contains data flow status fields for receive FIFO.
+    @offset(0x70)
+    const volatile bitfield<u32> {
+
+        // Start Of Frame
+        //
+        // Indicates that this is the first data word received after PCS assertion.
+        //
+        // 0 - Subsequent data word
+        // 1 - First data word
+        [0] SOF;
+
+        // RX FIFO Empty
+        //
+        // 0 - Not empty
+        // 1 - Empty
+        [1] RXEMPTY;
+    } RSR;
+
+
+    // Receive Data
+    //
+    // Reading this register pulls the first entry from the receive FIFO.
+    @offset(0x74)
+    const volatile bitfield<u32> {
+
+        // Receive Data
+        [0:32] DATA;
+    } RDR;
+}

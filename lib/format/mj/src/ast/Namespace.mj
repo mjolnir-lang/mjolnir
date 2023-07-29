@@ -1,0 +1,35 @@
+#pragma once
+
+#include "mj/ast/MjComment.hpp"
+#include "mj/ast/MjScope.hpp"
+#include "mj/ast/MjToken.hpp"
+
+#include "encoding/Utf8File.hpp"
+
+
+class MjNamespace {
+private:
+    const MjToken &name;
+    MjScope scope;
+    MjComment comment;
+public:
+
+
+    MjNamespace(
+        const MjToken &name,
+        MjScope &parent,
+        MjComment comment
+    ) :
+        name(name),
+        scope(parent),
+        comment(comment)
+    {}
+
+
+    void to_mjolnir(Utf8File &out) {
+    }
+
+
+    void to_c(Utf8File &out) {
+    }
+};

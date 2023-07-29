@@ -1,0 +1,23 @@
+
+
+bitfield<u8> I3cControllerCapabilities {
+    [0] MULTIMASTER;
+
+    [1] HIGH_SPEED_MODE;
+    [2] FAST_MODE;
+    [3] FAST_MODE_PLUS;
+    [3] ULTRA_FAST_MODE;
+    [3] STANDARD_MODE;
+
+    /// Clock Stretching
+    ///
+    /// Clock stretching during this mode has a special rule:
+    ///
+    /// It is only allowed after the ACK bit (and before the 1st bit of the next byte).
+    /// Stretching between bits 2-9 is illegal because the edges of these bits are boosted
+    /// with an additional current source. See I2C specification rev. 03 chapter 5.3.1 for
+    /// further details.
+    [4] CLOCK_STRETCHING;
+    [5] GADGET_MODE;
+    [6] 10_BIT_MODE;
+}

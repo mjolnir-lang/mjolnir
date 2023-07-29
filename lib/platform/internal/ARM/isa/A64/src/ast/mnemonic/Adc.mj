@@ -1,0 +1,40 @@
+
+
+/// ADC, ADCS (immediate) [A1]
+bitfield<u32> AdcImmediateA1 {
+    [31:28] Cond cond;
+    [27:21] = 0b0010101;
+    [20] bool s;
+    [19:16] rn;
+    [15:12] rd;
+    [11:0] imm12;
+}
+
+
+/// ADC, ADCS (register) [A1]
+bitfield<u32> AdcRegisterA1 {
+    [31:28] Cond cond;
+    [27:21] = 0b0000101u;
+    [20] bool s;
+    [19:16] u8 rn;
+    [15:12] u8 rd;
+    [11:7] u8 imm5;
+    [6:5] u8 stype;
+    [4] = 0;
+    [3:0] u8 rm;
+}
+
+
+/// ADC, ADCS (register-shifted register) [A1]
+bitfield<u32> AdcRegisterShiftedRegisterA1 {
+    [31:28] Cond cond;
+    [27:21] = 0b0000101u;
+    [20] bool s;
+    [19:16] u8 rn;
+    [15:12] u8 rd;
+    [11:8] u8 rs;
+    [7] = 0;
+    [6:5] u8 stype;
+    [4] = 1;
+    [3:0] u8 rm;
+}

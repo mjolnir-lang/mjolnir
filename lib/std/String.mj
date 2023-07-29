@@ -1,0 +1,207 @@
+
+
+class String {
+    u8 *data = null
+    u32 capacity = 0
+    u32 size = 0
+
+
+    String(safe) {}
+
+
+    String(safe; const u8 *data, u32 size) {
+        Memory::allocate(this.data, size)
+        Memory::copy(this.data, data, size)
+        this.size = size
+    }
+
+
+    String(safe; const String &other) {
+        Memory::allocate(data, other.size)
+        size = other.size
+        Memory::copy(data, other.data, size)
+    }
+
+
+    String(safe; const String &other, u32 size) {
+        Memory::allocate(data, size)
+        this.size = min(other.size, size)
+        Memory::copy(data, other.data, size)
+    }
+
+
+    ~String() {
+        Memory::free(data)
+    }
+
+
+    bool is_empty(safe) {
+        return size == 0
+    }
+
+
+    // Return the size of the String.
+    u32 size(safe) {
+        return size
+    }
+
+
+    // Return the total allocated size of the String.
+    u32 capacity(safe) {
+        return capacity
+    }
+
+
+    // Return the allocated, unused space at the end of the String.
+    u32 space(safe) {
+        return capacity - size
+    }
+
+
+    // Return the byte data of the String.
+    safe u8 *data(safe) {
+        return data
+    }
+
+
+    // Clear the String.
+    void clear() {
+        size = 0
+    }
+
+
+    void resize(u32 size)? {
+        if (size > capacity) {
+            Memory::reallocate(data, size)
+            capacity = size
+        }
+
+        this.size = size
+    }
+
+
+    void reserve(u32 size)? {
+        if (size > capacity) {
+            Memory::reallocate(data, size)
+            capacity = size
+        }
+
+        this.size = size
+    }
+
+
+    void extend(u32 size)? {
+        if (size > space()) {
+            Memory::reallocate(data, this.size + size)
+            capacity = size
+        }
+
+        this.size = size
+    }
+
+
+
+
+
+    /// Append a character to the string.
+    void append(u8 ch)? {
+        append(&ch, 1)
+    }
+
+
+    void append(const u8 *data, u32 size)? {
+        if (size > space()) {
+            resize(this.size + size)
+        }
+
+        Memory::copy(&this.data[size], data, size)
+        this.size += size
+    }
+
+
+    void append(const StringView &string)? {
+        append(string.data(), string.size())
+    }
+
+
+    void append(const StringView &string, u32 size)? {
+        append(string.data(), min(size, string.size()))
+    }
+
+
+    void append(const String &string)? {
+        append(string.data(), string.size())
+    }
+
+
+    void append(const String &string, u32 size)? {
+        append(string.data(), min(size, string.size()))
+    }
+
+
+
+
+
+    void insert(u32 index, u8 ch)? {
+        insert(index, &ch, 1)
+    }
+
+
+    void insert(u32 index, const u8 *buffer, u32 size)? {
+        if (size > space()) {
+            resize(this.size + size)
+        }
+
+        Memory::move(&data[size], &data[size], size)
+
+        // Copy the new data.
+        Memory::copy(&data[size], buffer, size)
+        this.size += size
+    }
+
+
+    void insert(u32 index, const StringView &string)? {
+        insert(index, string.data(), string.size())
+    }
+
+
+    void insert(u32 index, const String &string, u32 size)? {
+        insert(index, string.data(), min(size, string.size()))
+    }
+
+
+
+
+
+    void splice(u32 index, u32 n, const StringView &string)? {
+        insert(index, string.data(), string.size())
+    }
+
+
+
+
+
+
+
+
+
+
+    safe StringView slice(safe; u32 start, u32 end) {
+        return StringView(&data[start], end - start)
+    }
+
+
+    StringView {[:]}(safe; u32 start, u32 end) {
+        return slice(start, end)
+    }
+
+
+    safe u8 &{[]}(safe; u32 index) {
+        return data[index]
+    }
+
+
+    StringView {(:)}(safe) {
+        return this
+    }
+}

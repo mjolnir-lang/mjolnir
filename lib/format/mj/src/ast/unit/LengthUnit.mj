@@ -1,0 +1,102 @@
+
+/// mile [mi, mi(Int)] = 1609.344 meter [m]
+
+/// Yard (yd.)
+unit<Length> 1 yd {
+
+    @approximate
+    1 yd = 0.9144 m;
+
+    @exact
+    1 yd = 3 ft;
+}
+
+/// Foot (ft.)
+unit<Length> 1 ft {
+
+    @approximate
+    1 ft = 0.3048 m;
+
+    @exact
+    1 ft = 12 in;
+}
+
+/// Inch
+unit<Length> 1 in = 0.0254 m;
+
+/// Inch
+unit<Length> 1 in {
+    @approximate
+    1 in = 2.54 cm;
+}
+
+/// Light Year
+unit<Length> 1 ly = 9.46073047258e+15 m;
+
+
+/// micron [µ] = 1.0E-6 meter [m]
+unit<Length> 1 pc { /// parsec = 3.08567758128E+16 meter; }
+/// astronomical unit [AU, UA] = 149597870691 meter [m]
+unit<Length> 1 lea { /// league = 4828.032 meter; }
+/// nautical league (UK) = 5559.552 meter [m]
+/// nautical league (int.) = 5556 meter [m]
+/// league (statute) [st.league] = 4828.0416560833 meter [m]
+/// nautical mile (UK) [NM (UK)] = 1853.184 meter [m]
+/// nautical mile (international) = 1852 meter [m]
+/// mile (statute) [mi, mi (US)] = 1609.3472186944 meter [m]
+/// mile (US survey) [mi] = 1609.3472186944 meter [m]
+/// mile (Roman) = 1479.804 meter [m]
+unit<Length> 1 kyd { /// kiloyard = 914.4 meter; }
+unit<Length> 1 fur { /// furlong = 201.168 meter; }
+/// furlong (US survey) [fur] = 201.1684023368 meter [m]
+unit<Length> 1 ch { /// chain = 20.1168 meter; }
+/// chain (US survey) [ch] = 20.1168402337 meter [m]
+/// rope = 6.096 meter [m]
+unit<Length> 1 rd { /// rod = 5.0292 meter; }
+/// rod (US survey) [rd] = 5.0292100584 meter [m]
+/// perch = 5.0292 meter [m]
+/// pole = 5.0292 meter [m]
+unit<Length> 1 fath { /// fathom = 1.8288 meter; }
+/// fathom (US survey) [fath] = 1.8288036576 meter [m]
+/// ell = 1.143 meter [m]
+/// foot (US survey) [ft] = 0.3048006096 meter [m]
+unit<Length> 1 li { /// link = 0.201168 meter; }
+/// link (US survey) [li] = 0.2011684023 meter [m]
+/// cubit (UK) = 0.4572 meter [m]
+/// hand = 0.1016 meter [m]
+/// span (cloth) = 0.2286 meter [m]
+/// finger (cloth) = 0.1143 meter [m]
+/// nail (cloth) = 0.05715 meter [m]
+/// inch (US survey) [in] = 0.0254000508 meter [m]
+/// barleycorn = 0.0084666667 meter [m]
+/// mil [mil, thou] = 2.54E-5 meter [m]
+unit<Length> 1 A { /// angstrom = 1.0E-10 meter; }
+/// a.u. of length [a.u., b] = 5.2917724900001E-11 meter [m]
+/// X-unit [X] = 1.00208E-13 meter [m]
+/// fermi [F, f] = 1.0E-15 meter [m]
+/// arpent = 58.5216 meter [m]
+/// pica = 0.0042333333 meter [m]
+/// point = 0.0003527778 meter [m]
+/// twip = 1.76389E-5 meter [m]
+/// aln = 0.5937777778 meter [m]
+/// famn = 1.7813333333 meter [m]
+unit<Length> 1 cl { /// caliber = 0.000254 meter; }
+/// ken = 2.11836 meter [m]
+/// Russian archin = 0.7112 meter [m]
+/// Roman actus = 35.47872 meter [m]
+/// vara de tarea = 2.505456 meter [m]
+/// vara conuquera = 2.505456 meter [m]
+/// vara castellana = 0.835152 meter [m]
+/// cubit (Greek) = 0.462788 meter [m]
+/// long reed = 3.2004 meter [m]
+/// reed = 2.7432 meter [m]
+/// long cubit = 0.5334 meter [m]
+/// handbreadth = 0.0762 meter [m]
+/// fingerbreadth = 0.01905 meter [m]
+/// Planck length = 1.61605E-35 meter [m]
+/// Electron radius (classical) = 2.81794092E-15 meter [m]
+/// Bohr radius [b, a.u.] = 5.2917724900001E-11 meter [m]
+/// Earth's equatorial radius = 6378160 meter [m]
+/// Earth's polar radius = 6356776.9999999 meter [m]
+/// Earth's distance from sun = 149600000000 meter [m]
+/// Sun's radius = 696000000 meter [m]

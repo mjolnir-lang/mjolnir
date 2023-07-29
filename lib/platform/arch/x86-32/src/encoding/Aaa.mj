@@ -1,0 +1,6 @@
+
+
+/// AAA - ASCII Adjust After Addition
+bitfield<u8> AaaEncoding {
+    [7:0] = 0x37u;
+}

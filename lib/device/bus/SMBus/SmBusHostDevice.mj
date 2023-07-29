@@ -1,0 +1,15 @@
+import i2c;
+
+
+/// A Host is a specialized controller that provides the main interface to the system's CPU
+/// or system management processor. A Host must be a controller-target and must
+/// support the SMBus Host Notify protocol (Section 6.5.9).
+///
+/// A system does not need to have a Host. One example of a hostless system is a simple
+/// battery charging station. The station might sit plugged into a wall waiting to charge a
+/// smart battery.
+///
+/// There may be at most one Host in a system.
+@api(1.0)
+class SmBusHostDevice {
+}

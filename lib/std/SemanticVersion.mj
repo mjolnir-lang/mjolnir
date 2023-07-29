@@ -1,0 +1,57 @@
+
+
+class SemanticVersion {
+    String string
+    StringView pre_release
+    u16 major
+    u16 minor
+    u16 patch
+
+
+    StringView string(safe) => string
+    StringView pre_release(safe) => pre_release
+    u32 major(safe) => major
+    u32 minor(safe) => minor
+    u32 patch(safe) => patch
+    bool is_pre_release(safe) => pre_release.size() > 0
+
+
+    SemanticVersion(u32 major, u32 minor, u32 patch) {
+        this.(major, minor, patch) = (major, minor, patch)
+        string = String::print("{}.{}.{}", major, minor, patch)
+    }
+
+
+    SemanticVersion(u32 major, u32 minor, u32 patch, StringView pre_release) {
+        this.(major, minor, patch) = (major, minor, patch)
+
+        if (pre_release.matches('^((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*)$')) {
+
+        }
+
+        string = String::print("{}.{}.{}-{}", major, minor, patch, pre_release)
+    }
+
+
+    @shared
+    SemanticVersion? parse(StringView string) {
+        string.parse(
+            '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)'
+            '(?:-('
+                '(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)'
+                '(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*'
+            '))?'
+            '(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$',
+            major, minor, patch
+        )
+    }
+
+
+    StringView {[]}(safe; u32 index) => &major[index]
+    StringView {:}(safe) => string
+
+
+    bool {<}(const SemanticVersion other) {
+        return major < other.major
+    }
+}

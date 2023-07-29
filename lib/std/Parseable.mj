@@ -1,0 +1,81 @@
+import std
+
+
+class Parseable {
+
+
+    struct ParseFormat {
+        u16 width
+        u8 base
+        u8 type_width
+        u8 type
+
+
+        @shared
+        void parse(ParseFormat &format, const String &string, u32 &size, ... &args)
+    }
+
+
+    @shared
+    u32 (*vparse_function[52])(const ParseFormat &format, ... &args)
+
+
+    // Parse a format string without advancing the cursor.
+    void peek_parse(const String &format, ...) = 0
+
+
+    // Parse a format string. If the parsing fails, do not advance the cursor.
+    void parse(const String &format, ...) = 0
+
+
+    void vparse(const String &format, ... &args)
+
+
+
+
+
+
+
+    /// \brief Parse an unsigned, 64 bit integer from the string.
+    /// \param str The string to parse
+    /// \param num The number of characters parsed
+    /// \param value The parsed value
+    /// \param base The numerical base to use when parsing
+    /// \return
+    ///     RESULT_SUCCESS if the parsed value had a valid representation and was
+    ///         within the range of the type.
+    ///     RESULT_FAILURE if the parsed value did not have a valid representation
+    ///         or was not within the range of the type. The value stored in value
+    ///         will be either the maximum or minimum value of the type if the
+    ///         parsed value was out of range or zero to indicate an invalid
+    ///         representation.
+    void parse_integer(const ParseFormat &format, u64 &value)
+
+
+    void parse_float(const ParseFormat &format, u64 &value)
+
+
+    void vparse_char(ParseFormat &format, ... &args)
+
+
+    void vparse_str(ParseFormat &format, ... &args)
+
+
+    void vparse_bool(ParseFormat &format, ... &args)
+
+
+    void vparse_pointer(ParseFormat &format, ... &args)
+
+
+    void vparse_memory(ParseFormat &format, ... &args)
+
+
+    void vparse_integer(ParseFormat &format, ... &args)
+
+
+    void vparse_float(ParseFormat &format, ... &args)
+
+
+    void vparse_number(ParseFormat &format, ... &args)
+}
+

@@ -1,0 +1,5 @@
+
+
+interface Directory {
+    const Path &path(safe);
+}

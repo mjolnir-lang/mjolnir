@@ -1,0 +1,6 @@
+import uart;
+
+
+class IcmbController {
+    UartController &uart_controller;
+}

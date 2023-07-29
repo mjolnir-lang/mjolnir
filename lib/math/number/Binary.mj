@@ -1,0 +1,363 @@
+
+
+@value-type
+class Binary<K> {
+
+
+    ///
+    /// Encoding Parameters
+    ///
+
+
+    /// Storage width in bits
+    @shared
+    @internal
+    const u32 k = 8 * sizeof(K);
+
+    /// Precision in bits
+    @shared
+    @internal
+    const u32 p = k - round(4 * log2(k)) + 13;
+
+    /// Exponent field width in bits
+    @shared
+    @internal
+    const u32 w = k - p;
+
+    /// Trailing significand field width in bits
+    @shared
+    @internal
+    const u32 t = p - 1;
+
+    /// Maximum exponent
+    @shared
+    const u32 EMAX = (1 << (w - 1)) - 1;
+
+    /// The minimum exponent
+    @shared
+    const i8 EMIN = 1 - EMAX;
+
+    /// Bias (E - e)
+    @shared
+    @internal
+    const u32 bias = EMAX;
+
+
+    bitfield<K> {
+        [k - 1] u8 sign;
+        [k - 2:t] u8 biased_exponent;
+        [t - 1:0] u32 significand;
+    }
+
+
+    /// Positive Infinity (Inf)
+    @shared
+    const Self INF = {
+        sign = 0;
+        biased_exponent = 0;
+        significand = 0;
+    };
+
+    /// Negative Infinity (NInf)
+    @shared
+    const Self NINF = {
+        sign = 0;
+        biased_exponent = 0;
+        significand = 0;
+    };
+
+    /// Quiet NaN (qNaN)
+    @shared
+    const Self QNAN = {
+        sign = 0;
+        biased_exponent = 0;
+        significand = 0;
+    };
+
+    /// Signaling NaN (sNaN)
+    @shared
+    Self SNAN(u32 s) => {
+        sign = 0;
+        biased_exponent = 0;
+        significand = 0;
+    };
+
+
+
+    ///
+    /// Properties
+    ///
+
+
+    u8 sign(safe) {
+        return sign;
+    }
+
+
+    u8 biased_exponent(safe) {
+        return biased_exponent;
+    }
+
+
+    u8 exponent(safe) {
+        return biased_exponent - EXPONENT_BIAS;
+    }
+
+
+    u8 significand(safe) {
+        return significand;
+    }
+
+
+    bool is_positive_zero(safe) {
+        return this == 0x0000'0000u32;
+    }
+
+
+    bool is_negative_zero(safe) {
+        return this == 0x8000'0000u32;
+    }
+
+
+    bool is_positive_infinity(safe) {
+        return ;
+    }
+
+
+    bool is_negative_infinity(safe) {
+        return ;
+    }
+
+
+    bool is_qnan(safe) {
+        return ;
+    }
+
+
+    bool is_snan(safe) {
+        return ;
+    }
+
+
+    bool is_normal(safe) {
+        return ;
+    }
+
+
+    bool is_subnormal(safe) {
+        return ;
+    }
+
+
+    ///
+    /// General Operations
+    ///
+
+
+    /// The preferred exponent is `max(q(source), 0)`.
+    (Self result) round_to_integral_ties_to_even(Self x) {
+        return result;
+    }
+
+
+    Self round_to_integral_ties_to_away(Self x) {
+        return result;
+    }
+
+
+    Self round_to_integral_toward_zero(Self x) {
+        return result;
+    }
+
+
+    Self round_to_integral_toward_positive(Self x) {
+        return result;
+    }
+
+
+    Self round_to_integral_toward_negative(Self x) {
+        return result;
+    }
+
+
+    /// See 5.9 for details.
+    /// The preferred exponent is max(Q(source), 0), even when the inexact exception is signaled.
+    Self round_to_integral_exact(Self x) {
+        return result;
+    }
+
+
+    /// `next_up(x)` is the least floating-point number in the format of `x`
+    /// that compares greater than `x`.
+    /// If `x` is the negative number of least magnitude in `x`'s format,
+    /// `next_up(x)` is `-0`. `next_up(+/-0)` is the positive number of least magnitude in `x`'s format.
+    /// `next_up(+INF)` is `+INF`
+    /// `next_up(-INF)` is the finite negative number largest in magnitude. When `x` is `NAN`, then the result is according to 6.2. `next_up(x)` is quiet except for `SNAN`s.
+    /// The preferred exponent is the least possible.
+    Self next_up(Self x) {
+        return result;
+    }
+
+
+    /// nextDown(x) is -nextUp(-x).
+    Self next_down(Self x) {
+        return -next_up(-x);
+    }
+
+
+    /// When `y != 0`, the remainder `r = remainder(x, y)` is defined for
+    /// finite `x` and `y` regardless of the rounding-direction attribute by
+    /// the mathematical relation `r = x - y * n`, where `n` is the integer
+    /// nearest the exact number `x / y` ; whenever `|n - x / y| == 1 / 2`,
+    /// then `n` is even. Thus, the remainder is always exact. If `r == 0`,
+    /// its sign shall be that of `x`. `remainder(x, INF)` is `x` for finite
+    /// `x`. The preferred exponent is `min(Q(x), Q(y))`.
+    Self remainder(Self x, Self y) {
+        return result;
+    }
+
+
+    /// `min_num(x, y)` is the canonicalized number `x` if `x < y`, `y` if `y < x`, the canonicalized number if one operand is a number and the other a quiet NaN. Otherwise it is either x or y, canonicalized (this means results might differ among implementations). When either x or y is a signalingNaN, then the result is according to 6.2.
+    Self min_num(Self x, Self y) {
+
+    }
+
+
+    /// `max_num(x, y)` is the canonicalized number `y` if `x < y`, `x` if `y < x`, the canonicalized number if one operand is a number and the other a quiet NaN. Otherwise it is either x or y, canonicalized (this means results might differ among implementations). When either x or y is a signalingNaN, then the result is according to 6.2.
+    Self max_num(Self x, Self y) {
+
+    }
+
+
+    /// minNumMag(x, y) is the canonicalized number `x` if `|x| < |y|`, `y` if `|y| < |x|`, otherwise `min_num(x, y)`.
+    Self min_num_mag(Self x, Self y) {
+
+    }
+
+
+    /// `max_num_mag(x, y)` is the canonicalized number `x` if `|x| > |y|`, `y` if `|y| > |x|`, otherwise `max_num(x, y)`.
+    Self max_num_mag(Self x, Self y) {
+
+    }
+
+    /// The preferred exponent is Q(x) if x is the result, Q(y) if y is the result.
+
+
+    ///
+    /// Decimal Operations
+    ///
+
+
+    /// For finite decimal operands x and y of the same format, quantize(x, y) is a floating-point number
+    /// in the same format that has, if possible, the same numerical value as x and the same quantum as y.
+    /// If the exponent is being increased, rounding according to the applicable rounding-direction
+    /// attribute might occur: the result is a different floating-point representation and the inexact
+    /// exception is signaled if the result does not have the same numerical value as x. If the exponent is
+    /// being decreased and the significand of the result would have more than p digits, the invalid
+    /// operation exception is signaled and the result is NaN. If one or both operands are NaN, the rules in
+    /// 6.2 are followed. Otherwise if only one operand is infinite then the invalid operation exception is
+    /// signaled and the result is NaN. If both operands are infinite then the result is canonical ∞ with the
+    /// sign of x. quantize does not signal underflow or overflow.
+    /// The preferred exponent is Q( y).
+    Self quantize(Self source, Self source) {
+
+    }
+
+
+    ///
+    /// logBFormat Operations
+    ///
+
+
+    /// scaleB(x, N) is x * b N for integral values N. The result is computed as if the exact product were
+    /// formed and then rounded to the destination format, subject to the applicable rounding-direction
+    /// attribute. When logBFormat is a floating-point format, the behavior of scaleB is language-defined
+    /// when the second operand is non-integral. For non-zero values of N, scaleB(±0, N) returns ±0 and
+    /// scaleB(±∞, N) returns ±∞. For zero values of N, scaleB(x, N) returns x.
+    /// The preferred exponent is Q(x) + N.
+    Self scaleB(Self x, logBFormat)
+
+
+    /// logB(x) is the exponent e of x, a signed integral value, determined as though x were represented
+    /// with infinite range and minimum exponent. Thus 1 ≤ scaleB(x, -logB(x)) < b when x is positive
+    /// and finite. logB(1) is +0.
+    /// When logBFormat is a floating-point format, logB(NaN) is a NaN, logB(∞) is +∞, and logB(0) is
+    /// −∞ and signals the divideByZero exception. When logBFormat is an integer format, then
+    /// logB(NaN), logB(∞), and logB(0) return language-defined values outside the range
+    /// ±2 * (emax + p - 1) and signal the invalid operation exception.
+    /// The preferred exponent is 0.
+    /// NOTE — For positive finite x, the value of logB(x) is floor(log 2 (x)) in a binary format, and is
+    /// floor(log10 (x)) in a decimal format.
+    logBFormat logB(source)
+
+
+    ///
+    /// Arithmetic Operations
+    ///
+
+
+    formatOf-addition(source1, source2)
+    /// The operation addition(x, y) computes x + y.
+    /// The preferred exponent is min(Q(x), Q( y)).
+
+
+    formatOf-subtraction(source1, source2)
+    /// The operation subtraction(x, y) computes x − y.
+    /// The preferred exponent is min(Q(x), Q( y)).
+
+
+    formatOf-multiplication(source1, source2)
+    /// The operation multiplication(x, y) computes x × y.
+    /// The preferred exponent is Q(x) + Q( y).
+
+
+    formatOf-division(source1, source2)
+    /// The operation division(x, y) computes x / y.
+    /// The preferred exponent is Q(x) − Q( y).
+
+
+    formatOf-squareRoot(source1)
+    /// The operation squareRoot(x) computes √ x. It has a positive sign for all operands ≥ 0, except that
+    /// squareRoot(−0) shall be −0.
+    /// The preferred exponent is floor(Q(x) / 2).
+
+
+    formatOf-fusedMultiplyAdd(source1, source2, source3)
+    /// The operation fusedMultiplyAdd(x, y, z) computes (x × y) + z as if with unbounded range and
+    /// precision, rounding only once to the destination format. No underflow, overflow, or inexact
+    /// exception (see 7) can arise due to the multiplication, but only due to the addition; and so
+    /// fusedMultiplyAdd differs from a multiplication operation followed by an addition operation.
+    /// The preferred exponent is min(Q(x) + Q( y), Q(z)).
+
+
+    formatOf-convertFromInt(int)
+    /// It shall be possible to convert from all supported signed and unsigned integer formats to all
+    /// supported arithmetic formats. Integral values are converted exactly from integer formats to
+    /// floating-point formats whenever the value is representable in both formats. If the converted value
+    /// is not exactly representable in the destination format, the result is determined according to the
+    /// applicable rounding-direction attribute, and an inexact or floating-point overflow exception arises
+    /// as specified in Clause 7, just as with arithmetic operations. The signs of integer zeros are
+    /// preserved. Integer zeros without signs are converted to +0.
+    /// The preferred exponent is 0.
+    /// Implementations shall provide the following intFormatOf general-computational operations for destinations
+    /// of all supported integer formats and for operands of all supported arithmetic formats.
+
+
+    intFormatOf-convertToIntegerTiesToEven(source)
+    intFormatOf-convertToIntegerTowardZero(source)
+    intFormatOf-convertToIntegerTowardPositive(source)
+    intFormatOf-convertToIntegerTowardNegative(source)
+    intFormatOf-convertToIntegerTiesToAway(source)
+    /// See 5.8 for details.
+
+
+    intFormatOf-convertToIntegerExactTiesToEven(source)
+    intFormatOf-convertToIntegerExactTowardZero(source)
+    intFormatOf-convertToIntegerExactTowardPositive(source)
+    intFormatOf-convertToIntegerExactTowardNegative(source)
+    intFormatOf-convertToIntegerExactTiesToAway(source)
+    /// See 5.8 for details.
+    /// NOTE — Implementations might provide some of the operations in this subclause, and the convertFormat
+    /// operations in 5.4.2, as sequences of one or more of a subset of the operations in subclause 5.4 when those
+    /// sequences produce the correct numerical value, quantum, and exception results.
+}

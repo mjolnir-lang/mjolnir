@@ -1,0 +1,49 @@
+
+
+class BitfieldType {
+    const Type &value_type;
+
+
+    BitfieldType(
+        u32 size,
+        u32 alignment,
+        bool is_const,
+        bool is_volatile,
+        const Token &name,
+        Vector<Type *> template_parameters,
+        const Comment *comment
+    ) :
+        BasicType(size, alignment, is_const, is_volatile, name, template_parameters, comment)
+    {}
+
+
+    void to_mjolnir(Utf8File &out) const {
+        out.newline();
+        out.write("bitfield<");
+        value_type.to_mjolnir(out);
+        out.write("> ");
+        type.to_mjolnir(out);
+        out.write(" {");
+        out.indent();
+
+        for (member : members) {
+            out.newline();
+            member.to_mjolnir(out);
+        }
+
+        out.undent();
+        out.newline();
+        out.write("}");
+    }
+
+
+    void to_c(Utf8File &out) const {
+        out.newline();
+        ;
+    }
+}
+
+
+impl<BasicType> BitfieldType {
+
+}

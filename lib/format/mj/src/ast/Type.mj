@@ -1,0 +1,143 @@
+#pragma once
+
+#include "mj/ast/MjComment.hpp"
+#include "mj/ast/MjOperator.hpp"
+#include "mj/ast/MjMethod.hpp"
+#include "mj/ast/MjFunction.hpp"
+#include "mj/ast/MjVariable.hpp"
+#include "mj/ast/MjProperty.hpp"
+#include "mj/ast/MjTemplate.hpp"
+
+#include "std/List.hpp"
+#include "std/String.hpp"
+
+
+/*
+
+foo is array of array of 8 pointer to pointer to function returning pointer to array of 7 pointer to char
+
+// C/C++ type with name
+char *(*(**foo[][8])())[7];
+
+// C/C++ type followed by name
+char *(*(**[][8])())[7] foo;
+
+// linear type followed by name
+char *[7]*()**[8][] foo;
+
+
+
+// C/C++ type with name with multiple return
+((int, int *)(*)(), char *(*)[7])(**foo[][8])();
+
+// linear type followed by name with multiple return
+((int, int *)()*, char *[7]*)()**[8][] foo;
+*/
+
+
+/// @brief An `MjTypeName` consists of a name optionally followed by a template argument list.
+class MjTypeName {
+private:
+    const MjToken &identifier_;
+    const Vector<const MjTemplateArgument *> template_arguments_;
+public:
+
+
+    MjTypeName(
+        const MjToken &identifier,
+        const Vector<const MjTemplateArgument *> template_arguments
+    ) :
+        identifier_(identifier),
+        template_arguments_(template_arguments)
+    {}
+
+
+    const Vector<const MjTemplateArgument *> template_arguments() const {
+        return template_arguments_;
+    }
+};
+
+
+/// @brief An `MjType` is defines the properties of an `MjObject`.
+class MjType {
+protected:
+    static const Vector<MjMethod *> CONSTRUCTORS;
+    static const Vector<MjMethod *> METHODS;
+    static const Vector<MjMember *> MEMBERS;
+    static const Vector<MjOperator *> OPERATORS;
+public:
+
+
+    virtual ~MjType() = default;
+
+
+    /// @brief Return the size of the type in bytes.
+    virtual u32 size() const = 0;
+
+
+    /// @brief Return the alignment of the type in bytes.
+    virtual u32 alignment() const = 0;
+
+
+    /// @brief Return true if the type is 'const' qualified.
+    virtual bool is_const() const = 0;
+
+
+    /// \brief Return true if the type is 'volatile' qualified.
+    virtual bool is_volatile() const = 0;
+
+
+    /// @brief Return the list of named constructors for the type.
+    /// This does not include any anonymous initializers.
+    virtual const Vector<MjMethod *> &constructors() const {
+        return CONSTRUCTORS;
+    }
+
+
+    /// @brief Return the destructor for the type.
+    virtual const MjMethod &destructor() const = 0;
+
+
+    /// @brief Return the list of member variables defined by the type.
+    virtual const Vector<MjMember *> &members() const {
+        return MEMBERS;
+    }
+
+
+    /// @brief Return the list of methods defined by the type.
+    virtual const Vector<MjMethod *> &methods() const {
+        return METHODS;
+    }
+
+
+    /// @brief Return the list of operators defined by the type.
+    virtual const Vector<MjOperator *> &operators() const {
+        return OPERATORS;
+    }
+
+
+    virtual const MjScope &shared() const = 0;
+
+
+    /// @brief Return the 'const' qualified derivation of the type.
+    virtual const MjType &const_qualified_derivation() const = 0;
+
+
+    /// @brief Return the 'volatile' qualified derivation of the type.
+    virtual const MjType &volatile_qualified_derivation() const = 0;
+};
+
+
+#include "mj/ast/types/MjArrayType.hpp"
+#include "mj/ast/types/MjBasicType.hpp"
+#include "mj/ast/types/MjBitfieldType.hpp"
+#include "mj/ast/types/MjClassType.hpp"
+#include "mj/ast/types/MjDerivedType.hpp"
+#include "mj/ast/types/MjEnumerationType.hpp"
+#include "mj/ast/types/MjFunctionType.hpp"
+#include "mj/ast/types/MjInterfaceType.hpp"
+#include "mj/ast/types/MjMethodType.hpp"
+#include "mj/ast/types/MjPointerType.hpp"
+#include "mj/ast/types/MjStructureType.hpp"
+#include "mj/ast/types/MjUnionType.hpp"
+#include "mj/ast/types/MjVariantType.hpp"

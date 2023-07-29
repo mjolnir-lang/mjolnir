@@ -1,0 +1,176 @@
+
+
+/// A `Task` object manages the state of an asynchronous execution context.
+/// Tasks have no return value and must be waited on before their resources
+/// can be released. Tasks must be checked upon completion for a failure
+/// condition.
+class Task {
+    Function<void?()> task
+    bool is_done = false
+    bool has_failed = false
+
+
+    Task(Function task) {
+        this.task = task
+    }
+
+
+    Task(Function task, Function abort_handler) {
+        this.task = task
+    }
+
+
+    ~Task() {
+        until (is_done) {
+            yield
+        }
+    }
+
+
+    void start() {
+        try task() {
+            has_failed = true
+        }
+
+        is_done = true
+    }
+
+
+    /// Return true if the task has completed. This indicated that resources
+    /// can now be released, but it does not indicate that the task has
+    /// completed successfully. Call `has_failed()` to determine if the task
+    /// has failed.
+    bool is_done(safe) =>
+        is_done
+
+
+    /// Return true if the task has failed. This indicates that the resources
+    /// can be released.
+    bool has_failed(safe) =>
+        has_failed
+
+
+    /// Wait for the task to complete. This call blocks the calling thread
+    /// until the task has returned. If the task failed, this call will fail.
+    void? wait(safe) {
+        until (is_done) {
+            yield
+        }
+
+        if (has_failed) {
+            fail
+        }
+    }
+
+
+    void? wait(safe; u32'ms timeout) {
+        u32'ms start = Time::now()
+
+        until (is_done) {
+            if (Time::now() - start >= timeout) {
+                fail
+            }
+
+            yield
+        }
+    }
+
+
+    void delay(safe; u32'ms timeout) {
+        u32'ms start = Time::now()
+
+        while (Time::now() - start < timeout) {
+            yield
+        }
+    }
+}
+
+
+
+class Task<T> {
+    Function<T> task
+    T result
+    bool is_done = false
+    bool has_failed = false
+
+
+    Task<T>(Function<T> task) {
+        this.task = task
+    }
+
+
+    Task<T>(Function<T> task, Function<T> abort_handler) {
+        this.task = task
+    }
+
+
+    ~Task<T>() {
+        until (is_done) {
+            yield
+        }
+    }
+
+
+    void start() {
+        result = try task() {
+            has_failed = true
+        }
+
+        is_done = true
+    }
+
+
+    safe T? result(safe) {
+        if (!is_done || was_aborted || has_failed) {
+            fail
+        }
+
+        return result
+    }
+
+
+    bool is_done(safe) =>
+        is_done
+
+
+    bool has_failed(safe) =>
+        has_failed
+
+
+    safe T? wait(safe) {
+        until (is_done) {
+            yield
+        }
+
+        if (has_failed) {
+            fail
+        }
+
+        return result
+    }
+
+
+    safe T? wait(safe; u32'ms timeout) {
+        u32'ms start = Time::now()
+
+        until (is_done) {
+            if (Time::now() - start >= timeout) {
+                abort()
+                fail
+            }
+
+            yield
+        }
+
+        return result
+    }
+
+
+    void delay(safe; u32'ms timeout) {
+        u32'ms start = Time::now()
+
+        while (Time::now() - start < timeout) {
+            yield
+        }
+    }
+}

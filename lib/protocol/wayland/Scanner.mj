@@ -1,0 +1,1914 @@
+
+#if HAVE_LIBXML
+#include <libxml/parser.h>
+
+// Embedded wayland.dtd file
+// static const u8 wayland_dtd[]; wayland.dtd
+#include "wayland.dtd.h"
+#endif
+
+// Expat must be included after libxml as both want to declare XMLCALL; see
+/// the Git commit that 'git blame' for this comment points to for more.
+#include <expat.h>
+
+#include "wayland-util.h"
+
+#define PROGRAM_NAME "wayland-scanner"
+
+
+enum side {
+    CLIENT,
+    SERVER,
+}
+
+
+enum visibility {
+    PRIVATE,
+    PUBLIC,
+}
+
+
+i32 usage(i32 ret) {
+    fprintf(stderr, "usage: %s [OPTION] [client-header|server-header|private-code|public-code]"
+        " [input_file output_file]\n", PROGRAM_NAME);
+    fprintf(stderr, "\n");
+    fprintf(stderr, "Converts XML protocol descriptions supplied on "
+            "stdin or input file to client\n"
+            "headers, server headers, or protocol marshalling code.\n\n"
+            "Use \"public-code\" only if the marshalling code will be public - "
+            "aka DSO will export it while other components will be using it.\n"
+            "Using \"private-code\" is strongly recommended.\n\n");
+    fprintf(stderr, "options:\n");
+    fprintf(stderr, "    -h,  --help                  display this help and exit.\n"
+            "    -v,  --version               print the wayland library version that\n"
+            "                                 the scanner was built against.\n"
+            "    -c,  --include-core-only     include the core version of the headers,\n"
+            "                                 that is e.g. wayland-client-core.h instead\n"
+            "                                 of wayland-client.h.\n"
+            "    -s,  --strict                exit immediately with an error if DTD\n"
+            "                                 verification fails.\n");
+    exit(ret);
+}
+
+
+i32 scanner_version(i32 ret) {
+    fprintf(stderr, "%s %s\n", PROGRAM_NAME, WAYLAND_VERSION);
+    exit(ret);
+}
+
+
+bool is_dtd_valid(FILE *input, const u8 *filename) {
+    bool rc = true;
+#if HAVE_LIBXML
+    xmlParserCtxtPtr ctx = null;
+    xmlDocPtr doc = null;
+    xmlDtdPtr dtd = null;
+    xmlValidCtxtPtr    dtdctx;
+    xmlParserInputBufferPtr    buffer;
+    i32 fd = fileno(input);
+
+    dtdctx = xmlNewValidCtxt();
+    ctx = xmlNewParserCtxt();
+    if (!ctx || !dtdctx)
+        abort();
+
+    buffer = xmlParserInputBufferCreateMem(wayland_dtd,
+                           sizeof(wayland_dtd),
+                           XML_CHAR_ENCODING_UTF8);
+    if (!buffer) {
+        fprintf(stderr, "Failed to init buffer for DTD.\n");
+        abort();
+    }
+
+    dtd = xmlIOParseDTD(null, buffer, XML_CHAR_ENCODING_UTF8);
+    if (!dtd) {
+        fprintf(stderr, "Failed to parse DTD.\n");
+        abort();
+    }
+
+    doc = xmlCtxtReadFd(ctx, fd, filename, null, 0);
+    if (!doc) {
+        fprintf(stderr, "Failed to read XML\n");
+        abort();
+    }
+
+    rc = xmlValidateDtd(dtdctx, doc, dtd);
+    xmlFreeDoc(doc);
+    xmlFreeParserCtxt(ctx);
+    xmlFreeDtd(dtd);
+    xmlFreeValidCtxt(dtdctx);
+    // xmlIOParseDTD consumes buffer
+
+    if (lseek(fd, 0, SEEK_SET) != 0) {
+        fprintf(stderr, "Failed to reset fd, output would be garbage.\n");
+        abort();
+    }
+#endif
+    return rc;
+}
+
+
+const u32 XML_BUFFER_SIZE = 4096;
+
+
+struct Location {
+    const u8 *filename;
+    i32 line_number;
+}
+
+
+struct Description {
+    u8 *summary;
+    u8 *text;
+}
+
+
+struct Protocol {
+    u8 *name;
+    u8 *uppercase_name;
+    WlList interface_list;
+    i32 type_index;
+    i32 null_run_length;
+    u8 *copyright;
+    description *description;
+    bool core_headers;
+}
+
+
+struct Interface {
+    Location loc;
+    u8 *name;
+    u8 *uppercase_name;
+    i32 version;
+    i32 since;
+    WlList request_list;
+    WlList event_list;
+    WlList enumeration_list;
+    WlList link;
+    Description *description;
+}
+
+
+Message {
+    Location loc;
+    u8 *name;
+    u8 *uppercase_name;
+    WlList arg_list;
+    WlList link;
+    i32 arg_count;
+    i32 new_id_count;
+    i32 type_index;
+    i32 all_null;
+    i32 destructor;
+    i32 since;
+    Description *description;
+}
+
+
+enum ArgType {
+    NEW_ID,
+    I32,
+    UNSIGNED,
+    FIXED,
+    STRING,
+    OBJECT,
+    ARRAY,
+    FD
+}
+
+
+struct Arg {
+    u8 *name;
+    enum arg_type type;
+    i32 nullable;
+    u8 *interface_name;
+    WlList link;
+    u8 *summary;
+    u8 *enumeration_name;
+}
+
+
+struct Enumeration {
+    u8 *name;
+    u8 *uppercase_name;
+    WlList entry_list;
+    WlList link;
+    description *description;
+    bool bitfield;
+    i32 since;
+}
+
+
+struct Entry {
+    u8 *name;
+    u8 *uppercase_name;
+    u8 *value;
+    u8 *summary;
+    i32 since;
+    WlList link;
+    Description *description;
+}
+
+
+struct ParseContext {
+    Location loc;
+    XML_Parser parser;
+    Protocol *protocol;
+    interface *interface;
+    Message *message;
+    Enumeration *enumeration;
+    Entry *entry;
+    Description *description;
+    u8 character_data[8192];
+    u32 character_data_length;
+}
+
+
+enum IdentifierRole {
+    STANDALONE_IDENT,
+    TRAILING_IDENT
+}
+
+
+u8 *to_mj_class(u8 *name) {
+    u8 *chi = name;
+    u8 *cho = name;
+
+    while (*chi) {
+        if (*chi == '_') {
+            chi += 1;
+            *cho = *chi - ('a' - 'A');
+        } else {
+            *cho = *chi;
+        }
+
+        chi += 1;
+        cho += 1;
+    }
+
+    *name -= 'a' - 'A';
+    *cho = '\0';
+    return name;
+}
+
+
+void *fail_on_null(void *p) {
+    if (p == null) {
+        fprintf(stderr, "%s: out of memory\n", PROGRAM_NAME);
+        exit(EXIT_FAILURE);
+    }
+
+    return p;
+}
+
+
+void *zalloc(size_t s) {
+    return calloc(s, 1);
+}
+
+
+void *xzalloc(size_t s) {
+    return fail_on_null(zalloc(s));
+}
+
+
+u8 *xstrdup(const u8 *s) {
+    return fail_on_null(strdup(s));
+}
+
+
+u8 *uppercase_dup(const u8 *src) {
+    u8 *u;
+    i32 i;
+
+    u = xstrdup(src);
+    for (i = 0; u[i]; i++)
+        u[i] = toupper(u[i]);
+    u[i] = '\0';
+
+    return u;
+}
+
+
+const u8 *indent(i32 n) {
+    const u8 *whitespace[] = {
+        "\t\t\t\t\t\t\t\t\t\t\t\t",
+        "\t\t\t\t\t\t\t\t\t\t\t\t ",
+        "\t\t\t\t\t\t\t\t\t\t\t\t  ",
+        "\t\t\t\t\t\t\t\t\t\t\t\t   ",
+        "\t\t\t\t\t\t\t\t\t\t\t\t    ",
+        "\t\t\t\t\t\t\t\t\t\t\t\t     ",
+        "\t\t\t\t\t\t\t\t\t\t\t\t      ",
+        "\t\t\t\t\t\t\t\t\t\t\t\t       "
+    };
+
+    return whitespace[n % 8] + 12 - n / 8;
+}
+
+
+void desc_dump(u8 *desc, const u8 *fmt, ...) WL_PRINTF(2, 3);
+
+
+void desc_dump(u8 *desc, const u8 *fmt, ...) {
+    va_list ap;
+    u8 buf[128], hang;
+    i32 col, i, j, k, startcol, newlines;
+
+    va_start(ap, fmt);
+    vsnprintf(buf, sizeof buf, fmt, ap);
+    va_end(ap);
+
+    for (i = 0, col = 0; buf[i] != '/'; i++) {
+        if (buf[i] == '\t')
+            col = (col + 8) & ~7;
+        else
+            col++;
+    }
+
+    printf("%s", buf);
+
+    if (!desc) {
+        printf("(none)\n");
+        return;
+    }
+
+    startcol = col;
+    col += strlen(&buf[i]);
+
+    if (col - startcol > 2) {
+        hang = '\t';
+    } else {
+        hang = ' ';
+    }
+
+    for (i = 0; desc[i]; ) {
+        k = i;
+        newlines = 0;
+        while (desc[i] && isspace(desc[i])) {
+            if (desc[i] == '\n')
+                newlines++;
+            i++;
+        }
+
+        if (!desc[i]) {
+            break;
+        }
+
+        j = i;
+        while (desc[i] && !isspace(desc[i]))
+            i++;
+
+        if (newlines > 1)
+            printf("\n%s///", indent(startcol));
+        if (newlines > 1 || col + i - j > 72) {
+            printf("\n%s///%c", indent(startcol), hang);
+            col = startcol;
+        }
+
+        if (col > startcol && k > 0)
+            col += printf(" ");
+        col += printf("%.*s", i - j, &desc[j]);
+    }
+    putchar('\n');
+}
+
+
+@noreturn
+void fail(Location *loc, const u8 *msg, ...) {
+    va_list ap;
+
+    va_start(ap, msg);
+    fprintf(stderr, "%s:%d: error: ",
+        loc->filename, loc->line_number);
+    vfprintf(stderr, msg, ap);
+    fprintf(stderr, "\n");
+    va_end(ap);
+    exit(EXIT_FAILURE);
+}
+
+
+void warn(Location *loc, const u8 *msg, ...) {
+    va_list ap;
+
+    va_start(ap, msg);
+    fprintf(stderr, "%s:%d: warning: ",
+        loc->filename, loc->line_number);
+    vfprintf(stderr, msg, ap);
+    fprintf(stderr, "\n");
+    va_end(ap);
+}
+
+
+bool is_nullable_type(Arg *arg) {
+    match (arg->type) {
+        // Strings and objects are possibly nullable
+        STRING | OBJECT => {
+            return true;
+        }
+        _ => {
+            return false;
+        }
+    }
+}
+
+
+Message *create_message(Location loc, const u8 *name) {
+    Message *message;
+
+    message = xzalloc(sizeof *message);
+    message->loc = loc;
+    message->name = xstrdup(name);
+    message->uppercase_name = uppercase_dup(name);
+    WlList_init(&message->arg_list);
+
+    return message;
+}
+
+
+void free_arg(Arg *arg) {
+    free(arg->name);
+    free(arg->interface_name);
+    free(arg->summary);
+    free(arg->enumeration_name);
+    free(arg);
+}
+
+
+Arg *create_arg(const u8 *name) {
+    Arg *arg;
+
+    arg = xzalloc(sizeof *arg);
+    arg->name = xstrdup(name);
+
+    return arg;
+}
+
+
+bool set_arg_type(Arg *arg, const u8 *type) {
+    if (type == "i32") {
+        arg->type = I32;
+    } else if (type == "uint") {
+        arg->type = UNSIGNED;
+    } else if (type == "fixed") {
+        arg->type = FIXED;
+    } else if (type == "string") {
+        arg->type = STRING;
+    } else if (type == "array") {
+        arg->type = ARRAY;
+    } else if (type == "fd") {
+        arg->type = FD;
+    } else if (type == "new_id") {
+        arg->type = NEW_ID;
+    } else if (type == "object") {
+        arg->type = OBJECT;
+    } else {
+        return false;
+    }
+
+    return true;
+}
+
+
+void free_description(description *desc) {
+    if (!desc) {
+        return;
+    }
+
+    free(desc->summary);
+    free(desc->text);
+
+    free(desc);
+}
+
+
+void free_message(message *message) {
+    Arg *a, *a_next;
+
+    free(message->name);
+    free(message->uppercase_name);
+    free_description(message->description);
+
+    WlList_for_each_safe(a, a_next, &message->arg_list, link)
+        free_arg(a);
+
+    free(message);
+}
+
+
+Enumeration *create_enumeration(const u8 *name) {
+    Enumeration *enumeration;
+
+    enumeration = xzalloc(sizeof *enumeration);
+    enumeration->name = to_mj_class(xstrdup(name));
+    enumeration->uppercase_name = uppercase_dup(name);
+    enumeration->since = 1;
+
+    WlList_init(&enumeration->entry_list);
+
+    return enumeration;
+}
+
+
+Entry *create_entry(const u8 *name, const u8 *value) {
+    Entry *entry;
+
+    entry = xzalloc(sizeof *entry);
+    entry->name = xstrdup(name);
+    entry->uppercase_name = uppercase_dup(name);
+    entry->value = xstrdup(value);
+
+    return entry;
+}
+
+
+void free_entry(Entry *entry) {
+    free(entry->name);
+    free(entry->uppercase_name);
+    free(entry->value);
+    free(entry->summary);
+    free_description(entry->description);
+
+    free(entry);
+}
+
+
+void free_enumeration(Enumeration *enumeration) {
+    Entry *e, *e_next;
+
+    free(enumeration->name);
+    free(enumeration->uppercase_name);
+    free_description(enumeration->description);
+
+    WlList_for_each_safe(e, e_next, &enumeration->entry_list, link)
+        free_entry(e);
+
+    free(enumeration);
+}
+
+
+Interface *create_interface(Location loc, const u8 *name, i32 version) {
+    Interface *interface;
+
+    interface = xzalloc(sizeof *interface);
+    interface->loc = loc;
+    interface->name = to_mj_class(xstrdup(name));
+    interface->uppercase_name = uppercase_dup(name);
+    interface->version = version;
+    interface->since = 1;
+    WlList_init(&interface->request_list);
+    WlList_init(&interface->event_list);
+    WlList_init(&interface->enumeration_list);
+
+    return interface;
+}
+
+
+void free_interface(Interface *interface) {
+    Message *m, *next_m;
+    Enumeration *e, *next_e;
+
+    free(interface->name);
+    free(interface->uppercase_name);
+    free_description(interface->description);
+
+    WlList_for_each_safe(m, next_m, &interface->request_list, link)
+        free_message(m);
+    WlList_for_each_safe(m, next_m, &interface->event_list, link)
+        free_message(m);
+    WlList_for_each_safe(e, next_e, &interface->enumeration_list, link)
+        free_enumeration(e);
+
+    free(interface);
+}
+
+
+// Convert string to unsigned integer
+///
+/// Parses a non-negative base-10 number from the given string.  If the
+/// specified string is blank, contains non-numerical characters, is out
+/// of range, or results in a negative number, -1 is returned to indicate
+/// an error.
+///
+/// Upon error, this routine does not modify or set errno.
+///
+/// Returns -1 on error, or a non-negative integer on success
+////
+i32 strtouint(const u8 *str) {
+    i32 ret;
+    u8 *end;
+    i32 prev_errno = errno;
+
+    errno = 0;
+    ret = strtol(str, &end, 10);
+
+    if (errno != 0 || end == str || *end != '\0')
+        return -1;
+
+    // check range
+    if (ret < 0 || ret > INT_MAX) {
+        return -1;
+    }
+
+    errno = prev_errno;
+    return ret;
+}
+
+
+// Check that the provided string will produce valid "C" identifiers.
+///
+/// If the string will form the prefix of an identifier in the
+/// generated C code, then it must match [_a-zA-Z][_0-9a-zA-Z]*.
+///
+/// If the string will form the suffix of an identifier, then
+/// it must match [_0-9a-zA-Z]+.
+///
+/// Unicode characters or escape sequences are not permitted,
+/// since not all C compilers support them.
+///
+/// If the above conditions are not met, then fail()
+////
+void validate_identifier(Location *loc, const u8 *str, IdentifierRole role) {
+    if (!*str) {
+        fail(loc, "element name is empty");
+    }
+
+    for (const u8 *scan = str; *scan; scan++) {
+        u8 c = *scan;
+
+        // we do not use the locale-dependent `isalpha`
+        bool is_alpha = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+        bool is_digit = c >= '0' && c <= '9';
+        bool leading_char = (scan == str) && role == STANDALONE_IDENT;
+
+        if (is_alpha || c == '_' || (!leading_char && is_digit)) {
+            continue;
+        }
+
+        if (role == TRAILING_IDENT) {
+            fail(loc, "'%s' is not a valid trailing identifier part", str);
+        } else {
+            fail(loc, "'%s' is not a valid standalone identifier", str);
+        }
+    }
+}
+
+i32
+version_from_since(parse_context *ctx, const u8 *since)
+{
+    i32 version;
+
+    if (since != null) {
+        version = strtouint(since);
+        if (version == -1) {
+            fail(&ctx->loc, "invalid integer (%s)\n", since);
+        } else if (version > ctx->interface->version) {
+            fail(&ctx->loc, "since (%u) larger than version (%u)\n",
+                 version, ctx->interface->version);
+        }
+    } else {
+        version = 1;
+    }
+
+
+    return version;
+}
+
+void
+start_element(void *data, const u8 *element_name, const u8 **atts)
+{
+    parse_context *ctx = data;
+    interface *interface;
+    message *message;
+    arg *arg;
+    enumeration *enumeration;
+    entry *entry;
+    description *description = null;
+    const u8 *name = null;
+    const u8 *type = null;
+    const u8 *interface_name = null;
+    const u8 *value = null;
+    const u8 *summary = null;
+    const u8 *since = null;
+    const u8 *allow_null = null;
+    const u8 *enumeration_name = null;
+    const u8 *bitfield = null;
+    i32 i, version = 0;
+
+    ctx->loc.line_number = XML_GetCurrentLineNumber(ctx->parser);
+    for (i = 0; atts[i]; i += 2) {
+        if (strcmp(atts[i], "name") == 0)
+            name = atts[i + 1];
+        if (strcmp(atts[i], "version") == 0) {
+            version = strtouint(atts[i + 1]);
+            if (version == -1)
+                fail(&ctx->loc, "wrong version (%s)", atts[i + 1]);
+        }
+        if (strcmp(atts[i], "type") == 0)
+            type = atts[i + 1];
+        if (strcmp(atts[i], "value") == 0)
+            value = atts[i + 1];
+        if (strcmp(atts[i], "interface") == 0)
+            interface_name = atts[i + 1];
+        if (strcmp(atts[i], "summary") == 0)
+            summary = atts[i + 1];
+        if (strcmp(atts[i], "since") == 0)
+            since = atts[i + 1];
+        if (strcmp(atts[i], "allow-null") == 0)
+            allow_null = atts[i + 1];
+        if (strcmp(atts[i], "enum") == 0)
+            enumeration_name = atts[i + 1];
+        if (strcmp(atts[i], "bitfield") == 0)
+            bitfield = atts[i + 1];
+    }
+
+    ctx->character_data_length = 0;
+    if (strcmp(element_name, "protocol") == 0) {
+        if (name == null)
+            fail(&ctx->loc, "no protocol name given");
+
+        validate_identifier(&ctx->loc, name, STANDALONE_IDENT);
+        ctx->protocol->name = xstrdup(name);
+        ctx->protocol->uppercase_name = uppercase_dup(name);
+    } else if (strcmp(element_name, "copyright") == 0) {
+
+    } else if (strcmp(element_name, "interface") == 0) {
+        if (name == null)
+            fail(&ctx->loc, "no interface name given");
+
+        if (version == 0)
+            fail(&ctx->loc, "no interface version given");
+
+        validate_identifier(&ctx->loc, name, STANDALONE_IDENT);
+        interface = create_interface(ctx->loc, name, version);
+        ctx->interface = interface;
+        WlList_insert(ctx->protocol->interface_list.prev,
+                   &interface->link);
+    } else if (strcmp(element_name, "request") == 0 ||
+           strcmp(element_name, "event") == 0) {
+        if (name == null)
+            fail(&ctx->loc, "no request name given");
+
+        validate_identifier(&ctx->loc, name, STANDALONE_IDENT);
+        message = create_message(ctx->loc, name);
+
+        if (strcmp(element_name, "request") == 0)
+            WlList_insert(ctx->interface->request_list.prev,
+                       &message->link);
+        else
+            WlList_insert(ctx->interface->event_list.prev,
+                       &message->link);
+
+        if (type != null && strcmp(type, "destructor") == 0)
+            message->destructor = 1;
+
+        version = version_from_since(ctx, since);
+
+        if (version < ctx->interface->since)
+            warn(&ctx->loc, "since version not increasing\n");
+        ctx->interface->since = version;
+        message->since = version;
+
+        if (strcmp(name, "destroy") == 0 && !message->destructor)
+            fail(&ctx->loc, "destroy request should be destructor type");
+
+        ctx->message = message;
+    } else if (strcmp(element_name, "arg") == 0) {
+        if (name == null)
+            fail(&ctx->loc, "no argument name given");
+
+        validate_identifier(&ctx->loc, name, STANDALONE_IDENT);
+        arg = create_arg(name);
+        if (!set_arg_type(arg, type))
+            fail(&ctx->loc, "unknown type (%s)", type);
+
+        match (arg->type) {
+        NEW_ID => {
+            ctx->message->new_id_count++;
+            // fallthrough
+        OBJECT => {
+            if (interface_name) {
+                validate_identifier(&ctx->loc,
+                            interface_name,
+                            STANDALONE_IDENT);
+                arg->interface_name = xstrdup(interface_name);
+            }
+        }
+        default:
+            if (interface_name != null)
+                fail(&ctx->loc, "interface attribute not allowed for type %s", type);
+        }
+        }
+
+        if (allow_null) {
+            if (strcmp(allow_null, "true") == 0)
+                arg->nullable = 1;
+            else if (strcmp(allow_null, "false") != 0)
+                fail(&ctx->loc,
+                     "invalid value for allow-null attribute (%s)",
+                     allow_null);
+
+            if (!is_nullable_type(arg))
+                fail(&ctx->loc,
+                     "allow-null is only valid for objects, strings, and arrays");
+        }
+
+        if (enumeration_name == null || strcmp(enumeration_name, "") == 0)
+            arg->enumeration_name = null;
+        else
+            arg->enumeration_name = xstrdup(enumeration_name);
+
+        if (summary)
+            arg->summary = xstrdup(summary);
+
+        WlList_insert(ctx->message->arg_list.prev, &arg->link);
+        ctx->message->arg_count++;
+    } else if (strcmp(element_name, "enum") == 0) {
+        if (name == null)
+            fail(&ctx->loc, "no enum name given");
+
+        validate_identifier(&ctx->loc, name, TRAILING_IDENT);
+        enumeration = create_enumeration(name);
+
+        if (bitfield == null || strcmp(bitfield, "false") == 0)
+            enumeration->bitfield = false;
+        else if (strcmp(bitfield, "true") == 0)
+            enumeration->bitfield = true;
+        else
+            fail(&ctx->loc,
+                 "invalid value (%s) for bitfield attribute (only true/false are accepted)",
+                 bitfield);
+
+        WlList_insert(ctx->interface->enumeration_list.prev,
+                   &enumeration->link);
+
+        ctx->enumeration = enumeration;
+    } else if (strcmp(element_name, "entry") == 0) {
+        if (name == null)
+            fail(&ctx->loc, "no entry name given");
+
+        validate_identifier(&ctx->loc, name, TRAILING_IDENT);
+        entry = create_entry(name, value);
+        version = version_from_since(ctx, since);
+
+        if (version < ctx->enumeration->since)
+            warn(&ctx->loc, "since version not increasing\n");
+        ctx->enumeration->since = version;
+        entry->since = version;
+
+        if (summary)
+            entry->summary = xstrdup(summary);
+        else
+            entry->summary = null;
+        WlList_insert(ctx->enumeration->entry_list.prev,
+                   &entry->link);
+        ctx->entry = entry;
+    } else if (strcmp(element_name, "description") == 0) {
+        if (summary == null)
+            fail(&ctx->loc, "description without summary");
+
+        description = xzalloc(sizeof *description);
+        description->summary = xstrdup(summary);
+
+        if (ctx->message)
+            ctx->message->description = description;
+        else if (ctx->entry)
+            ctx->entry->description = description;
+        else if (ctx->enumeration)
+            ctx->enumeration->description = description;
+        else if (ctx->interface)
+            ctx->interface->description = description;
+        else
+            ctx->protocol->description = description;
+        ctx->description = description;
+    }
+}
+
+enumeration *
+find_enumeration(protocol *protocol,
+         interface *interface,
+         u8 *enum_attribute)
+{
+    interface *i;
+    enumeration *e;
+    u8 *enum_name;
+    uint32_t idx = 0, j;
+
+    for (j = 0; j + 1 < strlen(enum_attribute); j++) {
+        if (enum_attribute[j] == '.') {
+            idx = j;
+        }
+    }
+
+    if (idx > 0) {
+        enum_name = enum_attribute + idx + 1;
+
+        WlList_for_each(i, &protocol->interface_list, link)
+            if (strncmp(i->name, enum_attribute, idx) == 0)
+                WlList_for_each(e, &i->enumeration_list, link)
+                    if (strcmp(e->name, enum_name) == 0)
+                        return e;
+    } else if (interface) {
+        enum_name = enum_attribute;
+
+        WlList_for_each(e, &interface->enumeration_list, link)
+            if (strcmp(e->name, enum_name) == 0)
+                return e;
+    }
+
+    return null;
+}
+
+void
+verify_arguments(parse_context *ctx,
+         interface *interface,
+         WlList *messages,
+         WlList *enumerations)
+{
+    message *m;
+    WlList_for_each(m, messages, link) {
+        arg *a;
+        WlList_for_each(a, &m->arg_list, link) {
+            enumeration *e;
+
+            if (!a->enumeration_name)
+                continue;
+
+
+            e = find_enumeration(ctx->protocol, interface,
+                         a->enumeration_name);
+
+            match (a->type) {
+            i32 => {
+                if (e && e->bitfield)
+                    fail(&ctx->loc,
+                         "bitfield-style enum must only be referenced by uint");
+            }
+            UNSIGNED => {
+            }
+            default:
+                fail(&ctx->loc,
+                     "enumeration-style argument has wrong type");
+            }
+        }
+    }
+
+}
+
+#ifndef HAVE_STRNDUP
+u8 *
+strndup(const u8 *s, size_t size)
+{
+    u8 *r = malloc(size + 1);
+    strncpy(r, s, size);
+    r[size] = '\0';
+    return r;
+}
+#endif
+
+void
+end_element(void *data, const XML_Char *name)
+{
+    parse_context *ctx = data;
+
+    if (strcmp(name, "copyright") == 0) {
+        ctx->protocol->copyright =
+            strndup(ctx->character_data,
+                ctx->character_data_length);
+    } else if (strcmp(name, "description") == 0) {
+        ctx->description->text =
+            strndup(ctx->character_data,
+                ctx->character_data_length);
+        ctx->description = null;
+    } else if (strcmp(name, "request") == 0 ||
+           strcmp(name, "event") == 0) {
+        ctx->message = null;
+    } else if (strcmp(name, "enum") == 0) {
+        if (WlList_empty(&ctx->enumeration->entry_list)) {
+            fail(&ctx->loc, "enumeration %s was empty",
+                 ctx->enumeration->name);
+        }
+        ctx->enumeration = null;
+    } else if (strcmp(name, "entry") == 0) {
+        ctx->entry = null;
+    } else if (strcmp(name, "protocol") == 0) {
+        interface *i;
+
+        WlList_for_each(i, &ctx->protocol->interface_list, link) {
+            verify_arguments(ctx, i, &i->request_list, &i->enumeration_list);
+            verify_arguments(ctx, i, &i->event_list, &i->enumeration_list);
+        }
+    }
+}
+
+void
+character_data(void *data, const XML_Char *s, i32 len)
+{
+    parse_context *ctx = data;
+
+    if (ctx->character_data_length + len > sizeof (ctx->character_data)) {
+        fprintf(stderr, "too much character data");
+        exit(EXIT_FAILURE);
+        }
+
+    memcpy(ctx->character_data + ctx->character_data_length, s, len);
+    ctx->character_data_length += len;
+}
+
+void
+format_text_to_comment(const u8 *text, bool standalone_comment)
+{
+    i32 bol = 1, start = 0, i, length;
+    bool comment_started = !standalone_comment;
+
+    length = strlen(text);
+    for (i = 0; i <= length; i++) {
+        if (bol && (text[i] == ' ' || text[i] == '\t')) {
+            continue;
+        } else if (bol) {
+            bol = 0;
+            start = i;
+        }
+        if (text[i] == '\n' ||
+            (text[i] == '\0' && !(start == i))) {
+            printf("/// %.*s\n", i - start, text + start);
+            bol = 1;
+            comment_started = true;
+        }
+    }
+}
+
+void
+emit_opcodes(WlList *message_list, interface *interface)
+{
+    message *m;
+    i32 opcode;
+
+    if (WlList_empty(message_list))
+        return;
+
+    opcode = 0;
+    WlList_for_each(m, message_list, link)
+        printf("u32 %s::%s = %d;\n",
+               interface->uppercase_name, m->uppercase_name, opcode++);
+
+    printf("\n");
+}
+
+void
+emit_opcode_versions(WlList *message_list, interface *interface)
+{
+    message *m;
+
+    WlList_for_each(m, message_list, link) {
+        printf("@api(%d)\n", m->since);
+        printf("interface %s {\n    u32 %s = %d;\n}\n", interface->name, m->uppercase_name, m->since);
+    }
+
+    printf("\n");
+}
+
+void
+emit_type(arg *a)
+{
+    match (a->type) {
+    default:
+    i32 => {
+    FD => {
+        printf("i32 ");
+    }
+    NEW_ID => {
+    UNSIGNED => {
+        printf("u32 ");
+    }
+    FIXED => {
+        printf("WlFixed ");
+    }
+    STRING => {
+        printf("StringView ");
+    }
+    OBJECT => {
+        printf("%s &", a->interface_name);
+    }
+    ARRAY => {
+        printf("WlArray &");
+    }
+    }
+}
+
+
+void emit_stubs(WlList *message_list, Interface *interface) {
+    Message *m;
+    Arg *a, *ret;
+    bool has_destructor;
+    bool has_destroy;
+
+    printf("void %s::set_user_data(void *user_data) {\n"
+           "    %s.set_user_data(user_data);\n"
+           "}\n\n\n",
+           interface->name, interface->name);
+
+    printf("void *%s::user_data() {\n"
+           "    return %s.user_data();\n"
+           "}\n\n\n",
+           interface->name, interface->name);
+
+    printf("u32 %s::version() {\n"
+           "    return %s.version();\n"
+           "}\n\n\n",
+           interface->name, interface->name);
+
+    has_destructor = false;
+    has_destroy = false;
+    WlList_for_each(m, message_list, link) {
+        if (m->destructor) {
+            has_destructor = true;
+        }
+
+        if (m->name == "destroy") {
+            has_destroy = true;
+        }
+    }
+
+    if (!has_destructor && has_destroy) {
+        fail(&interface->loc,
+             "interface '%s' has method named destroy "
+             "but no destructor",
+             interface->name);
+        exit(EXIT_FAILURE);
+    }
+
+    if (!has_destroy && interface->name != "WlDisplay") {
+        printf("void %s.destroy() {\n"
+               "    %s.destroy();\n"
+               "}\n\n\n",
+               interface->name, interface->name, interface->name,
+               interface->name);
+    }
+
+    if (WlList_empty(message_list))
+        return;
+
+    WlList_for_each(m, message_list, link) {
+        if (m->new_id_count > 1) {
+            warn(&m->loc,
+                 "request '%s::%s' has more than "
+                 "one new_id arg, not emitting stub\n",
+                 interface->name, m->name);
+            continue;
+        }
+
+        ret = null;
+        WlList_for_each(a, &m->arg_list, link) {
+            if (a->type == NEW_ID)
+                ret = a;
+        }
+
+        if (m->description && m->description->text)
+            format_text_to_comment(m->description->text, false);
+        if (ret && ret->interface_name == null)
+            printf("void *");
+        else if (ret)
+            printf("%s &", ret->interface_name);
+        else
+            printf("void ");
+
+        printf("%s(%s", m->name, interface->name);
+
+        WlList_for_each(a, &m->arg_list, link) {
+            if (a->type == NEW_ID && a->interface_name == null) {
+                printf(", const WlInterface &interface, u32 version");
+                continue;
+            } else if (a->type == NEW_ID)
+                continue;
+            printf(", ");
+            emit_type(a);
+            printf("%s", a->name);
+        }
+
+        printf(") {\n");
+        printf("    ");
+        if (ret) {
+            printf("WlProxy &%s = ", ret->name);
+        }
+        printf("%s.marshal_flags(%s::%s",
+               interface->name,
+               interface->uppercase_name,
+               m->uppercase_name);
+
+        if (ret) {
+            if (ret->interface_name) {
+                // Normal factory case, an arg has type="new_id" and
+                // an interface is provided
+                printf(", &%s_interface", ret->interface_name);
+            } else {
+                // an arg has type ="new_id" but interface is not
+                // provided, such as in wl_registry.bind
+                printf(", interface");
+            }
+        } else {
+            // No args have type="new_id"
+            printf(", null");
+        }
+
+        if (ret && ret->interface_name == null)
+            printf(", version");
+        else
+            printf(", %s.version()", interface->name);
+        printf(", %s", m->destructor ? "WlMarshalFlag::DESTROY" : "0");
+
+        WlList_for_each(a, &m->arg_list, link) {
+            if (a->type == NEW_ID) {
+                if (a->interface_name == null)
+                    printf(", interface->name, version");
+                printf(", null");
+            } else {
+                printf(", %s", a->name);
+            }
+        }
+        printf(");\n");
+
+        if (ret && ret->interface_name == null)
+            printf("\n    return %s;\n", ret->name);
+        else if (ret)
+            printf("\n    return %s;\n", ret->name);
+
+        printf("}\n\n\n");
+    }
+}
+
+
+void emit_event_wrappers(WlList *message_list, Interface *interface) {
+    Message *m;
+    Arg *a;
+
+    // We provide hand written functions for the display object
+    if (strcmp(interface->name, "WlDisplay") == 0)
+        return;
+
+    WlList_for_each(m, message_list, link) {
+        printf("\n\n/// Sends an `%s` event to the client owning the resource.\n", m->name);
+        printf("/// `resource_` The client's resource\n");
+        WlList_for_each(a, &m->arg_list, link) {
+            if (a->summary)
+                printf("/// `%s` %s\n", a->name, a->summary);
+        }
+        printf("void %s::send_%s(WlResource &resource_", interface->name, m->name);
+
+        WlList_for_each(a, &m->arg_list, link) {
+            printf(", ");
+            match (a->type) {
+            NEW_ID => {
+            OBJECT => {
+                printf("WlResource &");
+            }
+            default:
+                emit_type(a);
+            }
+            printf("%s", a->name);
+        }
+
+        printf(") {\n"
+               "    resource_.post_event(%s::%s",
+               interface->uppercase_name, m->uppercase_name);
+
+        WlList_for_each(a, &m->arg_list, link)
+            printf(", %s", a->name);
+
+        printf(");\n");
+        printf("}\n");
+    }
+}
+
+
+void emit_enumerations(Interface *interface) {
+    enumeration *e;
+    entry *entry;
+
+    WlList_for_each(e, &interface->enumeration_list, link) {
+        description *desc = e->description;
+
+        if (desc) {
+            format_text_to_comment(desc->summary, false);
+            if (desc->text)
+                format_text_to_comment(desc->text, false);
+        }
+        printf("\n\nenum<u32> %s::%s {\n", interface->name, e->name);
+        WlList_for_each(entry, &e->entry_list, link) {
+            desc = entry->description;
+            if (entry->summary || entry->since > 1 || desc) {
+                if (entry->summary)
+                    printf("    /// %s\n", entry->summary);
+                if (desc) {
+                    printf("    /// %s\n", desc->summary);
+                    printf("    ///\n");
+                    if (desc->text)
+                        desc_dump(desc->text, "    /// ");
+                }
+                if (entry->since > 1)
+                    printf("    @api(%d)\n", entry->since);
+            }
+            printf("    %s_%s = %s;\n",
+                   e->uppercase_name,
+                   entry->uppercase_name, entry->value);
+        }
+        printf("}\n");
+
+        WlList_for_each(entry, &e->entry_list, link) {
+            if (entry->since == 1)
+                            continue;
+
+                        printf("const u32 %s_%s_SINCE_VERSION = %d;\n",
+                               e->uppercase_name, entry->uppercase_name,
+                               entry->since);
+
+        }
+    }
+}
+
+
+void emit_structs(WlList *message_list, Interface *interface, Side side) {
+    Message *m;
+    Arg *a;
+    i32 n;
+
+    if (WlList_empty(message_list))
+        return;
+
+    printf("\n\nclass %s::%s {\n", interface->name, (side == SERVER) ? "interface" : "listener");
+
+    WlList_for_each(m, message_list, link) {
+        description *mdesc = m->description;
+
+        printf("\n\n");
+        if (mdesc) {
+            if (mdesc->summary)
+                printf("    /// %s\n", mdesc->summary);
+            printf("    ///\n");
+            desc_dump(mdesc->text, "    /// ");
+        }
+        WlList_for_each(a, &m->arg_list, link) {
+            if (side == SERVER && a->type == NEW_ID &&
+                a->interface_name == null)
+                printf("    /// `interface` name of the objects interface\n"
+                       "    /// `version` version of the objects interface\n");
+
+            if (a->summary)
+                printf("    /// `%s` %s\n", a->name, a->summary);
+        }
+        if (m->since > 1) {
+            printf("    @api(%d)\n", m->since);
+        }
+        printf("    void (");
+
+        n = strlen(m->name) + 17;
+        if (side == SERVER) {
+            printf("WlClient &client, WlResource &resource");
+        } else {
+            printf("void *data, %s &%s", interface->name, interface->name);
+        }
+
+        WlList_for_each(a, &m->arg_list, link) {
+            printf(", ");
+
+            if (side == SERVER && a->type == OBJECT)
+                printf("WlResource &");
+            else if (side == SERVER && a->type == NEW_ID && a->interface_name == null)
+                printf("StringView interface, u32 version, u32 ");
+            else if (side == CLIENT && a->type == OBJECT && a->interface_name == null)
+                printf("void *");
+
+            else if (side == CLIENT && a->type == NEW_ID)
+                printf("%s &", a->interface_name);
+            else
+                emit_type(a);
+
+            printf("%s", a->name);
+        }
+
+        printf(")* %s;\n", m->name);
+    }
+
+    if (side == CLIENT) {
+        printf(
+            "\n\n    i32 %s.add_listener(const %s_listener &listener, void *data) {\n"
+           "        return %s.add_listener(listener, data);\n"
+           "    }\n",
+           interface->name,
+           interface->name,
+           interface->name);
+    }
+
+    printf("}\n\n\n");
+}
+
+
+void emit_types_forward_declarations(Protocol *protocol, WlList *message_list, WlArray *types) {
+    message *m;
+    arg *a;
+    i32 length;
+    u8 **p;
+
+    WlList_for_each(m, message_list, link) {
+        length = 0;
+        m->all_null = 1;
+        WlList_for_each(a, &m->arg_list, link) {
+            length++;
+            match (a->type) {
+            NEW_ID => {
+            OBJECT => {
+                if (!a->interface_name)
+                    continue;
+
+                m->all_null = 0;
+                p = fail_on_null(wl_array_add(types, sizeof *p));
+                *p = a->interface_name;
+            }
+            default:
+            }
+            }
+        }
+
+        if (m->all_null && length > protocol->null_run_length)
+            protocol->null_run_length = length;
+    }
+}
+
+
+i32 cmp_names(const void *p1, const void *p2) {
+    const u8 * const *s1 = p1, * const *s2 = p2;
+
+    return strcmp(*s1, *s2);
+}
+
+
+const u8 *get_include_name(bool core, Side side) {
+    if (side == SERVER)
+        return core ? "wayland-server-core" : "wayland-server";
+    else
+        return core ? "wayland-client-core" : "wayland-client";
+}
+
+
+void emit_mainpage_blurb(const Protocol *protocol, Side side) {
+    interface *i;
+
+    printf("/// The %s protocol\n", protocol->name);
+
+    if (protocol->description) {
+        if (protocol->description->summary) {
+            printf("/// %s\n"
+                   "///\n", protocol->description->summary);
+        }
+
+        if (protocol->description->text) {
+            printf("/// Description\n");
+            format_text_to_comment(protocol->description->text, false);
+        }
+    }
+
+    printf("/// Interfaces\n");
+    WlList_for_each(i, &protocol->interface_list, link) {
+        printf("/// %s\n", i->description && i->description->summary ?  i->description->summary : "");
+    }
+}
+
+void emit_header(Protocol *protocol, Side side) {
+    Interface *i, *i_next;
+    WlArray types;
+    const u8 *s = (side == SERVER) ? "SERVER" : "CLIENT";
+    u8 **p, *prev;
+
+    printf("/// Generated by %s %s\n\n", PROGRAM_NAME, WAYLAND_VERSION);
+
+    printf(
+           "import %s;\n",
+           get_include_name(protocol->core_headers, side));
+    if (side == SERVER)
+        printf("WlClient;\n"
+               "WlResource;\n\n");
+
+    emit_mainpage_blurb(protocol, side);
+
+    wl_array_init(&types);
+    WlList_for_each(i, &protocol->interface_list, link) {
+        emit_types_forward_declarations(protocol, &i->request_list, &types);
+        emit_types_forward_declarations(protocol, &i->event_list, &types);
+    }
+
+    WlList_for_each(i, &protocol->interface_list, link) {
+        p = fail_on_null(wl_array_add(&types, sizeof *p));
+        *p = i->name;
+    }
+
+    if (types.size > 0)
+        qsort(types.data, types.size / sizeof *p, sizeof *p, cmp_names);
+
+    prev = null;
+    wl_array_for_each(p, &types) {
+        if (prev && strcmp(*p, prev) == 0)
+            continue;
+        printf("class %s;\n", *p);
+        prev = *p;
+    }
+    wl_array_release(&types);
+    printf("\n");
+
+    WlList_for_each(i, &protocol->interface_list, link) {
+        printf("/// `%s`\n", i->name);
+        if (i->description && i->description->text) {
+            printf("/// Description\n");
+            format_text_to_comment(i->description->text, false);
+        }
+        printf("/// API\n"
+               "/// See `%s`.\n",
+               i->name);
+        printf("/// The %s interface\n", i->name);
+        if (i->description && i->description->text)
+            format_text_to_comment(i->description->text, false);
+        printf("const WlInterface %s_interface;\n", i->name);
+    }
+
+    printf("\n");
+
+    WlList_for_each_safe(i, i_next, &protocol->interface_list, link) {
+
+        emit_enumerations(i);
+
+        if (side == SERVER) {
+            emit_structs(&i->request_list, i, side);
+            emit_opcodes(&i->event_list, i);
+            emit_opcode_versions(&i->event_list, i);
+            emit_opcode_versions(&i->request_list, i);
+            emit_event_wrappers(&i->event_list, i);
+        } else {
+            emit_structs(&i->event_list, i, side);
+            emit_opcodes(&i->request_list, i);
+            emit_opcode_versions(&i->event_list, i);
+            emit_opcode_versions(&i->request_list, i);
+            emit_stubs(&i->request_list, i);
+        }
+
+        free_interface(i);
+    }
+}
+
+
+void emit_null_run(Protocol *protocol) {
+    i32 i;
+
+    for (i = 0; i < protocol->null_run_length; i++)
+        printf("    null,\n");
+}
+
+
+void emit_types(Protocol *protocol, WlList *message_list) {
+    Message *m;
+    Arg *a;
+
+    WlList_for_each(m, message_list, link) {
+        if (m->all_null) {
+            m->type_index = 0;
+            continue;
+        }
+
+        m->type_index = protocol->null_run_length + protocol->type_index;
+        protocol->type_index += m->arg_count;
+
+        WlList_for_each(a, &m->arg_list, link) {
+            match (a->type) {
+            NEW_ID => {
+            OBJECT => {
+                if (a->interface_name)
+                    printf("    &%s_interface,\n", a->interface_name);
+                else
+                    printf("    null,\n");
+            }
+            default:
+                printf("    null,\n");
+            }
+            }
+        }
+    }
+}
+
+
+void emit_messages(const u8 *name, WlList *message_list, Interface *interface, const u8 *suffix) {
+    Message *m;
+    Arg *a;
+
+    if (WlList_empty(message_list))
+        return;
+
+    printf("const WlMessage[] %s::%s = {\n", interface->name, suffix);
+
+    WlList_for_each(m, message_list, link) {
+        printf("    { \"%s\", \"", m->name);
+
+        if (m->since > 1)
+            printf("%d", m->since);
+
+        WlList_for_each(a, &m->arg_list, link) {
+            if (is_nullable_type(a) && a->nullable)
+                printf("?");
+
+            match (a->type) {
+            default:
+            i32 => {
+                printf("i");
+            }
+            NEW_ID => {
+                if (a->interface_name == null)
+                    printf("su");
+                printf("n");
+            }
+            UNSIGNED => {
+                printf("u");
+            }
+            FIXED => {
+                printf("f");
+            }
+            STRING => {
+                printf("s");
+            }
+            OBJECT => {
+                printf("o");
+            }
+            ARRAY => {
+                printf("a");
+            }
+            FD => {
+                printf("h");
+            }
+            }
+        }
+        printf("\", %s_types + %d },\n", name, m->type_index);
+    }
+
+    printf("};\n\n\n");
+}
+
+
+void emit_code(Protocol *protocol, Visibility vis) {
+    const u8 *symbol_visibility;
+    Interface *i, *next;
+    WlArray types;
+    u8 **p, *prev;
+
+    printf("/// Generated by %s %s\n\n", PROGRAM_NAME, WAYLAND_VERSION);
+
+    if (protocol->copyright)
+        format_text_to_comment(protocol->copyright, true);
+
+    printf("import wayland-util;\n\n\n");
+
+    // When building a shared library symbols must be exported, otherwise
+    // we want to have the symbols hidden.
+
+    wl_array_init(&types);
+    WlList_for_each(i, &protocol->interface_list, link) {
+        emit_types_forward_declarations(protocol, &i->request_list, &types);
+        emit_types_forward_declarations(protocol, &i->event_list, &types);
+    }
+
+    if (types.size > 0)
+        qsort(types.data, types.size / sizeof *p, sizeof *p, cmp_names);
+
+    prev = null;
+    wl_array_for_each(p, &types) {
+        if (prev && strcmp(*p, prev) == 0) {
+            continue;
+        }
+
+        printf("const WlInterface %s_interface;\n", *p);
+        prev = *p;
+    }
+
+    wl_array_release(&types);
+    printf("\n");
+
+    printf("static const WlInterface &[]%s_types = {\n", protocol->name);
+    emit_null_run(protocol);
+    WlList_for_each(i, &protocol->interface_list, link) {
+        emit_types(protocol, &i->request_list);
+        emit_types(protocol, &i->event_list);
+    }
+    printf("};\n\n\n");
+
+    WlList_for_each_safe(i, next, &protocol->interface_list, link) {
+
+        emit_messages(protocol->name, &i->request_list, i, "requests");
+        emit_messages(protocol->name, &i->event_list, i, "events");
+
+        printf("const WlInterface %s_interface = {\n"
+               "    \"%s\", %d,\n",
+               i->name, i->name, i->version);
+
+        if (!WlList_empty(&i->request_list))
+            printf("    %d, %s_requests,\n",
+                   WlList_length(&i->request_list), i->name);
+        else
+            printf("    0, null,\n");
+
+        if (!WlList_empty(&i->event_list))
+            printf("    %d, %s_events,\n",
+                   WlList_length(&i->event_list), i->name);
+        else
+            printf("    0, null,\n");
+
+        printf("};\n\n\n");
+
+        // we won't need it any further
+        free_interface(i);
+    }
+}
+
+
+void free_protocol(Protocol *protocol) {
+    free(protocol->name);
+    free(protocol->uppercase_name);
+    free(protocol->copyright);
+    free_description(protocol->description);
+}
+
+
+i32 main(i32 argc, u8 *argv[]) {
+    ParseContext ctx;
+    Protocol protocol;
+    FILE *input = stdin;
+    u8 *input_filename = null;
+    i32 len;
+    void *buf;
+    bool help = false;
+    bool core_headers = false;
+    bool version = false;
+    bool strict = false;
+    bool fail = false;
+    i32 opt;
+
+    enum<u8> Mode mode {
+        CLIENT_HEADER,
+        SERVER_HEADER,
+        PRIVATE_CODE,
+        PUBLIC_CODE,
+        CODE,
+    }
+
+    const Option options[] = {
+        { "help",              no_argument, null, 'h' },
+        { "version",           no_argument, null, 'v' },
+        { "include-core-only", no_argument, null, 'c' },
+        { "strict",            no_argument, null, 's' },
+        { 0,                   0,           null, 0 }
+    };
+
+    while (1) {
+        opt = getopt_long(argc, argv, "hvcs", options, null);
+
+        if (opt == -1) {
+            break;
+        }
+
+        match (opt) {
+            'h' => {
+                help = true;
+            }
+            'v' => {
+                version = true;
+            }
+            'c' => {
+                core_headers = true;
+            }
+            's' => {
+                strict = true;
+            }
+            _ => {
+                fail = true;
+            }
+        }
+    }
+
+    argv += optind;
+    argc -= optind;
+
+    if (help)
+        usage(EXIT_SUCCESS);
+    else if (version)
+        scanner_version(EXIT_SUCCESS);
+    else if ((argc != 1 && argc != 3) || fail)
+        usage(EXIT_FAILURE);
+    else if (strcmp(argv[0], "help") == 0)
+        usage(EXIT_SUCCESS);
+    else if (strcmp(argv[0], "client-header") == 0)
+        mode = CLIENT_HEADER;
+    else if (strcmp(argv[0], "server-header") == 0)
+        mode = SERVER_HEADER;
+    else if (strcmp(argv[0], "private-code") == 0)
+        mode = PRIVATE_CODE;
+    else if (strcmp(argv[0], "public-code") == 0)
+        mode = PUBLIC_CODE;
+    else if (strcmp(argv[0], "code") == 0)
+        mode = CODE;
+    else
+        usage(EXIT_FAILURE);
+
+    if (argc == 3) {
+        input_filename = argv[1];
+        input = fopen(input_filename, "r");
+        if (input == null) {
+            fprintf(stderr, "Could not open input file: %s\n",
+                strerror(errno));
+            exit(EXIT_FAILURE);
+        }
+        if (freopen(argv[2], "w", stdout) == null) {
+            fprintf(stderr, "Could not open output file: %s\n",
+                strerror(errno));
+            fclose(input);
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    // initialize protocol structure
+    memset(&protocol, 0, sizeof protocol);
+    WlList_init(&protocol.interface_list);
+    protocol.core_headers = core_headers;
+
+    // initialize context
+    memset(&ctx, 0, sizeof ctx);
+    ctx.protocol = &protocol;
+    if (input == stdin)
+        ctx.loc.filename = "<stdin>";
+    else
+        ctx.loc.filename = input_filename;
+
+    if (!is_dtd_valid(input, ctx.loc.filename)) {
+        fprintf(stderr,
+        "*******************************************************\n"
+        "*                                                     *\n"
+        "* WARNING: XML failed validation against built-in DTD *\n"
+        "*                                                     *\n"
+        "*******************************************************\n");
+        if (strict) {
+            fclose(input);
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    // create XML parser
+    ctx.parser = XML_ParserCreate(null);
+    XML_SetUserData(ctx.parser, &ctx);
+    if (ctx.parser == null) {
+        fprintf(stderr, "failed to create parser\n");
+        fclose(input);
+        exit(EXIT_FAILURE);
+    }
+
+    XML_SetElementHandler(ctx.parser, start_element, end_element);
+    XML_SetCharacterDataHandler(ctx.parser, character_data);
+
+    do {
+        buf = XML_GetBuffer(ctx.parser, XML_BUFFER_SIZE);
+        len = fread(buf, 1, XML_BUFFER_SIZE, input);
+        if (len < 0) {
+            fprintf(stderr, "fread: %s\n", strerror(errno));
+            fclose(input);
+            exit(EXIT_FAILURE);
+        }
+        if (XML_ParseBuffer(ctx.parser, len, len == 0) == 0) {
+            fprintf(stderr,
+                "Error parsing XML at line %ld col %ld: %s\n",
+                XML_GetCurrentLineNumber(ctx.parser),
+                XML_GetCurrentColumnNumber(ctx.parser),
+                XML_ErrorString(XML_GetErrorCode(ctx.parser)));
+            fclose(input);
+            exit(EXIT_FAILURE);
+        }
+    } while (len > 0);
+
+    XML_ParserFree(ctx.parser);
+
+    match (mode) {
+        CLIENT_HEADER => {
+            emit_header(&protocol, CLIENT);
+        }
+        SERVER_HEADER => {
+            emit_header(&protocol, SERVER);
+        }
+        PRIVATE_CODE => {
+            emit_code(&protocol, PRIVATE);
+        }
+        CODE => {
+            fprintf(stderr,
+                "Using \"code\" is deprecated - use "
+                "private-code or public-code.\n"
+                "See the help page for details.\n");
+            // fallthrough
+        PUBLIC_CODE => {
+            emit_code(&protocol, PUBLIC);
+        }
+    }
+
+    free_protocol(&protocol);
+    fclose(input);
+
+    return 0;
+}

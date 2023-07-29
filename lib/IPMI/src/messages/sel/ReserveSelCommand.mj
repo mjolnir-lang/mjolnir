@@ -1,0 +1,59 @@
+
+
+Reserve SEL Command
+This command is used to set the present ‘owner’ of the SEL, as identified by the Software ID or by the
+Requester’s Slave Address from the command. The reservation process provides a limited amount of protection
+on repository access from the IPMB when records are being deleted or incrementally read.
+The Reserve SEL command is provided to help prevent deleting the wrong record when doing deletes, to provide
+a mechanism to avoid clearing the SEL just after a new event has been received, and to prevent receiving
+incorrect data when doing incremental reads.
+The Reserve SEL command does NOT guarantee access to the SEL. That is, the case exists that a pair of
+requesters could vie for access to the SEL in such a manner that they alternately cancel the reservation that is held
+by the other - effectively ‘deadlocking’ each other.
+A ‘Reservation ID’ value is returned in response to this command. This value is required in other requests, such as
+the ‘Clear SEL’ command. These commands will not execute unless the correct Reservation ID value is provided.
+The Reservation ID is used in the following manner. Suppose an application wishes to clear the SEL. The
+application would first ‘reserve’ the repository by issuing a Reserve SEL command. The application would then
+check that all SEL entries have been handled prior to issuing the Clear SEL command.
+If an new event had been placed in the SEL after the records were checked, but before the Clear SEL command, it
+is possible for the event to be lost. However, the addition of a new event to the SEL causes the present
+Reservation ID to be ‘canceled’. This would prevent the Clear SEL command from executing. If this occurred, the
+application would repeat the reserve-check-clear process until successful.
+Table 31-, Reserve SEL Command
+byte data field
+Request Data - -
+Response Data 1 Completion Code
+81h = cannot execute command, SEL erase in progress
+2 Reservation ID, LS Byte 0000h reserved.
+3 Reservation ID, MS Byte
+
+
+
+
+
+
+
+
+
+ Reservation Restricted Commands
+A Requester must issue a ‘Reserve SEL’ command prior to issuing any of the following SEL commands. Note
+that the ‘Reserve SEL’ command only needs to be reissued if the reservation is canceled. These commands shall
+be rejected if the Requester’s reservation has been canceled.
+ Delete SEL Entry command
+ Clear SEL command
+ Get SEL Entry command (if ‘get’ is from an offset other than 00h)
+ Partial Add SEL Entry command
+If the given reservation has been canceled, a ‘reservation canceled’ completion code shall be returned in the
+response to the above commands.
+Note that the Record ID associated with a given record could change between successive offset 0 ‘Gets’ to that
+Record ID. For example, the first SEL Entry could change if the SEL were cleared and a new event came in. It
+is thus the responsibility of the device accessing the SEL to verify that the retrieved record information matches
+up with the ID information (timestamp, slave address, LUN, sensor ID, etc.) of the event record.
+31.4.2 Reservation Cancellation
+The SEL Device shall automatically cancel the present SEL reservation after any of the following events occur:
+ A SEL entry is added.
+ A SEL entry is deleted such that other Record IDs change. As a simplification, an implementation is
+allowed to cancel the reservation on any SEL entry deletion.
+ The SEL is cleared.
+ The SEL Device is reset (via hardware or Cold Reset command)
+ A new ‘Reserve SEL’ command is received.

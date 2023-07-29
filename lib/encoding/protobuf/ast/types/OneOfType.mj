@@ -1,0 +1,11 @@
+import protobuf.ast.Type;
+
+
+class OneOfType {
+    Map<u32, Type &> fields;
+}
+
+
+impl<Type> OneOfType {
+
+}

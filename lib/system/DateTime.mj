@@ -1,0 +1,418 @@
+
+
+/// \brief 
+struct TimezoneInfo {
+    StringView name;  // 
+    StringView abbr;  // 
+    u8 offset;        // 
+}
+
+
+/// \brief A calendar date with nanosecond resolution.
+struct DateTime {
+    Date date
+    u32 seconds;      // [0, (86398|83699|86400)] (86400 for positive leap seconds, 86398 for negative leap seconds)
+    u32 nanoseconds;  // [0, 999999999]
+
+
+    DateTime(
+        i32 year, u32 month, u32 day,
+        u32 hour, u32 minute, u32 second, u32 nanosecond
+    )
+
+
+    void copy(const DateTime &other) {
+        *this = *other
+    }
+
+
+    result_t from_ymd(i32 year, u32 month, u32 day) {
+        return DateTime(year, month, day, 0, 0, 0, 0)
+    }
+
+
+    result_t from_date(const Date &other) {
+        return from_ymd(this, other.year, other.month, other.day)
+    }
+
+
+    //void now(DateTime *this)
+
+
+    bool is_bc() {
+        return date.year <= 0
+    }
+
+
+    bool is_leap_year() {
+        return date_is_leap_year(&date)
+    }
+
+
+    bool is_leap_day() {
+        return date_is_leap_day(&date)
+    }
+
+
+    bool has_leap_seconds() {
+        return date_has_leap_seconds(&date)
+    }
+
+
+    i32 get_leap_seconds() {
+        return date_get_leap_seconds(&date)
+    }
+
+
+    u32 get_year() {
+        return is_bc(this) ? -(date.year + 1) : this->date.year
+    }
+
+
+    u32 get_month() {
+        return date.month
+    }
+
+
+    /// \brief Return the day component of the date time value.
+    /// \return The 'day' component.
+    u32 get_day() {
+        return date.day
+    }
+
+
+    u32 get_hour() {
+        return seconds / SEC_PER_HR
+    }
+
+
+    u32 get_minute() {
+        return (seconds / SEC_PER_MIN) % MIN_PER_HR
+    }
+
+
+    u32 get_second() {
+        return seconds % SEC_PER_MIN
+    }
+
+
+    u32 get_millisecond() {
+        return nanoseconds / NSEC_PER_MSEC
+    }
+
+
+    u32 get_microsecond() {
+        return nanoseconds / NSEC_PER_USEC
+    }
+
+
+    u32 get_nanosecond() {
+        return nanoseconds
+    }
+
+
+    u32 get_weekday() {
+        return date_get_weekday(&date)
+    }
+
+
+    u32 get_day_of_year() {
+        return date_get_day_of_year(&date)
+    }
+
+
+    const MonthInfo *get_month_info() {
+        return date_get_month_info(&date)
+    }
+
+
+    const WeekDayInfo *get_weekday_info() {
+        return date_get_weekday_info(&date)
+    }
+
+
+    void add_time(DateTime *restrict this, const Time *restrict time)
+
+
+    void add_days(i32 days)
+
+
+    void add_hours(i32 hours)
+
+
+    void add_minutes(i32 minutes)
+
+
+    void add_seconds(i32 seconds)
+
+
+    void add_milliseconds(i32 milliseconds)
+
+
+    void add_microseconds(i32 microseconds)
+
+
+    void add_nanoseconds(i32 nanoseconds)
+
+
+    i32 compare(const DateTime *restrict other)
+
+
+    bool equ(const DateTime *restrict other) {
+        return compare(this, other) == 0
+    }
+
+
+    bool neq(const DateTime *restrict other) {
+        return compare(this, other) != 0
+    }
+
+
+    bool geq(const DateTime *restrict other) {
+        return compare(this, other) >= 0
+    }
+
+
+    bool gtr(const DateTime *restrict other) {
+        return compare(this, other) > 0
+    }
+
+
+    bool leq(const DateTime *restrict other) {
+        return compare(this, other) <= 0
+    }
+
+
+    bool les(const DateTime *restrict other) {
+        return compare(this, other) < 0
+    }
+}
+
+
+#endif
+
+
+result_t init(
+    DateTime *datetime, i32 year, u32 month, u32 day,
+    u32 hour, u32 minute, u32 second, u32 nanosecond
+) {
+    if (date_init(&datetime->date, year, month, day)) {
+        return RESULT_FAILURE
+    }
+
+    if (
+        hour >= HR_PER_DAY || minute >= MIN_PER_HR || nanosecond >= NSEC_PER_SEC ||
+        second >= (u32) (SEC_PER_MIN + date_get_leap_seconds(&datetime->date))
+    ) {
+        return RESULT_FAILURE
+    }
+
+    datetime->seconds = (SEC_PER_HR * hour) + (SEC_PER_MIN * minute) + second
+    datetime->nanoseconds = nanosecond
+    return RESULT_SUCCESS
+}
+
+
+
+//void now(DateTime *datetime) {
+//    OsTime raw_time = os_time(NULL)
+//    OsDateTime raw = os_localtime(&raw_time)
+//    datetime->date.year = raw.year
+//    //...
+//}
+
+
+
+void add_time(DateTime *restrict datetime, const Time *restrict time) {
+    datetime->nanoseconds += time->nanoseconds
+    datetime->seconds += time->seconds
+    u32 days = datetime->date.day + time->days
+
+    if (datetime->nanoseconds >= NSEC_PER_SEC) {
+        datetime->nanoseconds -= NSEC_PER_SEC
+        datetime->seconds += 1
+    }
+
+    if (datetime->seconds >= SEC_PER_DAY) {
+        datetime->seconds -= SEC_PER_DAY
+        days += 1
+    }
+
+    datetime->date.month += 0
+    datetime->date.year += 0
+}
+
+
+void add_days(DateTime *datetime, i32 days) {
+    u32 d = datetime->date.day + days
+    u32 m = datetime->date.month + (d / 30)
+    datetime->date.day = d % 30
+    datetime->date.year += m / 12
+    datetime->date.month += m % 12
+}
+
+
+void add_hours(DateTime *datetime, i32 hours) {
+    add_seconds(datetime, SEC_PER_HR * hours)
+}
+
+
+void add_minutes(DateTime *datetime, i32 minutes) {
+    add_seconds(datetime, SEC_PER_MIN * minutes)
+}
+
+
+void add_seconds(DateTime *datetime, i32 seconds) {
+    i32 days = seconds / SEC_PER_DAY
+    datetime->seconds += seconds % SEC_PER_DAY
+
+    if (datetime->seconds >= SEC_PER_DAY) {
+        datetime->seconds -= SEC_PER_DAY
+        days += 1
+    }
+
+    add_days(datetime, days)
+}
+
+
+void add_milliseconds(DateTime *datetime, i32 milliseconds) {
+    add_nanoseconds(datetime, NSEC_PER_MSEC * milliseconds)
+}
+
+
+void add_microseconds(DateTime *datetime, i32 microseconds) {
+    add_nanoseconds(datetime, NSEC_PER_USEC * microseconds)
+}
+
+
+void add_microseconds(DateTime *datetime, i32 nanoseconds) {
+    i32 seconds = nanoseconds / NSEC_PER_SEC
+    datetime->nanoseconds += nanoseconds % NSEC_PER_SEC
+
+    if (datetime->nanoseconds >= NSEC_PER_SEC) {
+        datetime->nanoseconds -= NSEC_PER_SEC
+        seconds += 1
+    }
+
+    add_seconds(datetime, seconds)
+}
+
+
+i32 compare(const DateTime *restrict datetime, const DateTime *restrict other) {
+    i32 diff
+
+    if ((diff = date_compare(&datetime->date, &other->date))) {
+        return diff
+    }
+
+    if ((diff = (i32) datetime->seconds - other->seconds)) {
+        return diff
+    }
+
+    return (i32) datetime->nanoseconds - other->nanoseconds
+}
+
+
+
+
+static result_t printable_vprint_datetime(Printable *restrict printable, PrintFormat *restrict format, va_list *args) {
+    const DateTime *datetime = va_arg(*args, const DateTime *)
+    PrintFormat number_format = {
+        .width = 0,
+        .base = 10,
+        .type = 'u',
+        .fill = '0',
+        .type_width = 32,
+        .align = '>',
+        .extra = "",
+        .extra_size = 0,
+        .has_alternate = false,
+        .has_precision = false,
+        .index = 0,
+        .sign = '-',
+    }
+    const char *fmt = format
+
+    while (*fmt && *fmt != '}') {
+        if (*fmt != '%') {
+            if (printable_write_char(printable, *fmt++)) {
+                lib_error("Failed to print to string!")
+                return RESULT_FAILURE
+            }
+        }
+
+        u32 val = 0
+
+        switch (*fmt++) {
+        case '%':
+            printable_write_char(printable, '%')
+            continue
+        case 'A':
+            number_format.width = 4
+            val = get_year(datetime)
+            break
+        case 'a':
+            number_format.width = 4
+            val = get_year(datetime)
+            break
+        case 'B':
+            number_format.width = 4
+            val = get_month_info(datetime)->name
+            break
+        case 'b':
+            number_format.width = 4
+            val = get_year(datetime)
+            break
+        case 'Y':
+            number_format.width = 4
+            val = get_year(datetime)
+            break
+        case 'y':
+            number_format.width = 2
+            val = get_year(datetime)
+            break
+        case 'm':
+            number_format.width = 2
+            val = get_month(datetime)
+            break
+        case 'd':
+            number_format.width = 2
+            val = get_day(datetime)
+            break
+        case 'H':
+            number_format.width = 2
+            val = get_hour(datetime)
+            break
+        case 'M':
+            number_format.width = 2
+            val = get_minute(datetime)
+            break
+        case 'S':
+            number_format.width = 2
+            val = get_second(datetime)
+            break
+        case 'ms':
+            number_format.width = 3
+            val = get_millisecond(datetime)
+            break
+        case 'us':
+            number_format.width = 6
+            val = get_microsecond(datetime)
+            break
+        case 'ns':
+            number_format.width = 9
+            val = get_nanosecond(datetime)
+            break
+        default:
+            lib_error("Invalid format specifier!")
+            return RESULT_FAILURE
+        }
+
+        if (printable_print_u64(printable, number_format, val)) {
+            lib_error("Failed to print to string!")
+            return RESULT_FAILURE
+        }
+    }
+
+    return RESULT_SUCCESS
+}

@@ -1,0 +1,79 @@
+
+
+/// Get SEL Info Command
+///
+/// This command returns the number of entries in the SEL, SEL command version,
+/// and the timestamp for the most recent entry and delete/clear. The
+/// timestamp format is provided in section 0, Timestamp Format. The Most
+/// Recent Addition timestamp field returns the timestamp for the last add or
+/// log operation, while the Most Recent Erase field returns the timestamp for
+/// the last delete or clear operation.
+///
+/// These timestamps are independent of timestamps that may be returned by
+/// other commands, such as those returned by the Get SDR Repository Info
+/// command. The timestamp reflects when the most recent SEL add or erase
+/// occurred, not when the last add or erase occurred on the physical storage
+/// device.
+///
+/// For example, the SEL Info Most Recent Addition timestamp would reflect the
+/// last time a new event was added to the SEL. This would be independent of
+/// the Most Recent Addition time for an SDR - even if the implementation
+/// elected to implement the SEL and SDR Repository in the same storage device.
+class GetSelInfoCommand {
+    struct ResponseRecord response {
+
+        /// Completion Code
+        ///
+        /// `0x81` - cannot execute command, SEL erase in progress
+        u8 completion_code;
+
+        /// SEL Version - version number of the SEL command set for this SEL Device.
+        /// 51h for this specification.
+        /// (BCD encoded).BCD encoded with bits 7:4 holding the Least Significant
+        /// digit of the revision and bits 3:0 holding the Most Significant bits.
+        u8 sel_version;
+
+        /// Number of log entries in SEL, LS Byte first
+        u16 entries;
+
+        /// Free Space in bytes, LS Byte first. `0xFFFF` indicates 65535 or more bytes of
+        /// free space are available.
+        u16 free_space;
+
+        /// Most recent addition timestamp. LS byte first.
+        /// Returns `0xFFFF'FFFF` if no SEL entries have ever been made or if a
+        /// component update or error caused the retained value to be lost.
+        u32 addition_timestamp;
+
+        /// 11:14 Most recent erase timestamp. Last time that one or more entries were
+        /// deleted from the log. LS byte first.
+        u32 erase_timestamp;
+
+        /// 15 Operation Support
+        bitfield<u8> operation_support {
+
+            /// Overflow Flag
+            /// Events have been dropped due to lack of space in the SEL.
+            [7] => bool overflow_flag;
+
+            /// [6:4] - reserved. Write as 000
+
+            /// Delete SEL command supported
+            [3] => bool is_delete_sel_command_supported;
+
+            /// Partial Add SEL Entry command supported
+            [2] => bool is_partial_add_sel_entry_command_supported;
+
+            /// Reserve SEL command supported
+            [1] => bool is_reserve_sel_command_supported;
+
+            /// Get SEL Allocation Information command supported
+            [0] => bool is_get_sel_allocation_information_command_supported;
+        }
+    }
+}
+
+
+impl<Command> GetSelInfoCommand {
+
+}

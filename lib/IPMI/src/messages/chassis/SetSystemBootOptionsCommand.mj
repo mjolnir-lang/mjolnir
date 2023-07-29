@@ -1,0 +1,52 @@
+
+
+/// Set System Boot Options Command
+///
+/// This command is used to set parameters that direct the system boot
+/// following a system power up or reset. The boot flags only apply for one
+/// system restart. It is the responsibility of the system BIOS to read these
+/// settings from the BMC and then clear the boot flags.
+///
+/// It is possible that a remote console application could set the boot option
+/// flags and then be terminated either accidentally or intentionally. In this
+/// circumstance, it's possible that a user initiated system restart could
+/// occur hours or even days later. If the boot options were used without
+/// examining the reset cause, this could cause an unexpected boot sequence.
+/// Thus, the BMC will automatically clear a 'boot flags valid bit' if a system
+/// restart is not initiated by a Chassis Control command within 60 seconds +/-
+/// 10% of the valid flag being set. The BMC will also clear the bit on any
+/// system resets or power-cycles that are not triggered by a System Control
+/// command. This default behavior can be temporarily overridden using the 'BMC
+/// boot flag valid bit clearing' parameter.
+class SetSystemBootOptionsCommand {
+    struct Request request {
+        bitfield<u8> parameter_valid {
+
+            /// 1 - mark parameter invalid / locked
+            /// 0 - mark parameter valid / unlocked
+            [7] mark_parameter_invalid;
+
+            /// boot option parameter selector
+            [6:0] boot_option_parameter_selector;
+        }
+
+        /// Boot option parameter data, per Table 22-12, Boot Option Parameters. Passing 0-bytes of parameter data allows the parameter valid bit to be changed without affecting the present parameter setting.
+        struct boot_option_parameter_data {
+            
+        }
+    }
+    struct Response response {
+
+        /// Completion Code
+        ///
+        /// Generic plus the following command-specific completion codes:
+        ///
+        /// `0x80` - parameter not supported.
+        /// `0x81` - attempt to set the 'set in progress' value (in parameter
+        /// #0) when not in the 'set complete' state. (This completion code
+        /// provides a way to recognize that another party has already
+        /// 'claimed' the parameters)
+        /// `0x82` - attempt to write read-only parameter
+        CompletionCode completion_code;
+    }
+}

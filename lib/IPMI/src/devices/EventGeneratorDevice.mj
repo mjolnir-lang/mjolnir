@@ -1,0 +1,6 @@
+
+
+/// The Event Generator Device represents the functionality that is used to deliver Event Messages to the Event Receiver Device. The Event Generator Device includes commands to allow configuration of Event Message delivery. The term IPMB Event Generator refers to the capability to generate an Event Message on the IPMB. The BMC is typically an IPMB Event Receiver, but not an IPMB Event Generator.
+interface IpmiEventGeneratorDevice {
+
+}

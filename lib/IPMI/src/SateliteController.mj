@@ -1,0 +1,8 @@
+
+
+/// All satellite management controllers are required to implement the mandatory IPM Device commands. All other functions are optional. If a function is implemented, such as Event Generation or Sensors, then the mandatory commands for that function must be implemented.
+///
+/// It is highly recommended that satellite controllers that provide sensors also provide event generation for those sensors. This will eliminate the need for system management software to poll to detect event conditions. It is also highly recommended that all satellite management controllers provide a Primary FRU Inventory device.
+interface IpmiSatelliteController {
+    implements IpmiIpmDevice;
+}

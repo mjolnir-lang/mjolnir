@@ -1,0 +1,12 @@
+
+
+/// 
+class GetSystemBootOptionsCommand {
+    struct Request request {
+    }
+    struct Response response {
+
+        /// Completion Code
+        CompletionCode completion_code;
+    }
+}

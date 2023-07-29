@@ -1,0 +1,17 @@
+#pragma once
+
+#include "mj/ast/MjToken.hpp"
+#include "mj/ast/MjType.hpp"
+#include "mj/ast/MjStatement.hpp"
+
+
+/// @brief A generator is a specialized coroutine which yields a value until it is exhausted.
+class MjGeneratorType : public MjBasicType {
+private:
+    MjType &return_type_;
+    MjStatement &body_;
+public:
+
+
+    MjGeneratorType() : MjBasicType() {}
+};

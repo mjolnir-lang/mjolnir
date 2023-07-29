@@ -1,0 +1,167 @@
+import i2c;
+
+
+/// The System Management Bus (SMBus) is a two-wire interface through which various
+/// system component chips and devices can communicate with each other and with the
+/// rest of the system. It is based on the principles of operation of the I2C bus. Appendix B
+/// provides a description of some of the ways the SMBus characteristics are different from
+/// those of the I²C bus.
+///
+/// SMBus provides a control bus for system and power management related tasks. A
+/// system may use SMBus to pass messages to and from devices instead of using
+/// individual control lines. Removing the individual control lines reduces pin count.
+/// Accepting messages ensures future expandability.
+///
+/// With System Management Bus, a device can provide manufacturer information, tell the
+/// system what its model/part number is, save its state for a suspend event, report
+/// different types of errors, accept control parameters, and return its status.
+@api(1.0)
+class SmBusController {
+    I2cController &i2c_controller;
+
+
+    /// Quick Command
+    ///
+    /// In the Quick Command the R/W# bit of the target address denotes the command.
+    /// The R/W# bit may be used to simply turn a device function on or off, or enable/disable
+    /// a low power standby mode. There is no data sent or received.
+    ///
+    /// The Quick Command implementation is good for very small devices that have
+    /// limited support for the SMBus specification. It also limits data on the bus for simple
+    /// devices.
+    @api(1.0)
+    Task<u32> quick_command(SmBusAddress target_address, SmBusReadWrite rw) {
+        return i2c_controller.(rw ? write : read)(target_address, null, 0);
+    }
+
+
+    /// Send Byte
+    ///
+    /// A simple device may recognize its own target address and accept up to 256
+    /// possible encoded commands in the form of a byte that follows the target address.
+    /// All or parts of the Send Byte may contribute to the command. For example, the
+    /// highest 7 bits of the command code might specify an access to a feature, while the
+    /// least significant bit would tell the device to turn the feature on or off. Or, a device
+    /// may set the "volume" of its output based on the value it received from the Send Byte
+    /// protocol.
+    @api(1.0)
+    Task<u32> send_byte(SmBusAddress target_address, u8 data) =>
+        i2c_controller.write(target_address, &data, 1);
+
+
+    @api(1.0)
+    Task<u32> send_byte_with_pec(SmBusAddress target_address, u8 data) {
+        u8 pec = crc8({(target_address << 1) | 0, data});
+        return i2c_controller.write(target_address, {data, pec}, 2);
+    }
+
+
+    /// Receive Byte
+    ///
+    /// The Receive Byte is similar to a Send Byte, the only difference being the direction
+    /// of data transfer. A simple device may have information that the controller needs. It
+    /// can do so with the Receive Byte protocol. The same device may accept both Send
+    /// Byte and Receive Byte protocols. A NACK (a '1' in the ACK bit position) signifies
+    /// the end of a read transfer.
+    Task<u32> receive_byte(SmBusAddress target_address, u8 *data) =>
+        i2c_controller.read(target_address, data, 1);
+
+
+    Task<u32> receive_byte_with_pec(SmBusAddress target_address, u8 *data) =>
+        () => {
+            SmBusReceiveByteFrame frame = {(target_address << 1) | 1};
+            i2c_controller.read(target_address, &frame.data_byte, 2).wait();
+
+            if (frame.pec != crc8((u8 *: &frame), 2)) {
+                fail;
+            }
+
+            *data = frame.data_byte;
+        };
+
+
+    /// Write Byte/Word
+    ///
+    /// The first byte of a Write Byte/Word access is the command code. The next one or
+    /// two bytes, respectively, are the data to be written. In this example the controller
+    /// sends the target device address followed by the write bit. The device
+    /// acknowledges and the controller delivers the command code. The target again
+    /// acknowledges before the controller sends the data byte or word (low byte first).
+    /// The target acknowledges each byte, and the entire transaction is finished with a
+    /// STOP condition.
+    Task<u32> write_byte(SmBusAddress target_address, u8 command_code, u8 data_byte);
+    Task<u32> write_word(SmBusAddress target_address, u8 command_code, u16 data_word);
+    Task<u32> write_byte_with_pec(SmBusAddress target_address, u8 command_code, u8 data_byte);
+    Task<u32> write_word_with_pec(SmBusAddress target_address, u8 command_code, u16 data_word);
+
+
+    /// Read Byte/Word
+    ///
+    /// Reading data is slightly more complicated than writing data. First the controller
+    /// must write a command to the target device. Then it must follow that command with
+    /// a repeated START condition to denote a read from that device’s address. The
+    /// target then returns one or two bytes of data.
+    /// Note that there is no STOP condition before the repeated START condition, and
+    /// that a NACK signifies the end of the read transfer.
+    Task<u32> read_byte(SmBusAddress target_address, u8 command_code, u8 *data_byte);
+    Task<u32> read_word(SmBusAddress target_address, u8 command_code, u16 *data_word);
+
+
+    Task<u32> read_byte_with_pec(SmBusAddress target_address, u8 command_code, u8 *data_byte) =>
+        () => {
+            SmBusReadByteFrame frame = {target_address << 1, command_code, (target_address << 1) | 1};
+            u32 result = i2c_controller.read(target_address, &frame.data_byte, 2).wait();
+
+            if (frame.pec != crc8((u8 *: &frame), 4)) {
+                fail;
+            }
+
+            *data = frame.data_byte;
+            return result;
+        };
+
+
+    Task<u32> read_word_with_pec(SmBusAddress target_address, u8 command_code, u16 *data_word) =>
+        () => {
+            SmBusReadWordFrame frame = {target_address << 1, command_code, (target_address << 1) | 1};
+            u32 result = i2c_controller.read(target_address, &frame.data_byte_low, 3).wait();
+
+            if (frame.pec != crc8((u8 *: &frame), 5)) {
+                fail;
+            }
+
+            *data = ((u16: frame.data_byte_high) << 8) | frame.data_byte_low;
+            return result;
+        };
+
+
+    /// Process Call
+    ///
+    /// The Process Call is so named because a command sends data and waits for the
+    /// target to return a value dependent on that data. The protocol is simply a Write
+    /// Word followed by a Read Word without the Read-Word command field and the
+    /// Write-Word STOP bit.
+    /// Note that there is no STOP condition before the repeated START condition, and
+    /// that a NACK signifies the end of the read transfer.
+    Task<u32> process_call(SmBusAddress target_address, u8 command_code, u16 data_word, u16 data_word_response);
+    Task<u32> process_call_with_pec(SmBusAddress target_address, u8 command_code, u16 data_word, u16 data_word_response);
+
+
+    /// Block Write/Read
+    ///
+    /// The Block Write begins with a target address and a write condition. After the
+    /// command code the controller issues a byte count which describes how many more
+    /// bytes will follow in the message. If a target has 20 bytes to send, the byte count field
+    /// will have the value 20 (14h), followed by the 20 bytes of data. The byte count does not
+    /// include the PEC byte. The byte count may be 0. A Block Read or Block Write is
+    /// allowed to transfer a maximum of 255 data bytes.
+    Task<u32> block_write(SmBusAddress target_address, u8 command_code, u8 *data, u8 size);
+    Task<u32> block_write_with_pec(SmBusAddress target_address, u8 command_code, u8 *data, u8 size);
+
+
+    /// A Block Read differs from a Block Write in that the repeated START condition
+    /// exists to satisfy the requirement for a change in the transfer direction. A NACK
+    /// immediately preceding the STOP condition signifies the end of the read transfer.
+    Task<u32> block_read(SmBusAddress target_address, u8 command_code, const u8 *data, u8 size);
+    Task<u32> block_read_with_pec(SmBusAddress target_address, u8 command_code, const u8 *data, u8 size);
+}

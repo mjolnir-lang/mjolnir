@@ -1,0 +1,179 @@
+
+
+@value-type
+class f128 {
+    bitfield<u32> {
+        [15:0] u32 bits;
+        [15] u8 sign;
+        [14:10] u8 biased_exponent;
+        [9:0] u32 significand;
+    }
+
+
+    f128(u8 x) {
+        
+    }
+
+
+    f128(u16 x) {
+        
+    }
+
+
+    f128(u32 x) {
+        
+    }
+
+
+    f128(u64 x) {
+        
+    }
+
+
+    f128(u128 x) {
+        
+    }
+
+
+    f128(i8 x) {
+        
+    }
+
+
+    f128(i16 x) {
+        
+    }
+
+
+    f128(i32 x) {
+        
+    }
+
+
+    f128(i64 x) {
+        
+    }
+
+
+    f128(i128 x) {
+        
+    }
+
+
+    f128(f16 x) {
+        
+    }
+
+
+    f128(f32 x) {
+        sign = x.sign;
+        biased_exponent = x.biased_exponent;
+        significand = x.significand;
+
+        if (biased_exponent == 0xFFu) {
+            if (significand) {
+                this = softfloat_commonNaNToF128UI(softfloat_f32UIToCommonNaN(x));
+            } else {
+                biased_exponent = 0x7FFFu;
+            }
+
+            return;
+        }
+
+        if (biased_exponent == 0) {
+            if (significand == 0) {
+                return;
+            }
+
+            Exp16Sig32 normExpSig = softfloat_normSubnormalF32Sig(significand);
+            exp = normExpSig.exp - 1;
+            significand = normExpSig.sig;
+        }
+
+        biased_exponent += 0x3F80u;
+        significand <<= 25;
+    }
+
+
+    f128(f64 x) {
+        
+    }
+
+
+    f128(f80 x) {
+        
+    }
+}
+
+
+
+
+
+#if def SOFTFLOAT_FAST_INT64
+
+
+f128m::f128m(f32 x) {
+    return f128(x);
+}
+
+#else
+
+void f128m(f32 x) {
+    uint32_t *zWPtr;
+    union ui32_f32 uA;
+    uint32_t uiA;
+    bool sign;
+    int_fast16_t exp;
+    uint32_t frac, uiZ64;
+    struct commonNaN commonNaN;
+    uint32_t uiZ96;
+    struct exp16_sig32 normExpSig;
+    uint64_t frac64;
+
+    /*------------------------------------------------------------------------
+    *------------------------------------------------------------------------*/
+    zWPtr = (uint32_t *) zPtr;
+    /*------------------------------------------------------------------------
+    *------------------------------------------------------------------------*/
+    uA.f = a;
+    uiA = uA.ui;
+    sign = signF32UI( uiA );
+    exp  = expF32UI( uiA );
+    frac = fracF32UI( uiA );
+    /*------------------------------------------------------------------------
+    *------------------------------------------------------------------------*/
+    uiZ64 = 0;
+    if ( exp == 0xFF ) {
+        if ( frac ) {
+            softfloat_f32UIToCommonNaN( uiA, &commonNaN );
+            softfloat_commonNaNToF128M( &commonNaN, zWPtr );
+            return;
+        }
+        uiZ96 = packToF128UI96( sign, 0x7FFF, 0 );
+        goto uiZ;
+    }
+    /*------------------------------------------------------------------------
+    *------------------------------------------------------------------------*/
+    if ( ! exp ) {
+        if ( ! frac ) {
+            uiZ96 = packToF128UI96( sign, 0, 0 );
+            goto uiZ;
+        }
+        normExpSig = softfloat_normSubnormalF32Sig( frac );
+        exp = normExpSig.exp - 1;
+        frac = normExpSig.sig;
+    }
+    /*------------------------------------------------------------------------
+    *------------------------------------------------------------------------*/
+    frac64 = (uint64_t) frac<<25;
+    uiZ96 = packToF128UI96( sign, exp + 0x3F80, frac64>>32 );
+    uiZ64 = frac64;
+ uiZ:
+    zWPtr[indexWord( 4, 3 )] = uiZ96;
+    zWPtr[indexWord( 4, 2 )] = uiZ64;
+    zWPtr[indexWord( 4, 1 )] = 0;
+    zWPtr[indexWord( 4, 0 )] = 0;
+
+}
+
+#end if

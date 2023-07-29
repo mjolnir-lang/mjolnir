@@ -1,0 +1,233 @@
+
+
+class Z80Cpu {
+
+    /// Interrupt Page Address Register (I)
+    ///
+    /// The Z80 CPU can be operated in a mode in which an indirect call to any
+    /// memory location can be achieved in response to an interrupt. The I
+    /// register is used for this purpose and stores the high-order eight bits
+    /// of the indirect address while the interrupting device provides the
+    /// lower eight bits of the address. This feature allows interrupt routines
+    /// to be dynamically located anywhere in memory with minimal access time
+    /// to the routine.
+    u16 i;
+
+    /// Memory Refresh Register (R)
+    ///
+    /// The Z80 CPU contains a memory refresh counter, enabling dynamic
+    /// memories to be used with the same ease as static memories. Seven bits
+    /// of this 8-bit register are automatically incremented after each
+    /// instruction fetch. The eighth bit remains as programmed, resulting from
+    /// an LD R, A instruction. The data in the refresh counter is sent out on
+    /// the lower portion of the address bus along with a refresh control
+    /// signal while the CPU is decoding and executing the fetched instruction.
+    /// This mode of refresh is transparent to the programmer and does not slow
+    /// the CPU operation. The programmer can load the R register for testing
+    /// purposes, but this register is normally not used by the programmer.
+    /// During refresh, the contents of the I Register are placed on the upper
+    /// eight bits of the address bus.
+    u16 r;
+
+    /// Index Register (IX)
+    ///
+    /// The two independent index registers hold a 16-bit base address that is
+    /// used in indexed addressing modes. In this mode, an index register is
+    /// used as a base to point to a region in memory from which data is to be
+    /// stored or retrieved. An additional byte is included in indexed
+    /// instructions to specify a displacement from this base. This
+    /// displacement is specified as a two's complement signed integer. This
+    /// mode of addressing greatly simplifies many types of programs,
+    /// especially when tables of data are used.
+    union {
+        u16 ix;
+        bitfield<u16> {
+            [15:8] u8 ixh; // IXH
+            [7:0] u8 ixl; // IXL
+        }
+    }
+
+    /// Index Register (IY)
+    ///
+    /// The two independent index registers hold a 16-bit base address that is
+    /// used in indexed addressing modes. In this mode, an index register is
+    /// used as a base to point to a region in memory from which data is to be
+    /// stored or retrieved. An additional byte is included in indexed
+    /// instructions to specify a displacement from this base. This
+    /// displacement is specified as a two's complement signed integer. This
+    /// mode of addressing greatly simplifies many types of programs,
+    /// especially when tables of data are used.
+    union {
+        u16 iy;
+        bitfield<u16> {
+            [15:8] u8 iyh; // IYH
+            [7:0] u8 iyl; // IYL
+        }
+    }
+
+    /// Stack Pointer (SP)
+    ///
+    /// The stack pointer holds the 16-bit address of the current top of a
+    /// stack located anywhere in external system RAM memory. The external
+    /// stack memory is organized as a last-in first-out (LIFO) file. Data can
+    /// be pushed onto the stack from specific CPU registers or popped off of
+    /// the stack to specific CPU registers through the execution of PUSH and
+    /// POP instructions. The data popped from the stack is always the most
+    /// recent data pushed onto it. The stack allows simple implementation of
+    /// multiple level interrupts, unlimited subroutine nesting and
+    /// simplification of many types of data manipulation.
+    u16 sp;
+
+    /// Program Counter (PC)
+    ///
+    /// The program counter holds the 16-bit address of the current instruction
+    /// being fetched from memory. The Program Counter is automatically incre-
+    /// mented after its contents are transferred to the address lines. When a
+    /// program jump occurs, the new value is automatically placed in the
+    /// Program Counter, overriding the incrementer.
+    u16 pc;
+
+    /// Accumulator and Flag Register (AF)
+    ///
+    /// The CPU includes two independent 8-bit Accumulators and associated
+    /// 8-bit Flag registers. The Accumulator holds the results of 8-bit
+    /// arithmetic or logical operations while the Flag Register indicates
+    /// specific conditions for 8-bit or 16-bit operations, such as indicating
+    /// whether or not the result of an operation is equal to 0. The programmer
+    /// selects the Accumulator and flag pair with a single exchange
+    /// instruction so that it is possible to work with either pair.
+    union {
+        u16 af;
+        struct {
+            u8 a; // MSB
+
+            /// Flag (LSB)
+            ///
+            /// Four of these bits (C, P/V, Z, and S) can be tested for use
+            /// with conditional JUMP, CALL, or RETURN instructions. The H and
+            /// N flags cannot be tested; these two flags are used for BCD
+            /// arithmetic.
+            bitfield<u8> Flag f {
+
+                /// Sign Flag
+                [7] bool s;
+
+                /// Zero Flag
+                [6] bool z;
+
+                [5] = 0;
+
+                /// Half Carry Flag
+                ///
+                /// The Half Carry Flag (H) is set (1) or cleared (0) depending on the Carry and Borrow status between bits 3 and 4 of an 8-bit arithmetic operation. This flag is used by the Decimal Adjust Accumulator (DAA) instruction to correct the result of a packed BCD add or subtract operation. The H Flag is set (1) or cleared (0) as shown in Table 23.
+                ///
+                /// H Flag | Add                                 | Subtract
+                /// 1      | A Carry occurs from bit 3 to bit 4  | A Borrow from bit 4 occurs
+                /// 0      | No Carry occurs from bit 3 to bit 4 | No Borrow from bit 4 occurs
+                [4] bool h;
+
+                [3] = 0;
+
+                /// Parity/Overflow Flag
+                [2] bool pv;
+
+                /// Add/Subtract Flag
+                ///
+                /// The Add/Subtract Flag (N) is used by the Decimal Adjust Accumulator instruction (DAA) to distinguish between the ADD and SUB instructions. For ADD instructions, N is cleared to 0. For SUB instructions, N is set to 1.
+                [1] bool n;
+
+                /// Carry Flag
+                ///
+                /// The Carry Flag (C) is set or cleared depending on the operation being performed. For ADD instructions that generate a Carry, and for SUB instructions that generate a Borrow, the Carry Flag is set. The Carry Flag is reset by an ADD instruction that does not generate a Carry, and by a SUB instruction that does not generate a Borrow. This saved Carry facilitates software routines for extended precision arithmetic. Additionally, the DAA instruction sets the Carry Flag if the conditions for making the decimal adjustment are met.
+                ///
+                /// For the RLA, RRA, RLS, and RRS instructions, the Carry bit is used as a link between the least-significant byte (LSB) and the most-significant byte (MSB) for any register or memory location. During the RLCA, RLC, and SLA instructions, the Carry flag contains the final value shifted out of bit 7 of any register or memory location. During the RRCA, RRC, SRA, and SRL instructions, the Carry flag contains the final value shifted out of bit 0 of any register or memory location.
+                ///
+                /// For the logical instructions AND, OR, and XOR, the Carry flag is reset.
+                ///
+                /// The Carry flag can also be set by the Set Carry Flag (SCF) instruction and complemented by the Compliment Carry Flag (CCF) instruction.
+                [0] bool c;
+            }
+        }
+    }
+
+    /// General Purpose Registers
+    ///
+    /// Two matched sets of general-purpose registers, each set containing six 8-bit registers, can be used individually as 8-bit registers or as 16-bit register pairs. One set is called BC, DE, and HL while the complementary set is called BC', DE', and HL'. At any one time, the programmer can select either set of registers to work through a single exchange command for the entire set. In systems that require fast interrupt response, one set of general-purpose registers and an Accumulator/Flag Register can be reserved for handling this fast routine. One exchange command is executed to switch routines. This process greatly reduces interrupt service time by eliminating the requirement for saving and retrieving register contents in the external stack during interrupt or subroutine processing. These general-purpose registers are used for a wide range of applications. They also simplify programing, specifically in ROM-based systems in which little external read/write memory is available.
+    union {
+        u16 bc; // BC
+        bitfield<u16> {
+            [15:8] u8 b; // B
+            [7:0] u8 c; // C
+        }
+    }
+
+    union {
+        u16 de; // DE
+        bitfield<u16> {
+            [15:8] u8 d; // D
+            [7:0] u8 e; // E
+        }
+    }
+
+    union {
+        u16 hl; // HL
+        bitfield<u16> {
+            [15:8] u8 h; // H
+            [7:0] u8 l; // L
+        }
+    }
+
+    struct alt {
+        union {
+            u16 af;
+            struct {
+                u8 a; // MSB
+
+                /// Flag (LSB)
+                bitfield<u8> f {
+                    [7] bool s;
+                    [6] bool z;
+                    [5] = 0;
+                    [4] bool h;
+                    [3] = 0;
+                    [2] bool pv;
+                    [1] bool n;
+                    [0] bool c;
+                }
+            }
+        }
+        union {
+            u16 bc; // BC
+            bitfield<u16> {
+                [15:8] u8 b; // B
+                [7:0] u8 c; // C
+            }
+        }
+        union {
+            u16 de; // DE
+            bitfield<u16> {
+                [15:8] u8 d; // D
+                [7:0] u8 e; // E
+            }
+        }
+        union {
+            u16 hl; // HL
+            bitfield<u16> {
+                [15:8] u8 h; // H
+                [7:0] u8 l; // L
+            }
+        }
+    }
+
+
+    /// Instruction Register
+    ///
+    /// Instruction Register and CPU Control
+    ///
+    /// As each instruction is fetched from memory, it is placed in the
+    /// Instruction Register and decoded. The control sections performs this
+    /// function and then generates and supplies the control signals necessary
+    /// to read or write data from or to the registers, control the ALU, and
+    /// provide required external control signals.
+    u8 ir;
+}

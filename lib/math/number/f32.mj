@@ -1,0 +1,926 @@
+
+
+@value-type
+class f32 {
+    bitfield<u32> {
+        [31:0] u32 bits;
+        [31] u8 sign;
+        [30:27] u8 biased_exponent;
+        [26:0] u32 significand;
+    }
+
+
+
+
+
+
+
+    f32(i32 x) {
+        sign = x < 0;
+
+        if (x & 0x7FFF'FFFFu32 == 0) {
+            this = {
+                biased_exponent = sign ? 0x9E : 0;
+                significand = 0
+            };
+            return;
+        }
+
+        this = f32::normRoundPackToF32(sign, 0x9C, sign ? -(u32) x : (u32) x);
+    }
+
+
+    f32(i64 x) {
+        sign = x < 0;
+        u64 absA = sign ? -(u64) x : (u64) x;
+        i8 shiftDist = absA.countLeadingZeros64() - 40;
+
+        if (0 <= shiftDist) {
+            return x ? packToF32UI(sign, 0x95 - shiftDist, (u32: absA) << shiftDist) : 0;
+        } else {
+            shiftDist += 7;
+            significand = (shiftDist < 0)
+                ? f32::shortShiftRightJam64(absA, -shiftDist)
+                : (u32: absA) << shiftDist;
+            return f32::roundPackToF32(sign, 0x9C - shiftDist, significand);
+        }
+    }
+
+
+
+
+
+
+
+
+
+    @shared
+    @internal
+    f32 normRoundPackToF32(bool sign, i16 exp, u32 sig) {
+        i8 shiftDist;
+        union ui32_f32 uZ;
+
+        shiftDist = sig.countLeadingZeros() - 1;
+        exp -= shiftDist;
+
+        if (7 <= shiftDist && (u32: exp) < 0xFDu) {
+            uZ.ui = f32::packToF32UI(sign, sig ? exp : 0, sig << (shiftDist - 7));
+            return uZ.f;
+        } else {
+            return f32::roundPackToF32(sign, exp, sig << shiftDist);
+        }
+
+    }
+
+
+    @shared
+    @internal
+    f32 roundPackToF32(bool sign, i16 exp, u32 sig) {
+        uint_fast8_t roundingMode;
+        bool roundNearEven;
+        uint_fast8_t roundIncrement, roundBits;
+        bool isTiny;
+        uint_fast32_t uiZ;
+        union ui32_f32 uZ;
+
+        /*------------------------------------------------------------------------
+        *------------------------------------------------------------------------*/
+        roundingMode = softfloat_roundingMode;
+        roundNearEven = (roundingMode == softfloat_round_near_even);
+        roundIncrement = 0x40;
+        if (! roundNearEven && (roundingMode != softfloat_round_near_maxMag)) {
+            roundIncrement =
+                (roundingMode
+                    == (sign ? softfloat_round_min : softfloat_round_max))
+                    ? 0x7F
+                    : 0;
+        }
+        roundBits = sig & 0x7F;
+        /*------------------------------------------------------------------------
+        *------------------------------------------------------------------------*/
+        if (0xFD <= (unsigned int) exp) {
+            if (exp < 0) {
+                /*----------------------------------------------------------------
+                *----------------------------------------------------------------*/
+                isTiny =
+                    (softfloat_detectTininess == softfloat_tininess_beforeRounding)
+                        || (exp < -1) || (sig + roundIncrement < 0x80000000);
+                sig = softfloat_shiftRightJam32(sig, -exp);
+                exp = 0;
+                roundBits = sig & 0x7F;
+                if (isTiny && roundBits) {
+                    softfloat_raiseFlags(softfloat_flag_underflow);
+                }
+            } else if ((0xFD < exp) || (0x80000000 <= sig + roundIncrement)) {
+                /*----------------------------------------------------------------
+                *----------------------------------------------------------------*/
+                softfloat_raiseFlags(
+                    softfloat_flag_overflow | softfloat_flag_inexact);
+                uiZ = packToF32UI(sign, 0xFF, 0) - ! roundIncrement;
+                goto uiZ;
+            }
+        }
+        /*------------------------------------------------------------------------
+        *------------------------------------------------------------------------*/
+        sig = (sig + roundIncrement)>>7;
+        if (roundBits) {
+            softfloat_exceptionFlags |= softfloat_flag_inexact;
+    #ifdef SOFTFLOAT_ROUND_ODD
+            if (roundingMode == softfloat_round_odd) {
+                sig |= 1;
+                goto packReturn;
+            }
+    #endif
+        }
+        sig &= ~(uint_fast32_t) (! (roundBits ^ 0x40) & roundNearEven);
+        if (! sig) exp = 0;
+        /*------------------------------------------------------------------------
+        *------------------------------------------------------------------------*/
+    packReturn:
+        uiZ = packToF32UI(sign, exp, sig);
+    uiZ:
+        uZ.ui = uiZ;
+        return uZ.f;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    /// Add
+    f32 {+}(safe; f32 other) {
+        return (
+            signF32UI(bits ^ other.bits) ?
+            softfloat_subMagsF32 :
+            softfloat_addMagsF32
+        )(bits, other.bits);
+    }
+
+
+    /// Subtract
+    f32 {-}(safe; f32 other) {
+        return (
+            signF32UI(bits ^ other.bits) ?
+            softfloat_addMagsF32 :
+            softfloat_subMagsF32
+        )(bits, other.bits);
+    }
+
+
+    /// Multiply
+    f32 {*}(safe; f32 other) {
+        bool signZ;
+        uint_fast32_t magBits;
+        struct exp16_sig32 normExpSig;
+        int_fast16_t expZ;
+        uint_fast32_t result.significand, uiZ;
+        union ui32_f32 uZ;
+
+        /*------------------------------------------------------------------------
+        *------------------------------------------------------------------------*/
+        signZ = sign ^ other.sign;
+        /*------------------------------------------------------------------------
+        *------------------------------------------------------------------------*/
+        if (biased_exponent == 0xFF) {
+            if (significand || ((other.biased_exponent == 0xFF) && other.significand)) goto propagateNaN;
+            magBits = other.biased_exponent | other.significand;
+            goto infArg;
+        }
+        if (other.biased_exponent == 0xFF) {
+            if (other.significand) goto propagateNaN;
+            magBits = biased_exponent | significand;
+            goto infArg;
+        }
+        /*------------------------------------------------------------------------
+        *------------------------------------------------------------------------*/
+        if (! biased_exponent) {
+            if (! significand) goto zero;
+            normExpSig = softfloat_normSubnormalF32Sig(significand);
+            biased_exponent = normExpSig.exp;
+            significand = normExpSig.sig;
+        }
+        if (! other.biased_exponent) {
+            if (! other.significand) goto zero;
+            normExpSig = softfloat_normSubnormalF32Sig(other.significand);
+            other.biased_exponent = normExpSig.exp;
+            other.significand = normExpSig.sig;
+        }
+        /*------------------------------------------------------------------------
+        *------------------------------------------------------------------------*/
+        expZ = biased_exponent + other.biased_exponent - 0x7F;
+        significand = (significand | 0x00800000)<<7;
+        other.significand = (other.significand | 0x00800000)<<8;
+        result.significand = softfloat_shortShiftRightJam64((uint_fast64_t) significand * other.significand, 32);
+        if (result.significand < 0x40000000) {
+            --expZ;
+            result.significand <<= 1;
+        }
+        return softfloat_roundPackToF32(signZ, expZ, result.significand);
+        /*------------------------------------------------------------------------
+        *------------------------------------------------------------------------*/
+    propagateNaN:
+        uiZ = softfloat_propagateNaNF32UI(uiA, uiB);
+        goto uiZ;
+        /*------------------------------------------------------------------------
+        *------------------------------------------------------------------------*/
+    infArg:
+        if (! magBits) {
+            softfloat_raiseFlags(softfloat_flag_invalid);
+            uiZ = defaultNaNF32UI;
+        } else {
+            uiZ = packToF32UI(signZ, 0xFF, 0);
+        }
+        goto uiZ;
+        /*------------------------------------------------------------------------
+        *------------------------------------------------------------------------*/
+    zero:
+        uiZ = packToF32UI(signZ, 0, 0);
+    uiZ:
+        uZ.ui = uiZ;
+        return uZ.f;
+
+    }
+
+
+    /// Divide
+    f32 {/}(safe; f32 other) {
+        bool signZ;
+        struct exp16_sig32 normExpSig;
+        int_fast16_t expZ;
+    #ifdef SOFTFLOAT_FAST_DIV64TO32
+        uint_fast64_t sig64A;
+        uint_fast32_t result.significand;
+    #else
+        uint_fast32_t result.significand;
+        uint_fast64_t rem;
+    #endif
+        uint_fast32_t uiZ;
+        f32 result;
+
+        /*------------------------------------------------------------------------
+        *------------------------------------------------------------------------*/
+        result.sign = sign ^ other.sign;
+        /*------------------------------------------------------------------------
+        *------------------------------------------------------------------------*/
+        if (biased_exponent == 0xFF) {
+            if (sign) return propagateNaN;
+            if (other.biased_exponent == 0xFF) {
+                if (other.significand) return propagateNaN;
+                return invalid;
+            }
+            return infinity;
+        }
+        if (other.biased_exponent == 0xFF) {
+            if (other.significand) return propagateNaN;
+            return zero;
+        }
+        /*------------------------------------------------------------------------
+        *------------------------------------------------------------------------*/
+        if (! other.biased_exponent) {
+            if (! other.significand) {
+                if (! (biased_exponent | sign)) return invalid;
+                softfloat_raiseFlags(softfloat_flag_infinite);
+                return infinity;
+            }
+            normExpSig = softfloat_normSubnormalF32Sig(other.significand);
+            other.biased_exponent = normExpSig.exp;
+            other.significand = normExpSig.sig;
+        }
+        if (! biased_exponent) {
+            if (! sign) return zero;
+            normExpSig = softfloat_normSubnormalF32Sig(sign);
+            biased_exponent = normExpSig.exp;
+            sign = normExpSig.sig;
+        }
+        /*------------------------------------------------------------------------
+        *------------------------------------------------------------------------*/
+        result.exp = biased_exponent - other.biased_exponent + 0x7E;
+        sign |= 0x00800000;
+        other.significand |= 0x00800000;
+    #ifdef SOFTFLOAT_FAST_DIV64TO32
+        if (sign < other.significand) {
+            --result.exp;
+            sig64A = (uint_fast64_t) sign<<31;
+        } else {
+            sig64A = (uint_fast64_t) sign<<30;
+        }
+        result.significand = sig64A / other.significand;
+        if (! (result.significand & 0x3F)) result.significand |= ((u64: other.significand) * result.significand != sig64A);
+    #else
+        if (sign < other.significand) {
+            --result.exp;
+            sign <<= 8;
+        } else {
+            sign <<= 7;
+        }
+        other.significand <<= 8;
+        result.significand = ((uint_fast64_t) sign * softfloat_approxRecip32_1(other.significand))>>32;
+        /*------------------------------------------------------------------------
+        *------------------------------------------------------------------------*/
+        result.significand += 2;
+        if ((result.significand & 0x3F) < 2) {
+            result.significand &= ~3;
+    #ifdef SOFTFLOAT_FAST_INT64
+            rem = ((uint_fast64_t) sign<<31) - (uint_fast64_t) result.significand * other.significand;
+    #else
+            rem = ((uint_fast64_t) sign<<32) - (uint_fast64_t) (result.significand<<1) * other.significand;
+    #endif
+            if (rem & UINT64_C(0x8000000000000000)) {
+                result.significand -= 4;
+            } else {
+                if (rem) result.significand |= 1;
+            }
+        }
+    #endif
+        return softfloat_roundPackToF32(signZ, expZ, result.significand);
+        /*------------------------------------------------------------------------
+        *------------------------------------------------------------------------*/
+    propagateNaN:
+        uiZ = softfloat_propagateNaNF32UI(bits, other.bits);
+        goto uiZ;
+        /*------------------------------------------------------------------------
+        *------------------------------------------------------------------------*/
+    invalid:
+        softfloat_raiseFlags(softfloat_flag_invalid);
+        uiZ = defaultNaNF32UI;
+        goto uiZ;
+        /*------------------------------------------------------------------------
+        *------------------------------------------------------------------------*/
+    infinity:
+        uiZ = packToF32UI(signZ, 0xFF, 0);
+        goto uiZ;
+        /*------------------------------------------------------------------------
+        *------------------------------------------------------------------------*/
+    zero:
+        uiZ = packToF32UI(signZ, 0, 0);
+    uiZ:
+        uZ.ui = uiZ;
+        return uZ.f;
+
+    }
+
+
+    /// Compare
+    bool eq_signaling(safe; f32 other) {
+        if (isNaNF32UI(bits) || isNaNF32UI(other.bits)) {
+            softfloat_raiseFlags(softfloat_flag_invalid);
+            return false;
+        }
+
+        return (bits == other.bits) || ((bits | other.bits) << 1) == 0;
+    }
+
+
+    /// Compare
+    bool eq(safe; f32 other) {
+        if (isNaNF32UI(bits) || isNaNF32UI(other.bits)) {
+            if (softfloat_isSigNaNF32UI(bits) || softfloat_isSigNaNF32UI(other.bits)) {
+                softfloat_raiseFlags(softfloat_flag_invalid);
+            }
+
+            return false;
+        }
+
+        return (bits == other.bits) || ((bits | other.bits) << 1) == 0;
+    }
+
+
+
+
+
+    bool {<=}(safe; f32 other) {
+        if (isNaNF32UI(bits) || isNaNF32UI(other.bits)) {
+            softfloat_raiseFlags(softfloat_flag_invalid);
+            return false;
+        }
+
+        return (sign != other.sign) ?
+            sign || ((bits | other.bits) << 1) == 0:
+            (bits == other.bits) || (sign ^ (bits < other.bits));
+    }
+
+
+    bool le_quiet(safe; f32 other) {
+        if (isNaNF32UI(bits) || isNaNF32UI(other.bits)) {
+            if (softfloat_isSigNaNF32UI(bits) || softfloat_isSigNaNF32UI(other.bits)) {
+                softfloat_raiseFlags(softfloat_flag_invalid);
+            }
+
+            return false;
+        }
+
+        return (sign != other.sign) ?
+            sign || ((bits | other.bits) << 1) == 0 :
+            (bits == other.bits) || (sign ^ (bits < other.bits));
+    }
+
+
+    bool {<}(safe; f32 other) {
+        if (isNaNF32UI(bits) || isNaNF32UI(other.bits)) {
+            softfloat_raiseFlags(softfloat_flag_invalid);
+            return false;
+        }
+
+        return (sign != other.sign) ?
+            sign && ((bits | other.bits) << 1) != 0:
+            (bits == other.bits) && (sign ^ (bits < other.bits));
+    }
+
+
+    bool lt_quiet(safe; f32 other) {
+        if (isNaNF32UI(bits) || isNaNF32UI(other.bits)) {
+            if (softfloat_isSigNaNF32UI(bits) || softfloat_isSigNaNF32UI(other.bits)) {
+                softfloat_raiseFlags(softfloat_flag_invalid);
+            }
+
+            return false;
+        }
+
+        return (sign != other.sign) ?
+            sign && ((bits | other.bits) << 1) != 0 :
+            (bits != other.bits) && (sign ^ (bits < other.bits));
+    }
+
+
+
+
+
+
+
+    /// Return true if the value is a signalling NaN.
+    bool is_signaling_nan(safe) {
+        return softfloat_isSigNaNF32UI(bits);
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+    f32 sqrt(safe) {
+
+        if (biased_exponent == 0xFF) {
+            if (significand) {
+                return softfloat_propagateNaNF32UI(uiA, 0);
+            }
+
+            if (!sign) {
+                return this;
+            }
+
+            softfloat_raiseFlags(softfloat_flag_invalid);
+            return defaultNaNF32UI;
+        }
+
+        if (sign) {
+            if (!(biased_exponent | significand)) {
+                return this;
+            }
+
+            softfloat_raiseFlags(softfloat_flag_invalid);
+            return defaultNaNF32UI;
+        }
+
+        if (!biased_exponent) {
+            if (!significand) {
+                return this;
+            }
+
+            Exp16Sig32 normExpSig = softfloat_normSubnormalF32Sig(significand);
+            biased_exponent = normExpSig.exp;
+            significand = normExpSig.sig;
+        }
+
+        result.biased_exponent = ((biased_exponent - 0x7Fu) >> 1) + 0x7Eu;
+        biased_exponent &= 1;
+        significand = (significand | 0x00800000) << 8;
+        result.significand = (u64: significand) * softfloat_approxRecipSqrt32_1(biased_exponent, significand)) >> 32;
+
+        if (biased_exponent) {
+            result.significand >>= 1;
+        }
+
+        result.significand += 2;
+
+        if ((result.significand & 0x3F) < 2) {
+            u32 shiftedSigZ = result.significand>>2;
+            u32 negRem = shiftedSigZ * shiftedSigZ;
+            result.significand &= ~3;
+
+            if (negRem & 0x80000000) {
+                result.significand |= 1;
+            } else {
+                if (negRem) {
+                    --result.significand;
+                }
+            }
+        }
+
+        return softfloat_roundPackToF32(0, result.biased_exponent, result.significand);
+    }
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+i32::i32_r_minMag(float32_t a, bool exact) {
+    union ui32_f32 uA;
+    uint_fast32_t uiA;
+    int_fast16_t exp;
+    uint_fast32_t sig;
+    int_fast16_t shiftDist;
+    bool sign;
+    int_fast32_t absZ;
+
+    /*------------------------------------------------------------------------
+    *------------------------------------------------------------------------*/
+    uA.f = a;
+    uiA = uA.ui;
+    exp = expF32UI( uiA );
+    sig = fracF32UI( uiA );
+    /*------------------------------------------------------------------------
+    *------------------------------------------------------------------------*/
+    shiftDist = 0x9E - exp;
+    if ( 32 <= shiftDist ) {
+        if ( exact && (exp | sig) ) {
+            softfloat_exceptionFlags |= softfloat_flag_inexact;
+        }
+        return 0;
+    }
+    /*------------------------------------------------------------------------
+    *------------------------------------------------------------------------*/
+    sign = signF32UI( uiA );
+    if ( shiftDist <= 0 ) {
+        if ( uiA == packToF32UI( 1, 0x9E, 0 ) ) return -0x7FFFFFFF - 1;
+        softfloat_raiseFlags( softfloat_flag_invalid );
+        return
+            (exp == 0xFF) && sig ? i32_fromNaN
+                : sign ? i32_fromNegOverflow : i32_fromPosOverflow;
+    }
+    /*------------------------------------------------------------------------
+    *------------------------------------------------------------------------*/
+    sig = (sig | 0x00800000)<<8;
+    absZ = sig>>shiftDist;
+    if ( exact && ((uint_fast32_t) absZ<<shiftDist != sig) ) {
+        softfloat_exceptionFlags |= softfloat_flag_inexact;
+    }
+    return sign ? -absZ : absZ;
+
+}
+
+
+i32::i32(f32 x, u8 rounding_mode, bool exact) {
+    #if (i32_fromNaN != i32_fromPosOverflow) || (i32_fromNaN != i32_fromNegOverflow)
+        if (x.biased_exponent == 0xFFu && x.significand) {
+            #if (i32_fromNaN == i32_fromPosOverflow)
+                x.sign = 0;
+            #else if (i32_fromNaN == i32_fromNegOverflow)
+                x.sign = 1;
+            #else
+                softfloat_raiseFlags(softfloat_flag_invalid);
+                return i32_fromNaN;
+            #endif
+        }
+    #end if
+
+    if (x.biased_exponent) {
+        x.significand |= 0x0080'0000u32;
+    }
+
+    u64 sig64 = (u64: x.significand) << 32;
+    i16 shiftDist = 0xAAu - x.biased_exponent;
+
+    if (0 < shiftDist) {
+        sig64 = softfloat_shiftRightJam64(sig64, shiftDist);
+    }
+
+    return softfloat_roundToI32(x.sign, sig64, roundingMode, exact);
+}
+
+
+i64::i64_r_minMag(f32 x, bool exact) {
+    union ui32_f32 uA;
+    uint_fast32_t uiA;
+    int_fast16_t exp;
+    uint_fast32_t sig;
+    int_fast16_t shiftDist;
+    bool sign;
+    uint_fast64_t sig64;
+    int_fast64_t absZ;
+
+    /*------------------------------------------------------------------------
+    *------------------------------------------------------------------------*/
+    uA.f = a;
+    uiA = uA.ui;
+    exp = expF32UI( uiA );
+    sig = fracF32UI( uiA );
+    /*------------------------------------------------------------------------
+    *------------------------------------------------------------------------*/
+    shiftDist = 0xBE - exp;
+    if ( 64 <= shiftDist ) {
+        if ( exact && (exp | sig) ) {
+            softfloat_exceptionFlags |= softfloat_flag_inexact;
+        }
+        return 0;
+    }
+    /*------------------------------------------------------------------------
+    *------------------------------------------------------------------------*/
+    sign = signF32UI( uiA );
+    if ( shiftDist <= 0 ) {
+        if ( uiA == packToF32UI( 1, 0xBE, 0 ) ) {
+            return -INT64_C( 0x7FFFFFFFFFFFFFFF ) - 1;
+        }
+        softfloat_raiseFlags( softfloat_flag_invalid );
+        return
+            (exp == 0xFF) && sig ? i64_fromNaN
+                : sign ? i64_fromNegOverflow : i64_fromPosOverflow;
+    }
+    /*------------------------------------------------------------------------
+    *------------------------------------------------------------------------*/
+    sig |= 0x00800000;
+    sig64 = (uint_fast64_t) sig<<40;
+    absZ = sig64>>shiftDist;
+    shiftDist = 40 - shiftDist;
+    if ( exact && (shiftDist < 0) && (uint32_t) (sig<<(shiftDist & 31)) ) {
+        softfloat_exceptionFlags |= softfloat_flag_inexact;
+    }
+    return sign ? -absZ : absZ;
+
+}
+
+
+i64::i64(f32 a, u8 rounding_mode, bool exact) {
+    union ui32_f32 uA;
+    uint_fast32_t uiA;
+    bool sign;
+    int_fast16_t exp;
+    uint_fast32_t sig;
+    int_fast16_t shiftDist;
+#ifdef SOFTFLOAT_FAST_INT64
+    uint_fast64_t sig64, extra;
+    struct uint64_extra sig64Extra;
+#else
+    uint32_t extSig[3];
+#endif
+
+    /*------------------------------------------------------------------------
+    *------------------------------------------------------------------------*/
+    uA.f = a;
+    uiA = uA.ui;
+    sign = signF32UI( uiA );
+    exp  = expF32UI( uiA );
+    sig  = fracF32UI( uiA );
+    /*------------------------------------------------------------------------
+    *------------------------------------------------------------------------*/
+    shiftDist = 0xBE - exp;
+    if ( shiftDist < 0 ) {
+        softfloat_raiseFlags( softfloat_flag_invalid );
+        return
+            (exp == 0xFF) && sig ? i64_fromNaN
+                : sign ? i64_fromNegOverflow : i64_fromPosOverflow;
+    }
+    /*------------------------------------------------------------------------
+    *------------------------------------------------------------------------*/
+    if ( exp ) sig |= 0x00800000;
+#ifdef SOFTFLOAT_FAST_INT64
+    sig64 = (uint_fast64_t) sig<<40;
+    extra = 0;
+    if ( shiftDist ) {
+        sig64Extra = softfloat_shiftRightJam64Extra( sig64, 0, shiftDist );
+        sig64 = sig64Extra.v;
+        extra = sig64Extra.extra;
+    }
+    return softfloat_roundToI64( sign, sig64, extra, roundingMode, exact );
+#else
+    extSig[indexWord( 3, 2 )] = sig<<8;
+    extSig[indexWord( 3, 1 )] = 0;
+    extSig[indexWord( 3, 0 )] = 0;
+    if ( shiftDist ) softfloat_shiftRightJam96M( extSig, shiftDist, extSig );
+    return softfloat_roundMToI64( sign, extSig, roundingMode, exact );
+#endif
+
+}
+
+
+u32::u32_r_minMag(f32 x, bool exact) {
+    union ui32_f32 uA;
+    uint_fast32_t uiA;
+    int_fast16_t exp;
+    uint_fast32_t sig;
+    int_fast16_t shiftDist;
+    bool sign;
+    uint_fast32_t z;
+
+    /*------------------------------------------------------------------------
+    *------------------------------------------------------------------------*/
+    uA.f = a;
+    uiA = uA.ui;
+    exp = expF32UI( uiA );
+    sig = fracF32UI( uiA );
+    /*------------------------------------------------------------------------
+    *------------------------------------------------------------------------*/
+    shiftDist = 0x9E - exp;
+    if ( 32 <= shiftDist ) {
+        if ( exact && (exp | sig) ) {
+            softfloat_exceptionFlags |= softfloat_flag_inexact;
+        }
+        return 0;
+    }
+    /*------------------------------------------------------------------------
+    *------------------------------------------------------------------------*/
+    sign = signF32UI( uiA );
+    if ( sign || (shiftDist < 0) ) {
+        softfloat_raiseFlags( softfloat_flag_invalid );
+        return
+            (exp == 0xFF) && sig ? ui32_fromNaN
+                : sign ? ui32_fromNegOverflow : ui32_fromPosOverflow;
+    }
+    /*------------------------------------------------------------------------
+    *------------------------------------------------------------------------*/
+    sig = (sig | 0x00800000)<<8;
+    z = sig>>shiftDist;
+    if ( exact && (z<<shiftDist != sig) ) {
+        softfloat_exceptionFlags |= softfloat_flag_inexact;
+    }
+    return z;
+
+}
+
+
+u32::u32(f32 x, u8 rounding_mode, bool exact) {
+    union ui32_f32 uA;
+    uint_fast32_t uiA;
+    bool sign;
+    int_fast16_t exp;
+    uint_fast32_t sig;
+    uint_fast64_t sig64;
+    int_fast16_t shiftDist;
+
+    /*------------------------------------------------------------------------
+    *------------------------------------------------------------------------*/
+    uA.f = a;
+    uiA = uA.ui;
+    sign = signF32UI( uiA );
+    exp  = expF32UI( uiA );
+    sig  = fracF32UI( uiA );
+    /*------------------------------------------------------------------------
+    *------------------------------------------------------------------------*/
+#if (ui32_fromNaN != ui32_fromPosOverflow) || (ui32_fromNaN != ui32_fromNegOverflow)
+    if ( (exp == 0xFF) && sig ) {
+#if (ui32_fromNaN == ui32_fromPosOverflow)
+        sign = 0;
+#elif (ui32_fromNaN == ui32_fromNegOverflow)
+        sign = 1;
+#else
+        softfloat_raiseFlags( softfloat_flag_invalid );
+        return ui32_fromNaN;
+#endif
+    }
+#endif
+    /*------------------------------------------------------------------------
+    *------------------------------------------------------------------------*/
+    if (exp) {
+        sig |= 0x00800000;
+    }
+
+    sig64 = (uint_fast64_t) sig<<32;
+    shiftDist = 0xAA - exp;
+    if ( 0 < shiftDist ) sig64 = softfloat_shiftRightJam64( sig64, shiftDist );
+    return softfloat_roundToUI32( sign, sig64, roundingMode, exact );
+
+}
+
+u64::u64_r_minMag(f32 x, bool exact) {
+    union ui32_f32 uA;
+    uint_fast32_t uiA;
+    int_fast16_t exp;
+    uint_fast32_t sig;
+    int_fast16_t shiftDist;
+    bool sign;
+    uint_fast64_t sig64, z;
+
+    /*------------------------------------------------------------------------
+    *------------------------------------------------------------------------*/
+    uA.f = a;
+    uiA = uA.ui;
+    exp = expF32UI( uiA );
+    sig = fracF32UI( uiA );
+    /*------------------------------------------------------------------------
+    *------------------------------------------------------------------------*/
+    shiftDist = 0xBE - exp;
+    if ( 64 <= shiftDist ) {
+        if ( exact && (exp | sig) ) {
+            softfloat_exceptionFlags |= softfloat_flag_inexact;
+        }
+        return 0;
+    }
+    /*------------------------------------------------------------------------
+    *------------------------------------------------------------------------*/
+    sign = signF32UI( uiA );
+    if ( sign || (shiftDist < 0) ) {
+        softfloat_raiseFlags( softfloat_flag_invalid );
+        return
+            (exp == 0xFF) && sig ? ui64_fromNaN
+                : sign ? ui64_fromNegOverflow : ui64_fromPosOverflow;
+    }
+    /*------------------------------------------------------------------------
+    *------------------------------------------------------------------------*/
+    sig |= 0x00800000;
+    sig64 = (uint_fast64_t) sig<<40;
+    z = sig64>>shiftDist;
+    shiftDist = 40 - shiftDist;
+    if ( exact && (shiftDist < 0) && (uint32_t) (sig<<(shiftDist & 31)) ) {
+        softfloat_exceptionFlags |= softfloat_flag_inexact;
+    }
+    return z;
+
+}
+
+
+u64::u64(f32 x, u8 rounding_mode, bool exact) {
+    union ui32_f32 uA;
+    uint_fast32_t uiA;
+    bool sign;
+    int_fast16_t exp;
+    uint_fast32_t sig;
+    int_fast16_t shiftDist;
+#ifdef SOFTFLOAT_FAST_INT64
+    uint_fast64_t sig64, extra;
+    struct uint64_extra sig64Extra;
+#else
+    uint32_t extSig[3];
+#endif
+
+    /*------------------------------------------------------------------------
+    *------------------------------------------------------------------------*/
+    uA.f = a;
+    uiA = uA.ui;
+    sign = signF32UI( uiA );
+    exp  = expF32UI( uiA );
+    sig  = fracF32UI( uiA );
+    /*------------------------------------------------------------------------
+    *------------------------------------------------------------------------*/
+    shiftDist = 0xBE - exp;
+    if ( shiftDist < 0 ) {
+        softfloat_raiseFlags( softfloat_flag_invalid );
+        return
+            (exp == 0xFF) && sig ? ui64_fromNaN
+                : sign ? ui64_fromNegOverflow : ui64_fromPosOverflow;
+    }
+    /*------------------------------------------------------------------------
+    *------------------------------------------------------------------------*/
+    if ( exp ) sig |= 0x00800000;
+#ifdef SOFTFLOAT_FAST_INT64
+    sig64 = (uint_fast64_t) sig<<40;
+    extra = 0;
+    if ( shiftDist ) {
+        sig64Extra = softfloat_shiftRightJam64Extra( sig64, 0, shiftDist );
+        sig64 = sig64Extra.v;
+        extra = sig64Extra.extra;
+    }
+    return softfloat_roundToUI64( sign, sig64, extra, roundingMode, exact );
+#else
+    extSig[indexWord( 3, 2 )] = sig<<8;
+    extSig[indexWord( 3, 1 )] = 0;
+    extSig[indexWord( 3, 0 )] = 0;
+    if ( shiftDist ) softfloat_shiftRightJam96M( extSig, shiftDist, extSig );
+    return softfloat_roundMToUI64( sign, extSig, roundingMode, exact );
+#endif
+
+}

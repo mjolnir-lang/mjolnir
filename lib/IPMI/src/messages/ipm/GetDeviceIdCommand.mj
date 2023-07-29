@@ -1,0 +1,101 @@
+
+
+class GetDeviceIdCommand {
+    struct ResponseRecord response {
+
+        /// Completion Code
+        CompletionCode completion_code;
+        u8 device_id;
+
+        /// Device Revision
+        bitfield<u8> device_revision {
+
+            /// `1` - device provides Device SDRs
+            /// `0` - device does not provide Device SDRs
+            [7] provides_sdrs;
+
+            [6:4] = 0;
+
+            /// Device Revision, binary encoded.
+            [3:0] device_revision;
+        }
+
+        bitfield<u8> firmware_revision_1 {
+
+            /// Device available
+            /// `0` - normal operation
+            /// `1` -  device firmware, SDR Repository update or self-initialization in progress. [Firmware / SDR Repository updates can be differentiated by issuing a Get SDR command and checking the completion code.]
+            [7] ;
+
+            /// Major Firmware Revision, binary encoded.
+            [6:0] major_fimrware_revision;
+        }
+
+        /// Firmware Revision 2
+        ///
+        /// Minor Firmware Revision. BCD encoded.
+        u8 firmware_revision_2;
+
+        /// IPMI Version. Holds IPMI Command Specification Version. BCD encoded.
+        /// `0x00` - reserved.
+        /// Bits 7:4 hold the Least Significant digit of the revision,
+        /// while bits 3:0 hold the Most Significant bits.
+        /// `0x51` indicates revision 1.5 functionality.
+        /// `0x02` for implementations that provide IPMI v2.0 capabilities per this specification.
+        bitfield<u8> ipmi_version {
+            [7:4] lsb;
+            [3:0] msb;
+        }
+
+        /// Additional Device Support (formerly called IPM Device Support). Lists the IPMI 'logical device' commands and functions that the controller supports that are in addition to the mandatory IPM and Application commands.
+        bitfield<u8> additional_device_support {
+
+            /// Chassis Device
+            ///
+            /// device functions as chassis device per ICMB spec.
+            [7] chassis_device;
+
+            /// Bridge
+            ///
+            /// device responds to Bridge NetFn commands
+            [6] bridge;
+
+            /// IPMB Event Generator
+            ///
+            /// device generates event messages [platform event request messages] onto the IPMB
+            [5] ipmb_event_generator;
+
+            /// IPMB Event Receiver
+            ///
+            /// device accepts event messages [platform event request messages] from the IPMB
+            [4] ipmb_event_receiver;
+
+            /// FRU Inventory Device
+            [3] fru_inventory_device;
+
+            /// SEL Device
+            [2] sel_device;
+
+            /// SDR Repository Device
+            [1] sdr_repository_device;
+
+            /// Sensor Device
+            [0] sensor_device;
+        }
+
+        /// Manufacturer ID, LS Byte first. The manufacturer ID is a 20-bit value that is derived from the IANA 'Private Enterprise' ID (see below). Most significant four bits = reserved (0000b). 000000h = unspecified. 0FFFFFh = reserved. This value is binary encoded. E.g. the ID for the IPMI forum is 7154 decimal, which is 1BF2h, which would be stored in this record as F2h, 1Bh, 00h for bytes 8 through 10, respectively.
+        bitfield<u8[3]> {
+            [2][3:0] | [1] | [0] u32 manufacturer_id;
+            [2][7:4] = 0;
+        }
+
+        /// Product ID, LS Byte first. This field can be used to provide a number that identifies a particular system, module, add-in card, or board set. The number is specified according to the manufacturer given by Manufacturer ID (see below). 0000h = unspecified. FFFFh = reserved.
+        @le
+        u16 product_id;
+
+        /// Auxiliary Firmware Revision Information
+        ///
+        /// This field is optional. If present, it holds additional information about the firmware revision, such as boot block or internal data structure version numbers. The meanings of the numbers are specific to the vendor identified by Manufacturer ID (see below). When the vendor-specific definition is not known, generic utilities should display each byte as 2-digit hexadecimal numbers, with byte 13 displayed first as the most-significant byte.
+        u32 auxiliary_firmware_revision_information;
+    }
+}

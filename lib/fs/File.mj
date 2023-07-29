@@ -1,0 +1,38 @@
+
+
+interface File {
+    implements Writable<u8>;
+
+
+    const Path &path(safe);
+
+
+    u64 offset(safe);
+
+
+    void set_offset(u64 offset);
+
+
+    Task sync_async();
+
+
+    Task<u32> read_async(u64 offset, u8 *data, u32 size);
+
+
+    Task<u32> write_async(u64 offset, const u8 *data, u32 size);
+
+
+    void sync() {
+        sync_async().wait()
+    }
+
+
+    u32 read(u64 offset, u8 *data, u32 size) {
+        return read_async(offset, data, size).wait();
+    }
+
+
+    u32 write(u64 offset, const u8 *data, u32 size) {
+        return write_async(offset, data, size).wait();
+    }
+}

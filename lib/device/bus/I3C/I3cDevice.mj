@@ -1,0 +1,5 @@
+
+
+class I3cDevice {
+    I3cAddress address;
+}

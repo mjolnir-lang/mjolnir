@@ -1,0 +1,12 @@
+
+
+struct SignalState {
+    StringView name;
+    u8 id;
+}
+
+
+enum<u8> SignalState {
+    [0] ACTIVE_HIGH = {"Active High", 0};
+    [1] ACTIVE_LOW = {"Active Low", 1};
+}

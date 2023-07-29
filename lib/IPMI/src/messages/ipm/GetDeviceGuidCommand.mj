@@ -1,0 +1,45 @@
+
+
+/// Get Device GUID Command
+///
+/// This command returns a GUID (Globally Unique ID), also referred to as a
+/// UUID (Universally Unique IDentifier), for the management controller. The
+/// format of the ID follows the octet format specified in [RFC4122]. [RFC4122]
+/// specifies four different versions of UUID formats and generation algorithms
+/// suitable for use for a Device GUID in IPMI. These are version 1 (0001b)
+/// "time based", and three 'name-based' versions: version 3 (0011b) "MD5
+/// hash", version 4 (0100b) “Pseudo-random”, and version 5 “SHA1 hash”. The
+/// version 1 format is recommended. However, versions 3, 4, or 5 formats are
+/// also allowed. A Device GUID should never change over the lifetime of the
+/// device.
+class GetDeviceGuidCommand {
+    struct Response response {
+
+        /// Completion Code
+        CompletionCode completion_code;
+
+        /// Note that the individual fields within the GUID are stored least-
+        /// significant byte first, and in the order illustrated in the
+        /// following table. This is the reverse of convention described in
+        /// [RFC4122] where GUID bytes are transmitted in 'network order'
+        /// (most-significant byte first) starting with the time low field.
+        ///
+        ///  1 - node
+        ///  2 - node
+        ///  3 - node
+        ///  4 - node
+        ///  5 - node
+        ///  6 - node (MSbyte)
+        ///  7 - clock seq and reserved
+        ///  8 - clock seq and reserved (MSbyte)
+        ///  9 - time high and version
+        /// 10 - time high and version (MSbyte)
+        /// 11 - time mid
+        /// 12 - time mid (MSbyte)
+        /// 13 - time low
+        /// 14 - time low
+        /// 15 - time low
+        /// 16 - time low (MSbyte)
+        u8[16] guid;
+    }
+}

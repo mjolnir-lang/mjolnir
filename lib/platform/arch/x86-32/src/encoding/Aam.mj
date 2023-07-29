@@ -1,0 +1,7 @@
+
+
+/// AAM - ASCII Adjust AX After Multiply
+bitfield<u8[2]> AamEncoding {
+    [0] = 0xD4u;
+    [1] u8 imm8 = 0x0Au;
+}

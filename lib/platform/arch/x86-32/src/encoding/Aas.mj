@@ -1,0 +1,6 @@
+
+
+/// AAS - ASCII Adjust AL After Subtraction
+bitfield<u8> AasEncodingZo {
+    [7:0] = 0x3Fu;
+}

@@ -1,0 +1,8 @@
+
+
+class Ld-a-de {
+    const u8 = 0x1Au;
+
+
+    Ld-a-de() {}
+}

@@ -1,0 +1,119 @@
+
+
+class MapIterator<type K, type V> {
+
+
+    MapIterator() {}
+
+
+}
+
+
+class Map<type K, type V, u32 PAGE_SIZE = 32> {
+    Set<K> keys
+    Vector<V> data
+
+
+    Map() {}
+
+
+    Map(const Map<K, V> &values) {
+        
+    }
+
+
+    Map(Map<K, V> values) {
+        
+    }
+
+
+    bool is_empty(safe) {
+        return data.is_empty()
+    }
+
+
+    u32 size(safe) {
+        return data.size()
+    }
+
+
+    u32 capacity(safe) {
+        return data.capacity()
+    }
+
+
+    void clear() {
+        keys.clear()
+        data.clear()
+    }
+
+
+    void reserve(u32 size) {
+        data.reserve(size)
+    }
+
+
+    void insert(const K &key, V value) {
+        
+    }
+
+
+    V &insert_new(const K &key, ...) {
+        data[0] = V(...)
+    }
+
+
+    void remove(const K &key) {
+        
+    }
+
+
+    safe V &get(safe; const K &key) {
+        
+    }
+
+
+    safe V &get(safe; const K &key, const V &default) {
+        
+    }
+
+
+    bool contains(safe; const K &key) {
+        return keys.contains(key)
+    }
+
+
+    safe Set<K> &keys(safe) {
+        return keys
+    }
+
+
+    MapIterator<safe V> values(safe) {
+        return MapIterator<safe V>(this)
+    }
+
+
+
+    MapIterator<K, safe V> enumerate(safe) {
+        return MapIterator<safe V>(this)
+    }
+
+
+
+
+
+
+    safe V &{[]}(safe; const K &key) {
+        return get(key)
+    }
+
+
+    Map<K, V> &{=}(const Map<K, V> &values) {
+        return Map<K, V>(values)
+    }
+
+
+    Map<K, V> &{=}(Map<K, V> values) {
+        return Map<K, V>(values)
+    }
+}

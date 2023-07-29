@@ -1,0 +1,6 @@
+
+
+interface Stream<type T> {
+    implements Readable<T>
+    implements Writable<T>
+}

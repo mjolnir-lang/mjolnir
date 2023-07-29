@@ -1,0 +1,16 @@
+
+
+/// Chassis Reset Command
+///
+/// This command was used with early versions of the ICMB. It has been
+/// superceded by the Chassis Control command and is not recommended for new
+/// implementations. Refer to [ICMB] for more information. The Chassis Reset
+/// command allows chassis logic (excluding the chassis device itself) to be
+/// reset. For host systems, this corresponds to a system hard reset.
+class ChassisResetCommand {
+    struct Response response {
+
+        /// Completion Code
+        CompletionCode completion_code;
+    }
+}

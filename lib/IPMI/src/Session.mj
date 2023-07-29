@@ -1,0 +1,15 @@
+
+
+class Session {
+    SessionId id;
+    SessionSequenceNumber inbound_ssn;
+    SessionSequenceNumber outbound_ssn;
+    Timestamp last_message_received_time;
+}
+
+
+type<u8> SessionId;
+
+
+type<u32> SessionSequenceNumber;
+

@@ -1,0 +1,38 @@
+
+
+/// Legacy Virtual Register (LVR)
+///
+/// Each Legacy I2C Device that can be connected to the I3C Bus shall have an
+/// associated read-only Legacy Virtual Register (LVR) describing the Device's
+/// significant features. Since these are Legacy I2C Devices, it is understood
+/// that this register will exist virtually, for example as part of the
+/// Device's driver. When Legacy I2C Devices are present on an I3C Bus, LVR
+/// data determines allowed Modes and maximum SCL clock frequency.
+///
+/// All LVRs shall be established by the higher-level entity controlling the
+/// I3C Bus, and shall be transferred to the I3C Bus Primary Controller prior
+/// to Bus configuration. The LVR content for all I2C Devices is always known
+/// by the Primary Controller. The Primary Controller shall transfer the LVR
+/// content for all I2C Devices to Secondary Controllers by using the DEFTGTS
+/// CCC (see Section 5.1.9.3.7).
+bitfield<u8> I3cLegacyVirtualRegister {
+
+    /// Legacy I2C-Only [2:0] per Table 4
+    /// 0 - Spike Filter, Max SCL clock freq tolerant N/A
+    /// 1 - No Spike Filter, Max SCL clock freq tolerant
+    /// 2 - No Spike Filter, Not Max SCL clock freq tolerant
+    /// 3:7 - Reserved
+    [7:5] legacy_i2c_only;
+
+    /// I2C Mode Indicator
+    ///
+    /// 0 - I2C Fm+
+    /// 1 - I2C Fm
+    [4] i2c_mode_indicator;
+
+    /// MIPI Alliance I3C WG Reserved
+    ///
+    /// 0 - Reserved
+    /// 1:15 - 15 available codes for describing the Device capabilities and function on the sensors' system.
+    [3:0] mipi_alliance_i3c_wg_reserved;
+}

@@ -1,0 +1,21 @@
+
+class B<Cond cond> {
+    bitfield<u16> bits {
+        [15:12] = 0b1101u;
+        [12:8] Cond cond;
+        [7:0] u8 imm8;
+    }
+
+
+    B(Cond cond, u8 imm8) {
+        this.bits = {
+            .cond = cond;
+            .imm8 = imm8;
+        }
+    }
+}
+
+
+class B<Cond cond, LdrType type> {
+    u8 text[1];
+}

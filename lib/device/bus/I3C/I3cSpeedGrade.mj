@@ -1,0 +1,43 @@
+
+
+enum<u8> I3cProtocol {
+
+    /// Single Data Rate (SDR) Mode
+    ///
+    /// This Section specifies the communication protocols for Single Data Rate
+    /// (SDR) Mode. SDR Mode is the default Mode of the I3C Bus. SDR Mode is
+    /// also used to enter other Modes, sub-Modes, and states (as described in
+    /// Section 5.1 and Section 5.2); and for built-in features such as Common
+    /// Commands (CCCs), In-Band Interrupts, and transition from I2C to I3C by
+    /// assignment of a Dynamic Address.
+    ///
+    /// I3C SDR Mode is significantly similar to the I2C protocol [NXP01] in
+    /// terms of procedures and conditions, and as a result I3C Devices and
+    /// many Legacy I2C Target Devices (but not Legacy I2C Controller Devices)
+    /// can coexist on the same I3C Bus. However, SDR Mode also includes
+    /// numerous new features not present in I2C. For the procedures and
+    /// conditions that I3C shares with I2C, SDR Mode closely follows the
+    /// definitions in the I2C Specification. I2C traffic from an I3C
+    /// Controller to an I2C Target will be properly ignored by all I3C
+    /// Targets, because the I3C protocol is designed to allow I2C traffic. I3C
+    /// traffic from an I3C Controller to an I3C Target will not be seen by
+    /// most Legacy I 2C Target Devices, because the I 2C Spike Filter is
+    /// opaque to I3C's higher clock speed.
+    SDR;
+
+    ///
+    /// High Data Rate (HDR) Modes
+    ///
+
+    /// HDR Ternary Symbol Pure-bus (HDR-TSP) Mode
+    HDR_TSP;
+
+    /// HDR Ternary Symbol Legacy-inclusive-bus (HDR-TSL) Mode
+    HDR_TSL;
+
+    /// HDR Double Data Rate (HDR-DDR) Mode
+    HDR_DDR;
+
+    /// HDR Bulk Transport (HDR-BT) Mode
+    HDR_BT;
+}

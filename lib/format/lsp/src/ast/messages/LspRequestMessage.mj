@@ -1,0 +1,24 @@
+
+
+///
+/// Request Message
+///
+
+/// A request message to describe a request between the client and the server.
+/// Every processed request must send a response back to the sender of the request.
+
+
+interface LspRequestMessage {
+    implements LspMessage;
+
+    /// The request id.
+    (LspInteger | LspString) id();
+
+
+    /// The method to be invoked.
+    LspString method();
+
+
+    /// The method's params.
+    (LspArray | LspObject)? params();
+}

@@ -1,0 +1,55 @@
+
+
+enum<u8> CssTokenType {
+    COMMENT;
+    NEWLINE;
+    WHITESPACE;
+    HEX_DIGIT;
+    ESCAPE;
+    IDENTIFIER;
+    FUNCTION;
+    AT_KEYWORD;
+    HASH;
+
+    /// <string-token>
+    ///
+    /// RE: `'"([^"\\<newline>]|<escape>|\\<newline>)*"'`
+    STRING;
+    URL;
+
+    /// <number-token>
+    ///
+    /// RE: `'[+-]?\d*(.\d+)?([Ee][+-]?\d+)?'`
+    NUMBER;
+
+    /// <dimension-token>
+    ///
+    /// RE: `'<number-token><ident-token>'`
+    DIMENSION;
+
+    /// <dimension-token>
+    ///
+    /// RE: `'<number-token>%'`
+    PERCENTAGE;
+
+    /// <CDO-token>
+    ///
+    /// RE: `'<!--'`
+    ///
+    CDO;
+
+    /// <CDC-token>
+    ///
+    /// RE: `'-->'`
+    ///
+    CDC;
+}
+
+
+
+struct CssToken {
+    StringView data;
+    u32 line;
+    u16 column;
+    CssTokenType type;
+}

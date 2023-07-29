@@ -1,0 +1,6 @@
+
+
+/// This logical device represents the functions associated with comparing an event message against a set of selectable 'event filters' and generating a selectable action on a match.
+interface IpmiPefDevice {
+
+}

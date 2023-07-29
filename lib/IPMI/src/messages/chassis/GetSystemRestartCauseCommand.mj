@@ -1,0 +1,38 @@
+
+
+/// Get System Restart Cause Command
+///
+/// This command returns information about what action last caused the system
+/// to restart. BIOS can use this command in conjunction with the System Boot
+/// Options as additional information in determining whether to perform the
+/// requested boot operation.
+class GetSystemRestartCauseCommand {
+    struct Response response {
+
+        /// Completion Code
+        CompletionCode completion_code;
+
+        bitfield<u8> {
+
+            [7:4] = 0;
+
+            /// `0x0` - unknown (system start/restart detected, but cause unknown) [required if this condition exists]
+            /// `0x1` - Chassis Control command [required]
+            /// `0x2` - reset via pushbutton [optional]
+            /// `0x3` - power-up via power pushbutton [optional]
+            /// `0x4` - Watchdog expiration (see watchdog flags) [required]
+            /// `0x5` - OEM [optional]
+            /// `0x6` - automatic power-up on AC being applied due to 'always restore' power restore policy (see 28.8, Set Power Restore Policy Command) [optional]
+            /// `0x7` - automatic power-up on AC being applied due to 'restore previous power state' power restore policy (see 28.8, Set Power Restore Policy Command) [optional]
+            /// `0x8` - reset via PEF [required if PEF reset supported]
+            /// `0x9` - power-cycle via PEF [required if PEF power-cycle supported]
+            /// `0xA` - soft reset (e.g. CTRL-ALT-DEL) [optional]
+            /// `0xB` - power-up via RTC (system real time clock) wakeup [optional]
+            /// other - reserved
+            [3:0] restart_cause;
+        }
+
+        /// Channel number. (Channel that command was received over)
+        u8 channel_number;
+    }
+}

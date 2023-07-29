@@ -1,0 +1,5 @@
+
+
+interface UartController {
+    implements Stream<u8>;
+}

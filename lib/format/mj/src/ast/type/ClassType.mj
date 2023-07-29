@@ -1,0 +1,112 @@
+
+
+class ClassType {
+
+    // Type System Hierarchy
+    Vector<Type> derived; // The derived types
+
+    // Members
+    Shared shared_; // The list of shared type scopes
+    Vector<Operator *> operators;
+    Method destructor;
+    Vector<Method *> constructors;
+    Vector<Method *> methods;
+    Vector<Member *> members;
+    Vector<Property *> properties;
+    Vector<InterfaceType *> interfaces;
+
+    // Storage
+    u32 size;        // The type size in bytes
+    u32 alignment;   // The type alignment in bytes
+
+    // Storage Modifiers
+    const bool is_const;    // The type mutability. Memory may not be modified through this type
+    const bool is_volatile; // The type volatility. Memory may be modified outside of the program
+
+
+    const Token *name; // The type identifier sequence (TODO)
+    const Comment *comment; // The type documentation comment
+    Vector<Type *> template_parameters;
+
+
+    ClassType(
+        const Token *name,
+        Vector<Type *> template_parameters
+    ) {
+        .name = name;
+        .template_parameters = template_parameters;
+    }
+}
+
+
+impl<BasicType> ClassType {
+
+
+    /// Return the size of the type in bytes.
+    u32 size(safe) =>
+        size;
+
+
+    /// Return the alignment of the type in bytes.
+    u32 alignment(safe) =>
+        alignment;
+
+
+    /// Return true if the type is 'const' qualified.
+    bool is_const(safe) =>
+        is_const;
+
+
+    /// Return true if the type is 'volatile' qualified.
+    bool is_volatile(safe) =>
+        is_volatile;
+
+
+    bool is_anonymous() {
+        name == null;
+
+
+    bool is_generic() {
+        !template_parameters.is_empty();
+
+
+    safe Vector<Property *> &properties(safe) =>
+        properties;
+
+
+    safe Vector<Method *> &constructors(safe) =>
+        constructors;
+
+
+    safe Method &destructor(safe) =>
+        destructor;
+
+
+    /// Return the list of methods defined by the type.
+    safe Vector<Method *> &methods(safe) =>
+        methods;
+
+
+    safe Vector<Member *> &members(safe) =>
+        members;
+
+
+    /// Return the list of operators defined by the type.
+    safe Vector<Operator *> &operators(safe) =>
+        operators;
+
+
+    /// Return the list of operators defined by the type.
+    safe Vector<Operator *> &operators(safe) =>
+        operators;
+
+
+    /// Return the 'const' qualified derivation of the type.
+    safe Type &const_qualified_derivation(safe) =>
+        null;
+
+
+    /// Return the 'volatile' qualified derivation of the type.
+    safe Type &volatile_qualified_derivation(safe) =>
+        null;
+}

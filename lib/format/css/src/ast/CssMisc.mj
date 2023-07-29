@@ -1,0 +1,203 @@
+
+
+class CssAtRule {
+    String name;
+    List<CssComponentValue> prelude;
+    Optional<CssBlock> block;
+}
+
+
+class CssQualifiedRule {
+    String name;
+    List<CssComponentValue> prelude;
+    Optional<CssBlock> block;
+}
+
+
+
+
+class CssStyleSheet {
+    String name;
+    List<CssComponentValue> prelude;
+    Optional<CssBlock> block;
+
+
+    /// 5.3.3. Parse a stylesheet
+    ///
+    /// To parse a stylesheet from an input given an optional url location:
+    ///
+    /// 1. If input is a byte stream for stylesheet, decode bytes from input, and set input to the result.
+    /// 2. Normalize input, and set input to the result.
+    /// 3. Create a new stylesheet, with its location set to location (or null, if location was not passed).
+    /// 4. Consume a list of rules from input, with the top-level flag set, and set the stylesheet’s value to the result.
+    /// 5. Return the stylesheet.
+    CssStyleSheet parse(CssTokenStream &input)? {
+        fail;
+    }
+}
+
+
+
+class CssRuleList {
+    String name;
+    List<CssComponentValue> prelude;
+    Optional<CssBlock> block;
+
+
+    /// 5.3.4. Parse a list of rules
+    ///
+    /// To parse a list of rules from input:
+    ///
+    /// 1. Normalize input, and set input to the result.
+    /// 2. Consume a list of rules from the input, with the top-level flag unset.
+    /// 3. Return the returned list.
+    List<CssRule> parse(CssTokenStream &input)? {
+        fail;
+    }
+}
+
+
+class CssRule {
+
+
+    /// 5.3.5. Parse a rule
+    ///
+    /// To parse a rule from input:
+    ///
+    /// 1. Normalize input, and set input to the result.
+    /// 2. While the next input token from input is a <whitespace-token>, consume the next input token from input.
+    /// 3. If the next input token from input is an <EOF-token>, return a syntax error.
+    ///     Otherwise, if the next input token from input is an <at-keyword-token>, consume an at-rule from input, and let rule be the return value.
+    ///     Otherwise, consume a qualified rule from input and let rule be the return value. If nothing was returned, return a syntax error.
+    /// 4. While the next input token from input is a <whitespace-token>, consume the next input token from input.
+    /// 5. If the next input token from input is an <EOF-token>, return rule. Otherwise, return a syntax error.
+    CssRule parse(CssTokenStream &input)? {
+        fail;
+    }
+}
+
+
+class CssDeclarationList {
+    String name;
+    List<CssComponentValue> prelude;
+    Optional<CssBlock> block;
+
+
+    /// 5.3.8. Parse a list of declarations
+    ///
+    /// Note: Despite the name, this actually parses a mixed list of declarations and at-rules, as CSS 2.1 does for @page. Unexpected at-rules (which could be all of them, in a given context) are invalid and will be ignored by the consumer.
+    ///
+    /// Note: This algorithm does not handle nested style rules. If your use requires that, use parse a style block’s contents.
+    /// To parse a list of declarations from input:
+    ///
+    /// 1. Normalize input, and set input to the result.
+    /// 2. Consume a list of declarations from input, and return the result.
+
+
+}
+
+
+
+class CssDeclaration {
+    String name;
+    List<CssComponentValue> prelude;
+    Optional<CssBlock> block;
+
+
+    /// 5.3.6. Parse a declaration
+    ///
+    /// Note: Unlike "Parse a list of declarations", this parses only a declaration and not an at-rule.
+    /// To parse a declaration from input:
+    ///
+    /// 1. Normalize input, and set input to the result.
+    /// 2. While the next input token from input is a <whitespace-token>, consume the next input token.
+    /// 3. If the next input token from input is not an <ident-token>, return a syntax error.
+    /// 4. Consume a declaration from input. If anything was returned, return it. Otherwise, return a syntax error.
+    CssDeclaration parse(CssTokenStream &input)? {
+        fail;
+    }
+}
+
+
+
+class CssComponentValue {
+    String name;
+    List<CssComponentValue> prelude;
+    Optional<CssBlock> block;
+
+
+    /// 5.3.9. Parse a component value
+    ///
+    /// To parse a component value from input:
+    ///
+    /// 1. Normalize input, and set input to the result.
+    /// 2. While the next input token from input is a <whitespace-token>, consume the next input token from input.
+    /// 3. If the next input token from input is an <EOF-token>, return a syntax error.
+    /// 4. Consume a component value from input and let value be the return value.
+    /// 5. While the next input token from input is a <whitespace-token>, consume the next input token.
+    /// 6. If the next input token from input is an <EOF-token>, return value. Otherwise, return a syntax error.
+    CssComponentValue parse(CssTokenStream &input)? {
+        fail;
+    }
+}
+
+
+/// 5.3.10. Parse a list of component values
+///
+/// To parse a list of component values from input:
+///
+/// 1. Normalize input, and set input to the result.
+/// 2. Repeatedly consume a component value from input until an <EOF-token> is returned, appending the returned values (except the final <EOF-token>) into a list. Return the list. 
+
+
+
+/// 5.3.11. Parse a comma-separated list of component values
+///
+/// To parse a comma-separated list of component values from input:
+///
+/// 1. Normalize input, and set input to the result.
+/// 2. Let list of cvls be an initially empty list of component value lists.
+/// 3. Repeatedly consume a component value from input until an <EOF-token> or <comma-token> is returned, appending the returned values (except the final <EOF-token> or <comma-token>) into a list. Append the list to list of cvls.
+///     If it was a <comma-token> that was returned, repeat this step.
+/// 4. Return list of cvls.
+
+
+
+
+
+
+
+
+
+
+
+/// 5.3.7. Parse a style block's contents
+///
+/// Note: This algorithm parses the contents of style rules, which need to allow nested style rules and other at-rules. If you don’t need nested style rules, such as in @page or in @keyframes child rules, use parse a list of declarations.
+/// To parse a style block's contents from input:
+///
+/// 1. Normalize input, and set input to the result.
+/// 2. Consume a style block's contents from input, and return the result. 
+
+class CssCurlyBracketBlock {
+    List<CssComponentValue> prelude;
+}
+
+
+class CssSquareBracketBlock {
+    List<CssComponentValue> prelude;
+}
+
+
+class CssParenthesisBlock {
+    List<CssComponentValue> prelude;
+}
+
+
+
+class CssFunctionBlock {
+    String name;
+    List<CssComponentValue> prelude;
+    Optional<CssBlock> block;
+}
+

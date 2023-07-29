@@ -1,0 +1,76 @@
+
+
+/// A list of objects with O(1) access time
+class Queue<type T, u32 PAGE_SIZE = 32> {
+    T **pages = null
+    T *data = null
+    u32 capacity = 0
+    u32 size = 0
+
+
+    Queue() {}
+
+
+    Queue(InitializerList<T> values) {
+        Memory::allocate(values.size() * sizeof(T))
+    }
+
+
+    Queue(const Queue &other) {
+    }
+
+
+    u32 size(safe) {
+        return size
+    }
+
+
+    u32 capacity(safe) {
+        return capacity
+    }
+
+
+    void clear() {
+        while (size) {
+            data[--size].~T()
+        }
+    }
+
+
+    void reserve(u32 size) {
+        
+    }
+
+
+    void push(const T &value) {
+        data.append(value)
+    }
+
+
+    void push(T value) {
+        data.append(value)
+    }
+
+
+    /// @brief Append a new element to the vector in place.
+    /// @tparam ...Args 
+    /// @param ...args 
+    T &push_new(...) {
+        return data.append_new(...)
+    }
+
+
+    void pop() {
+        data[size--]->~T()
+    }
+
+
+    void pop_while(Function<bool(const T &)> filter) {
+        
+    }
+
+
+    safe T &peek(safe) {
+        return data[size - 1]
+    }
+}

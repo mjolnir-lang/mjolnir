@@ -1,0 +1,28 @@
+
+
+/// Cold Reset Command
+///
+/// This command directs the Responder to perform a 'Cold Reset' of itself.
+/// This causes default setting of interrupt enables, event message generation,
+/// sensor scanning, threshold values, and other 'power up default' state to be
+/// restored. That is, the device reinitializes its event, communication, and
+/// sensor functions. If the device incorporates a Self Test, the Self Test
+/// will also run at this time.
+///
+/// NOTE: The Cold Reset command is provided for platform development, test,
+/// and platform-specific initialization and recovery actions. The system
+/// actions of the Cold Reset command are platform specific. Issuing a Cold
+/// Reset command could have adverse effects on system operation, particularly
+/// if issued during run-time. Therefore, the Cold Reset command should not be
+/// used unless all the side-effects for the given platform are known.
+///
+/// It is recognized that there are conditions where a given controller may not
+/// be able to return a response to a Cold Reset Request message. Therefore,
+/// though recommended, the implementation is not required to return a response
+/// to the Cold Reset command. Applications should not rely on receiving a
+/// response as verification of the completion of a Cold Reset command.
+class ColdResetCommand {
+    struct ResponseRecotrd response {
+        CompletionCode completion_code;
+    }
+}

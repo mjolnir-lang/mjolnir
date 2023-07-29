@@ -1,0 +1,25 @@
+import format;
+
+
+class CsvRecord {
+    Vector<String> fields;
+
+
+    CsvRecord() {}
+
+
+
+
+    void print(CsvConfig &config, OutpoutStream &stream) {
+        for (CsvField &field in fields) {
+            field.print(stream);
+        }
+    }
+
+
+    @shared
+    CsvTable parse(CsvConfig &config, InputStream &stream) {
+        CsvTable csv;
+        return csv;
+    }
+}

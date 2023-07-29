@@ -1,0 +1,28 @@
+
+
+/// 2.1 Well-Formed XML Documents
+///
+/// [Definition: A textual object is a well-formed XML document if:]
+///
+/// 1. Taken as a whole, it matches the production labeled document.
+/// 2. It meets all the well-formedness constraints given in this specification.
+/// 3. Each of the parsed entities which is referenced directly or indirectly within the document is well-formed.
+///
+/// Document
+/// [1] document ::= prolog element Misc*
+///
+/// Matching the document production implies that:
+///
+/// It contains one or more elements.
+///
+/// [Definition: There is exactly one element, called the root, or document element, no part of which appears in the content of any other element.] For all other elements, if the start-tag is in the content of another element, the end-tag is in the content of the same element. More simply stated, the elements, delimited by start- and end-tags, nest properly within each other.
+///
+/// [Definition: As a consequence of this, for each non-root element C in the document, there is one other element P in the document such that C is in the content of P, but is not in the content of any other element that is in the content of P. P is referred to as the parent of C, and C as a child of P.] 
+class XmlDocument {
+
+
+    bool is_well_formed() {
+        ;
+    }
+
+}

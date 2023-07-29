@@ -1,0 +1,6 @@
+
+
+/// The Event Receiver Device accepts and acknowledges Event Request Messages. The normal action for the Event Receiver Device is to then pass the Event Message to the SEL Device for logging. An IPMB Event Receiver refers to an Event Receiver that accepts Event Messages from the IPMB.
+interface IpmiEventReceiverDevice {
+
+}

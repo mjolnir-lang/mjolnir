@@ -1,0 +1,265 @@
+
+const u32 NSEC_PER_USEC = 1000
+const u32 NSEC_PER_MSEC = 1000000
+const u32 NSEC_PER_SEC = 1000000000
+const u32 NSEC_PER_MIN = 60000000000
+const u32 NSEC_PER_HR = 3600000000000
+const u32 NSEC_PER_DAY = 86400000000000
+
+const u32 USEC_PER_MSEC = 1000
+const u32 USEC_PER_SEC = 1000000
+const u32 USEC_PER_MIN = 60000000
+const u32 USEC_PER_HR = 3600000000
+const u32 USEC_PER_DAY = 86400000000
+
+const u32 MSEC_PER_SEC = 1000
+const u32 MSEC_PER_MIN = 60000
+const u32 MSEC_PER_HR  = 3600000
+const u32 MSEC_PER_DAY = 86400000
+
+const u32 SEC_PER_MIN = 60
+const u32 SEC_PER_HR = 3600
+const u32 SEC_PER_DAY = 86400
+
+const u32 MIN_PER_HR = 60
+const u32 MIN_PER_DAY = 1440
+
+const u32 HR_PER_DAY = 24
+
+
+/// A measure of a duration of time with 1 microsecond resolution.
+/// Time does not account for leap years, leap seconds, daylight savings time.
+/// It has no information about time zones.
+/// It represents a duration which may be posative or negative.
+struct Time {
+    i32 days;        // [I32_MIN, I32_MAX]
+    i32 seconds;     // [-86399, 86399]
+    i32 nanoseconds; // [-999999999, 999999999]
+    //void now(Time *this)
+
+
+    /// Initialize a naive time value. The parameters will be adjusted such that they are within the defined values.
+    ///
+    /// `days` - The number of days [0, U32_MAX]
+    /// `hours` - The number of hours [0, 23]
+    /// `minutes` - The number of minutes [0, 59]
+    /// `seconds` - The number of seconds [0, 59]
+    /// `nanoseconds` - The number of nanoseconds [0, 999999999]
+    Time(u32 days, u32 hours, u32 minutes, u32 seconds, u32 nanoseconds) {
+        this.days = days
+        this.seconds = (SEC_PER_HR * hours) + (SEC_PER_MIN * minutes) + seconds
+        this.nanoseconds = nanoseconds
+    }
+
+
+    /// Initialize a naive time value.
+    ///
+    /// `days` - The number of days [0, U32_MAX]
+    /// `hours` - The number of hours [0, 23]
+    /// `minutes` - The number of minutes [0, 59]
+    /// `seconds` - The number of seconds [0, 59]
+    /// `nanoseconds` - The number of nanoseconds [0, 999999999]
+    Time(u32 days, u32 hours, u32 minutes, u32 seconds, u32 nanoseconds) {
+        this->days = days
+        this->seconds = (SEC_PER_HR * hours) + (SEC_PER_MIN * minutes) + seconds
+        this->nanoseconds = nanoseconds
+    }
+
+
+    /// Initialize a naive time value from 'hour', 'minute', and 'second' components.
+    ///
+    /// `days` - The number of days [0, U32_MAX]
+    /// `hours` - The number of hours [0, 23]
+    /// `minutes` - The number of minutes [0, 59]
+    /// `seconds` - The number of seconds [0, 59]
+    /// `nanoseconds` - The number of nanoseconds [0, 999999999]
+    Time(u32 hours, u32 minutes, u32 seconds) {
+        from_dhmsn(this, 0, hours, minutes, seconds, 0)
+    }
+
+
+    /// Initialize a naive time value from 'day', 'second', and 'nanosecond' components.
+    ///
+    /// `days` - The number of days [0, U32_MAX]
+    /// `seconds` - The number of seconds [0, 59]
+    /// `nanoseconds` - The number of nanoseconds [0, 999999999]
+    Time(u32 days, u32 seconds, u32 nanoseconds) {
+        this->days = days
+        this->seconds = seconds
+        this->nanoseconds = nanoseconds
+    }
+
+
+    /// Initialize a naive time value from 'day', 'second', and 'nanosecond' components.
+    ///
+    /// `other` - The time value to copy
+    Time(const Time &other) {
+        this->days = other->days
+        this->seconds = other->seconds
+        this->nanoseconds = other->nanoseconds
+    }
+
+
+    i32 to_days() {
+        return this->days
+    }
+
+
+    i64 to_hours() {
+        return (HR_PER_DAY * this->days) + (this->seconds / SEC_PER_HR)
+    }
+
+
+    i64 to_minutes() {
+        return (MIN_PER_DAY * this->days) + (this->seconds / SEC_PER_MIN)
+    }
+
+
+    i64 to_seconds() {
+        return (SEC_PER_DAY * this->days) + this->seconds
+    }
+
+
+    i64 to_milliseconds() {
+        return (MSEC_PER_DAY * this->days) + (MSEC_PER_SEC * this->seconds) + (this->nanoseconds / NSEC_PER_MSEC)
+    }
+
+
+    i64 to_microseconds() {
+        return (USEC_PER_DAY * this->days) + (USEC_PER_SEC * this->seconds) + (this->nanoseconds / NSEC_PER_USEC)
+    }
+
+
+    /// \brief Return the time value in nanoseconds.
+    /// `time` - The time value
+    /// \return The 'nanosecond' component of the time value
+    i64 to_nanoseconds() {
+        return (NSEC_PER_DAY * this->days) + (NSEC_PER_SEC * this->seconds) + this->nanoseconds
+    }
+
+
+    ///
+    /// Time Components
+    ///
+
+
+    /// Return the 'day' component of the time value.
+    i32 get_day(safe) =>
+        days
+
+
+    /// Return the 'hour' component of the time value.
+    i32 get_hour(safe) =>
+        seconds / SEC_PER_HR
+
+
+    /// Return the 'minute' component of the time value.
+    i32 get_minute(safe) =>
+        (seconds / SEC_PER_MIN) % MIN_PER_HR
+
+
+    /// Return the 'second' component of the time value.
+    i32 get_second(safe) =>
+        seconds % SEC_PER_MIN
+
+
+    /// Return the 'millisecond' component of the time value.
+    i32 get_millisecond(safe) =>
+        nanoseconds / NSEC_PER_MSEC
+
+
+    /// Return the 'microsecond' component of the time value.
+    i32 get_microsecond(safe) =>
+        nanoseconds / NSEC_PER_USEC
+
+
+    /// Return the 'nanosecond' component of the time value.
+    i32 get_nanosecond(safe) =>
+        nanoseconds
+
+
+    void add_days(i32 days) {
+        this.days += days
+    }
+
+
+    void add_hours(i32 hours) {
+        u64 sec = seconds + (3600 * hours)
+        seconds = sec % 86400
+        days += sec / 86400
+    }
+
+
+    void add_minutes(i32 minutes) {
+        u64 sec = seconds + (60 * minutes)
+        seconds = sec % 86400
+        days += sec / 86400
+    }
+
+
+    void add_seconds(i32 seconds) {
+        i32 days = seconds / SEC_PER_DAY
+        i32 sec = seconds % SEC_PER_DAY
+
+        this.seconds += seconds
+
+        this.seconds = sec % 86400
+        this.days += sec / 86400
+    }
+
+
+    void add_milliseconds(i32 milliseconds) {
+        add_microseconds(1000 * milliseconds)
+    }
+
+
+    void add_microseconds(i32 microseconds) {
+        u64 usec = (u64) this.nanoseconds + microseconds
+        this.nanoseconds = usec % 1000000
+        add_seconds(usec / 1000000)
+    }
+
+
+    void add_nanoseconds(i32 nanoseconds) {
+        i32 sec = nanoseconds / NSEC_PER_SEC
+        i32 nsec = nanoseconds % NSEC_PER_SEC
+        this.nanoseconds += nanoseconds
+
+        if (this.nanoseconds >= NSEC_PER_SEC) {
+            this.nanoseconds -= NSEC_PER_SEC
+            sec += 1
+        } else if (this.nanoseconds <= -NSEC_PER_SEC) {
+            this.nanoseconds += NSEC_PER_SEC
+            sec -= 1
+        }
+
+        add_seconds(sec)
+    }
+
+
+    void add(const Time &other) {
+        (days, seconds, nanoseconds) += other.(days, seconds, nanoseconds)
+    }
+
+
+    void sub(const Time &other) {
+        (days, seconds, nanoseconds) -= other.(days, seconds, nanoseconds)
+    }
+
+
+    i32 compare(safe; const Time &other) {
+        i32 result = days - other.days
+
+        if (result != 0) {
+            return result
+        }
+
+        result = seconds - other->seconds
+
+        if (result != 0) {
+            return result
+        }
+
+        return nanoseconds - other->nanoseconds
+    }
+}

@@ -1,0 +1,88 @@
+
+
+/// Scalar Value Types
+///
+/// A scalar message field can have one of the following types - the table shows the type specified in the .proto file,
+/// and the corresponding type in the automatically generated class:
+enum<u8> ScalarType {
+    const String protobuf_type_name;
+    const String mjolnir_type_name;
+    const u32 size;
+    const u32 alignment;
+
+
+    /// IEEE-754 binary64
+    /// Mjolnir Type: `f64`
+    /// Default Value: `0f64`
+    DOUBLE = {"double", "f64", 8, 8};
+
+    /// IEEE-754 binary32
+    /// Mjolnir Type: `f32`
+    /// Default Value: `0f32`
+    FLOAT = {"float", "f32", 4, 4};
+
+    /// Uses variable-length encoding. Inefficient for encoding negative numbers – if your field is likely to have negative values, use sint32 instead.
+    /// Mjolnir Type: `i32`
+    /// Default Value: `0i32`
+    INT32 = {"int32", "i32", 4, 4};
+
+    /// Uses variable-length encoding. Inefficient for encoding negative numbers – if your field is likely to have negative values, use sint64 instead.
+    /// Mjolnir Type: `i64`
+    /// Default Value: `0i64`
+    INT64 = {"int64", "i64", 8, 8};
+
+    /// Uses variable-length encoding.
+    /// Mjolnir Type: `u32`
+    /// Default Value: `0u32`
+    UINT32 = {"uint32", "u32", 4, 4};
+
+    /// Uses variable-length encoding.
+    /// Mjolnir Type: `u64`
+    /// Default Value: `0u64`
+    UINT64 = {"uint64", "u64", 8, 8};
+
+    /// Uses variable-length encoding. Signed int value. These more efficiently encode negative numbers than regular int32s.
+    /// Mjolnir Type: `i32`
+    /// Default Value: `0i32`
+    SINT32 = {"sint32", "i32", 4, 4};
+
+    /// Uses variable-length encoding. Signed int value. These more efficiently encode negative numbers than regular int64s.
+    /// Mjolnir Type: `i64`
+    /// Default Value: `0i64`
+    SINT64 = {"sint64", "i64", 8, 8};
+
+    /// Always four bytes. More efficient than uint32 if values are often greater than 2^28.
+    /// Mjolnir Type: `u32`
+    /// Default Value: `0u32`
+    FIXED32 = {"fixed32", "u32", 4, 4};
+
+    // Always eight bytes. More efficient than uint64 if values are often greater than 2^56.
+    /// Mjolnir Type: `u64`
+    /// Default Value: `0u64`
+    FIXED64 = {"fixed64", "u64", 8, 8};
+
+    /// Always four bytes.
+    /// Mjolnir Type: `i32`
+    /// Default Value: `0i32`
+    SFIXED32 = {"sfixed32", "i32", 4, 4};
+
+    /// Always eight bytes.
+    /// Mjolnir Type: `i64`
+    /// Default Value: `0i64`
+    SFIXED64 = {"sfixed64", "i64", 8, 8};
+
+    /// 
+    /// Mjolnir Type: `bool`
+    /// Default Value: `false`
+    BOOL = {"bool", "bool", 1, 1};
+
+    /// A string must always contain UTF-8 encoded or 7-bit ASCII text, and cannot be longer than 2^32.
+    /// Mjolnir Type: `String`
+    /// Default Value: `""`
+    STRING = {"string", "String", sizeof(String), alignof(String)};
+
+    /// May contain any arbitrary sequence of bytes no longer than 2^32.
+    /// Mjolnir Type: `Vector<u8>`
+    /// Default Value: `[]`
+    BYTES = {"bytes", "Vector<u8>", sizeof(Vector<u8>), alignof(Vector<u8>)};
+}

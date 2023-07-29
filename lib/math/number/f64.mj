@@ -1,0 +1,106 @@
+
+
+@value-type
+class f64 {
+    bitfield<u32> {
+        [15:0] u32 bits;
+        [15] u8 sign;
+        [14:10] u8 biased_exponent;
+        [9:0] u32 significand;
+    }
+
+
+    f64(u8 x) {
+        
+    }
+
+
+    f64(u16 x) {
+        
+    }
+
+
+    f64(u32 x) {
+        
+    }
+
+
+    f64(u64 x) {
+        
+    }
+
+
+    f64(u128 x) {
+        
+    }
+
+
+    f64(i8 x) {
+        
+    }
+
+
+    f64(i16 x) {
+        
+    }
+
+
+    f64(i32 x) {
+        
+    }
+
+
+    f64(i64 x) {
+        
+    }
+
+
+    f64(i128 x) {
+        
+    }
+
+
+    f64(f16 x) {
+        
+    }
+
+
+    f64(f32 x) {
+        sign = x.sign;
+        biased_exponent = x.biased_exponent;
+        significand = x.significand;
+
+        if (biased_exponent == 0xFFu) {
+            if (significand != 0) {
+                this = softfloat_commonNaNToF64UI(softfloat_f32UIToCommonNaN(x));
+            } else {
+                biased_exponent = 0x7FFu;
+            }
+
+            return;
+        }
+
+        if (biased_exponent == 0) {
+            if (significand == 0) {
+                return;
+            }
+
+            Exp16Sig32 normExpSig = softfloat_normSubnormalF32Sig(significand);
+            biased_exponent = normExpSig.exp - 1;
+            significand = normExpSig.sig;
+        }
+
+        biased_exponent += 0x380u;
+        significand <<= 29;
+    }
+
+
+    f64(f80 x) {
+        
+    }
+
+
+    f64(f128 x) {
+        
+    }
+}

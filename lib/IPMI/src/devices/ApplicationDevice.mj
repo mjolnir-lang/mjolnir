@@ -1,0 +1,6 @@
+
+
+/// A physical instantiation of an Intelligent Platform Management device will most likely have some 'device specific' functionality that it implements that falls outside the 'standard' sensor and event functions. This functionality is referred to as the devices 'Application' functionality. Commands that address this functionality are viewed as being handled by an 'Application' logical device.
+interface IpmiApplicationDevice {
+
+}

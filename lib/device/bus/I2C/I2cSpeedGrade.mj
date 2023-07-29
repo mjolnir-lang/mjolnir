@@ -1,0 +1,22 @@
+
+
+enum<u8> I2cSpeedGrade {
+
+    /// 100 kbit/s
+    STANDARD_MODE;
+
+    /// 400 kbit/s
+    FULL_SPEED;
+
+    /// 3.4 Mbit/s
+    FAST_MODE;
+
+    /// 1 Mbit/s
+    FAST_MODE_PLUS;
+
+    /// 3.4 Mbit/s
+    HIGH_SPEED_MODE;
+
+    /// 5 MHz
+    ULTRA_FAST_MODE;
+}

@@ -1,0 +1,70 @@
+
+
+/// A dynamic array. Stored elements do not keep the same address
+class Array<type T, u32 SIZE> {
+    T data[SIZE]
+
+
+    Array() {}
+
+
+    Array(InitializerList<T> values) {
+        data = values
+    }
+
+
+    Array(const Array<T, SIZE> &other) {
+        for (u32 i = 0; i < other.SIZE && i < SIZE; i++) {
+            data[i] = T(other[i])
+        }
+    }
+
+
+    // Return the number of elements in the Array.
+    u32 size(safe) {
+        return SIZE
+    }
+
+
+    safe T *data(safe) {
+        return data
+    }
+
+
+    Array<T, SIZE> &{=}(const Array<T, SIZE> &values) {
+        return Array<T, SIZE>(values)
+    }
+
+
+    Array<T, SIZE> &{=}(Array<T, SIZE> values) {
+        return Array<T, SIZE>(values)
+    }
+
+
+    Array<T, SIZE> &{=}(InitializerList<T> values) {
+        return Array<T, SIZE>(values)
+    }
+
+
+    safe T &{[]}(safe; u32 index) {
+        return data[index]
+    }
+}
+
+
+impl<Iterable<T>> Array<type T, SIZE> {
+
+
+    SliceIterator<safe T> iterator(safe) {
+        return SliceIterator<safe T>(data)
+    }
+}
+
+
+impl<Sliceable<T>> Array<type T, SIZE> {
+
+
+    Slice<safe T> slice(safe; u32 start, u32 end) {
+        return Slice<safe T>(&data[start], end - start)
+    }
+}

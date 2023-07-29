@@ -1,0 +1,27 @@
+
+
+interface CsvField {
+
+
+    void print(OutpoutStream &stream);
+
+
+    @shared
+    CsvField parse(InputStream &stream);
+}
+
+
+impl<CsvField> String {
+
+
+    void print(OutpoutStream &stream) {
+        stream.print(data);
+    }
+
+
+    @shared
+    String parse(InputStream &stream) {
+        String string = String();
+        return string;
+    }
+}

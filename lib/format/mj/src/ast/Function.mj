@@ -1,0 +1,38 @@
+#pragma once
+
+#include "mj/ast/MjType.hpp"
+
+
+class MjFunctionParameter {
+public:
+
+
+    virtual const MjExpression &default_value() const = 0;
+
+};
+
+
+/// @brief An `MjFunction` is an `MjStatement` object associated with a name and an `MjFunctionType`.
+class MjFunction {
+public:
+
+
+    virtual ~MjFunction() = default;
+
+
+    // The comment associated with the variable
+    virtual const MjComment &comment() const = 0;
+
+
+    // The variable name
+    virtual const MjToken &name() const = 0;
+
+
+    // The variable type
+    virtual const MjFunctionType &type() const = 0;
+
+
+    // The temporary sequence of tokens that make the definition
+    virtual const List<const MjToken *> &tokens() const = 0;
+};
+

@@ -1,0 +1,89 @@
+
+
+/// Internet Protocol version 4 (IPv4) Address
+///
+/// format - "XXX.XXX.XXX.XXX"
+class IPv4Address {
+    union {
+        u32 word;
+        u8[4] data;
+    };
+
+
+    IPv4Address(StringView string) {
+        this = parse(string);
+    }
+
+
+    IPv4Address(u8[4] data) {
+        data = data;
+    }
+
+
+    IPv4Address(u32 data) {
+        word = little_endian(data);
+    }
+
+
+    IPv4Address(u8 d0, u8 d1, u8 d2, u8 d3) {
+        data[0:3] = (d0, d1, d2, d3);
+    }
+
+
+    IPv4Address? parse() {
+        return IPv4Address()
+    }
+
+    u32 {(:)}(safe) {
+        return little_endian(word);
+    }
+}
+
+
+class IPv4Packet {
+    u8 data[4];
+}
+
+
+class IPv4Packet {
+    struct {
+        bitfield<u8> {
+            [3:0] version;
+            [7:4] ihl;
+        };
+        u8 tos;
+        u16 total_length;
+        u16 identification;
+        bitfield<u16> {
+            [3:0] flags;
+            [15:4] fragment_offset;
+        };
+        u8 ttl;
+        u8 protocol;
+        u16 header_checksum;
+        IPv4Address source_address;
+        IPv4Address destination_address;
+        Ipv4Option options;
+    } header;
+    u8 *data;
+    u32 size;
+
+
+    IPv4Packet? decode(const u8 *data, u32 size) {
+        IPv4Packet packet;
+
+        if (size < 20) {
+            // Meader size is too small
+            fail;
+        }
+
+        // Header checksum
+
+        // Options
+
+        // Data
+        Memory::copy(data, );
+
+        return packet;
+    }
+}

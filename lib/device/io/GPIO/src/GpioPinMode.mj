@@ -1,0 +1,19 @@
+
+
+struct GpioPinMode {
+    StringView name;
+    u8 id;
+}
+
+enum<u8> GpioPinMode {
+    [0] INPUT = {"Input (High Z)", 0};
+    INPUT_HIGH_Z = INPUT;
+    DISABLED = INPUT;
+
+    [1] INPUT_PULL_UP = {"Input Pull-Up", 1};
+    [2] INPUT_PULL_DOWN = {"Input Pull-Down", 2};
+
+    [3] OUTPUT = {"Output Push/Pull", 3};
+    [3] OUTPUT_PUSH_PULL = {"Output Push/Pull", 3};
+    [4] OUTPUT_OPEN_DRAIN = {"Output Open-Drain", 4};
+}

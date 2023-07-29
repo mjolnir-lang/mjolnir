@@ -1,0 +1,49 @@
+
+
+// A FileStream is a stream which is backed by a file on a file system.
+// This acts as the handle for the file object.
+class FileStream : public  {
+    File &file;
+    u32 offset = 0;
+
+
+    FileStream(File &file) {
+        file = file;
+    }
+};
+
+
+impl<Stream<u8>> FileStream {
+
+
+    /// Return true if there are no objects available to be read.
+    bool is_empty(safe) {
+        return offset == file.size();
+    }
+
+
+    /// The number of objects available to be read.
+    u32 size(safe) {
+        return file.size() - offset;
+    }
+
+
+    /// Read multiple objects.
+    void read(u8 *data, u32 size) {
+        file.read(offset, data, size);
+        offset += size;
+    }
+
+
+    /// Skip multiple objects.
+    void skip(u32 size) {
+        offset += size;
+    }
+
+
+    /// Write multiple bytes.
+    void write(const u8 *data, u32 size) {
+        file.write(offset, data, size);
+        offset += size;
+    }
+}

@@ -1,0 +1,12 @@
+
+
+class Unit {
+    const Token &name;
+
+
+    Unit(
+        const Token &name
+    ) {
+        name(name)
+    }
+}

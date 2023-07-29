@@ -1,0 +1,219 @@
+
+
+/// 5.3. Parser Entry Points
+///
+/// The algorithms defined in this section produce high-level CSS objects from lists of CSS tokens.
+/// The algorithms here are operate on a token stream as input, but for convenience can also be invoked with a number of other value types.
+///
+/// To normalize into a token stream a given input:
+///
+/// 1. If input is a list of CSS tokens, return input.
+///
+/// 2. If input is a list of CSS component values, return input.
+///
+/// Note: The only difference between a list of tokens and a list of component values is that some objects that "contain" things, like functions or blocks, are a single entity in the component-value list, but are multiple entities in a token list. This makes no difference to any of the algorithms in this specification.
+///
+/// 3. If input is a string, then filter code points from input, tokenize the result, and return the final result.
+///
+/// 4. Assert: Only the preceding types should be passed as input.
+///
+/// Note: Other specs can define additional entry points for their own purposes.
+/// The following notes should probably be translated into normative text in the relevant specs, hooking this spec’s terms:
+///
+/// - "Parse a stylesheet" is intended to be the normal parser entry point, for parsing stylesheets.
+/// - "Parse a list of rules" is intended for the content of at-rules such as @media. It differs from "Parse a stylesheet" in the handling of <CDO-token> and <CDC-token>.
+/// - "Parse a rule" is intended for use by the CSSStyleSheet#insertRule method, and similar functions which might exist, which parse text into a single rule.
+/// - "Parse a declaration" is used in @supports conditions. [CSS3-CONDITIONAL]
+/// - "Parse a list of declarations" is for the contents of a style attribute, which parses text into the contents of a single style rule.
+/// - "Parse a component value" is for things that need to consume a single value, like the parsing rules for attr().
+/// - "Parse a list of component values" is for the contents of presentational attributes, which parse text into a single declaration’s value, or for parsing a stand-alone selector [SELECT] or list of Media Queries [MEDIAQ], as in Selectors API or the media HTML attribute. 
+
+
+
+
+class CssScanner {
+    mutable List<CssToken> peek_buffer;
+    mutable Readable<u8> input;
+    u32 line = 0;
+    u16 column = 0;
+
+
+    CssScanner(Readable<u8> input) =>
+        this.input = input;
+
+
+    CssToken scan() {
+        CssToken token = {
+            line = ..line;
+            column = ..column;
+        }
+
+        match (input.peek()) {
+            '"' => {
+                token.type = QUOTATION_MARK;
+                token.value = '"';
+            }
+            "#" => {
+                token.type = NUMBER_SIGN;
+                token.value = "#";
+            }
+            "'" => {
+                token.type = APOSTROPHE;
+                token.value = "'";
+                input.skip();
+            }
+            "(" => {
+                token.type = LEFT_PARENTHESIS;
+                token.value = "(";
+                input.skip();
+            }
+            ")" => {
+                token.type = RIGHT_PARENTHESIS;
+                token.value = ")";
+                input.skip();
+            }
+            "+" => {
+                token.type = PLUS_SIGN;
+                token.value = "+";
+            }
+            "," => {
+                token.type = COMMA;
+                token.value = ",";
+                input.skip();
+            }
+            "-" => {
+                token.type = HYPHEN_MINUS;
+                token.value = "-";
+            }
+            "." => {
+                token.type = FULL_STOP;
+                token.value = ".";
+            }
+            ":" => {
+                token.type = COLON;
+                token.value = ":";
+                input.skip();
+            }
+            ";" => {
+                token.type = SEMICOLON;
+                token.value = ";";
+                input.skip();
+            }
+            "<" => {
+                token.type = LESS_THAN_SIGN;
+                token.value = "<";
+            }
+            "@" => {
+                token.type = COMMERCIAL_AT;
+                token.value = "@";
+            }
+            "[" => {
+                token.type = LEFT_SQUARE_BRACKET;
+                token.value = "[";
+                input.skip();
+            }
+            '\' => {
+                token.type = REVERSE_SOLIDUS;
+                token.value = '\';
+            }
+            "]" => {
+                token.type = RIGHT_SQUARE_BRACKET;
+                token.value = "]";
+                input.skip();
+            }
+            "{" => {
+                token.type = LEFT_CURLY_BRACKET;
+                token.value = "{";
+                input.skip();
+            }
+            "}" => {
+                token.type = RIGHT_CURLY_BRACKET;
+                token.value = "}";
+                input.skip();
+            }
+            "0":="9" => {
+                token.type = DIGIT;
+                token.value = code_point;
+            }
+            "A":="Z" | "a":="z" | "_" => {
+                token.type = IDENTIFIER;
+            }
+            _ => {
+                token.type = DELIM;
+                token.value = code_point;
+                input.skip();
+            }
+            ? => {
+                token.type = EOF;
+                token.value = "";
+            }
+        }
+    }
+}
+
+
+impl<Peekable<CssToken>> CssScanner {
+
+
+    // Read multiple CssTokens.
+    void peek(safe; CssToken *data, u32 size) {
+        if (peek_buffer.size()) {
+            ;
+        }
+
+        for (u32 i = 0; i < size && (data[i] = scan()) != EOF; i++);
+    }
+}
+
+
+impl<Readable<CssToken>> CssScanner {
+
+    // Return true if there are no CssTokens available to be read.
+    bool is_empty(safe) =>
+        size() == 0;
+
+
+    // The number of CssTokens available to be read.
+    u32 size(safe) =>
+        peek_buffer.size()
+
+
+    // Read multiple CssTokens.
+    void read(CssToken *data, u32 size) {
+        for (u32 i = 0; i < size; i++) {
+            if (peek_buffer.is_empty()) {
+                data[i] = scan();
+            } else {
+                data[i] = peek_buffer.read();
+                peek_buffer.advance();
+            }
+
+            if (data[i] == CssToken::EOF) {
+                break;
+            }
+        }
+    }
+
+
+    // Skip multiple CssTokens.
+    void skip(u32 size) {
+        if (!peek_buffer.is_empty()) {
+            u32 drop_count = min(size, peek_buffer.size());
+            peek_buffer.skip(drop_count);
+            size -= drop_count;
+        }
+
+        for (u32 i = 0; i < size; i++) {
+            if (peek_buffer.is_empty()) {
+                data[i] = scan();
+            } else {
+                data[i] = peek_buffer.read();
+                peek_buffer.advance();
+            }
+
+            if (data[i] == CssToken::EOF) {
+                break;
+            }
+        }
+    }
+}

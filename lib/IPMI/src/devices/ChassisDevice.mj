@@ -1,0 +1,6 @@
+
+
+/// This chassis control device represents functions associated with recovery control actions such as power on/off, power cycle, reset, diagnostic interrupt, chassis identification indicator, and system boot.
+interface IpmiChassisDevice {
+
+}

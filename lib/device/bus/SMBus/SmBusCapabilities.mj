@@ -1,0 +1,90 @@
+
+
+bitfield<u8> SmBusCapabilities {
+
+    /// Packet Error Checking
+    ///
+    /// The Packet Error Checking mechanism improves reliability and communication
+    /// robustness. Implementation of Packet Error Checking by SMBus devices is optional
+    /// for SMBus devices but is required for devices participating in and only during the ARP
+    /// process. SMBus devices that implement Packet Error Checking must be capable to
+    /// communicate with the controller and other devices that do not implement the Packet
+    /// Error Checking mechanism.
+    /// Packet Error Checking, whenever applicable, is implemented by appending a Packet
+    /// Error Code (PEC) at the end of each message transfer. Each protocol (except for
+    /// Quick Command and the SMBus Host Notify protocol described Section 6.5.9) has
+    /// two variants: one with the Packet Error Code (PEC) byte and one without. The PEC is a
+    /// CRC-8 error-checking byte, calculated on all the message bytes (including addresses
+    /// and read/write bits). The PEC is appended to the message by the device that supplied
+    /// the last data byte.
+    /// 6.4.1 Packet error checking implementation
+    /// The SMBus must accommodate any mixture of devices that support Packet Error
+    /// Checking and devices that do not. A device that acts as a target and supports the
+    /// PEC must always be prepared to perform the target transfer with or without a PEC,
+    /// verify the correctness of the PEC if present, and only process the message if the
+    /// PEC is correct. Implementations are encouraged to issue a NACK if the PEC is
+    /// present but not correct.
+    /// 6.4.1.1 ACK/NACK and Packet Error Checking
+    /// The ACK/NACK bit in a SMBus byte is as susceptible to corruption as any other bit in
+    /// a SMBus packet. Hence, an ACK at the end of a PEC is not a guarantee that the
+    /// PEC is correct. A controller-transmitter receiving an ACK at the end of a write
+    /// should not necessarily assume that the write was successfully carried out at the
+    /// target-receiver of the write, although it is highly likely that it was.
+    /// A NACK received after a PEC by a controller-transmitter indicates that the link layer
+    /// of the target-receiver became aware of an error with the transmission in time to
+    /// supply a NACK at the end of the PEC byte. This may be due to an incorrect PEC
+    /// or any other error. Errors discovered above the data link layer may also be indicated
+    /// with a NACK if the device is fast enough to discover and indicate the error when
+    /// the NACK is due.
+    /// An ACK received after a PEC by a controller-transmitter means that no error
+    /// could be determined by the link layer in the target-receiver in time to supply a
+    /// NACK. This might be because the receiver is not able to check the validity of the
+    /// PEC in real time.
+    /// If a controller transmitter wants to be sure that a write-operation is performed
+    /// correctly at the target device, it must use some higher-layer mechanism to verify
+    /// this. This might take the form of a read-with-PEC of the data; receipt of a correct
+    /// PEC would reliably indicate that that the original write occurred without error.
+    /// When a controller-receiver reads data from a target-transmitter, the ACK/NACK
+    /// supplied by the controller-receiver at the end of the transaction has little meaning
+    /// other than to mark the end of the last byte. The target-transmitter is supplying
+    /// the data, and if the PEC supplied by the target-transmitter is correct, the
+    /// controller-receiver may assume that the data was received as the target transmitted
+    /// it. If not, it is up to the controller-receiver to take any appropriate remedial action.
+    /// 6.4.1.2 Controller implementation
+    /// A controller may use PEC on any transaction. It is required that the controller have
+    /// either a priori knowledge of whether or not the target device supports PEC or a
+    /// way to determine whether the target device supports PEC. The use of PEC is
+    /// governed by upper layer protocols (e.g. device drivers), specifications (e.g.
+    /// requirements of the SMBus ARP protocol) or detection algorithms for a given class
+    /// of devices (e.g. smart batteries).
+    /// 6.4.1.3 Target implementation
+    /// A target device that implements Packet Error Checking must be prepared to
+    /// receive and transmit data with or without a PEC. During a target receive transfer,
+    /// after the device has identified the protocol and command, it must accept and
+    /// check the additional PEC for validity.
+    /// During a target transmit transfer, the target transmitter must respond to
+    /// additional clocks after the last byte transfer and furnish a PEC to the controller
+    /// receiver requesting it.
+    /// Each bus transaction requires a Packet Error Code (PEC) calculation by both the
+    /// transmitter and receiver within each packet. The PEC uses an 8-bit cyclic
+    /// redundancy check (CRC-8) of each read or write bus transaction to calculate a
+    /// Packet Error Code (PEC). The PEC may be calculated in any way that conforms
+    /// to a CRC-8 represented by the polynomial, C(x) = x8 + x 2 + x 1 + 1, and must be
+    /// calculated in the order of the bits as received.
+    /// Calculating the PEC for transmission or reception is implemented in a method
+    /// chosen by the device manufacturer. It is possible to perform the check with a low-
+    /// cost hardware or a firmware algorithm that could process the message bit-by-bit or
+    /// with a byte-wise look-up table. The SMBus web page provides some example
+    /// CRC-8 methods.
+    /// The PEC is appended to the message as dictated by the protocols in
+    /// Section 6.5. The PEC calculation includes all bytes in the transmission, including
+    /// address, command and data. The PEC calculation does not include ACK or NACK
+    /// bits or START, STOP or REPEATED START conditions. This means that the
+    /// PEC is computed over the entire message from the first START condition.
+    /// Whether a device implements packet error checking may be determined by the
+    /// specification revision code that is present in the Specification Info() command for
+    /// a Smart Battery, Smart Battery Charger or Smart Battery Selector. See these
+    /// individual specifications for exact revision coding identities. It may also be
+    /// discovered in the UDID, defined in Section 6.6.1, for other devices.
+    [0] PACKET_ERROR_CHECKING;
+}

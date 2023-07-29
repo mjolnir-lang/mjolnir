@@ -1,0 +1,193 @@
+
+
+/// Unique Device Identifier (UDID)
+@api(1.0)
+class SmBusUdid {
+
+    /// Device Capabilities
+    ///
+    /// Describes the device's capabilities. See detail below.
+    ///
+    /// The Device Capabilities field serves multiple purposes:
+    ///
+    /// 1. Reports generic SMBus capabilities.
+    /// 2. Guarantees order of ARP resolution. Because a 'zero' bit wins arbitration over a
+    /// '1' bit, and the Address Type bits are the first two bits presented when a
+    /// device presents its UDID, all fixed address devices on the bus are detected
+    /// during ARP first, followed by devices with dynamic and persistent addresses, and
+    /// so on. The bits in the brackets below show the highest two bits, the address type
+    /// field, within the Device Capabilities field:
+    /// [00] Fixed Address devices are identified first.
+    /// [01] Dynamic and Persistent Address devices are identified next.
+    /// [10] Dynamic and Volatile Address devices are identified next.
+    /// [11] Random Number devices are identified last.
+    bitfield<u8> {
+
+        /// Address Type
+        ///
+        /// These two bits describe the type of address contained in the device:
+        ///
+        ///   0 - Fixed Address device
+        ///   1 - Dynamic and persistent address device
+        ///   2 - Dynamic and volatile address device
+        ///   3 - Random number device
+        [7:6] ADDRESS_TYPE;
+
+        /// Reserved bits are for future extendibility and must be returned as 0 and ignored when read.
+        [5:1] RESERVED = 0;
+
+        /// PEC Supported
+        ///
+        /// This bit is set if the device supports Packet Error Code on all commands supported at the device’s SMBus address associated with this UDID. If this bit is not set, the ability of the device to support PEC is unknown.
+        [0] PEC_SUPPORTED;
+    } device_capabilities;
+
+    /// Version / Revision
+    ///
+    /// UDID version number, and silicon revision identification. See detail below.
+    bitfield<u8> {
+
+        /// Reserved
+        ///
+        /// Reserved bits are for future extendibility and must be a 0.
+        [7:6] RESERVED = 0;
+
+        /// UDID Version
+        ///
+        /// These bits define the UDID version as defined here:
+        ///
+        ///   0 - Reserved
+        ///   1 - UDID version 1 (defined for SMBus 2.0 release)
+        ///   2-7 - Reserved for future use
+        ///
+        /// It is expected that the version will increment as the bit definitions or protocols in this section change
+        [5:3] UDID_VERSION;
+
+        /// Silicon Revision ID
+        ///
+        /// These bits are used to designate the silicon revision level. The
+        /// vendor determines this value. The vendor is encouraged to
+        /// increment this value when silicon changes are made that
+        /// will/might affect the software interface (e.g. new features,
+        /// changed interface, etc.). In the event that all 8 encoded values
+        /// are exhausted, the vendor is encouraged to use a different
+        /// Device ID for the next revision.
+        [2:0] SILICON_REVISION_ID;
+    } version_revision;
+
+    /// Vendor ID
+    ///
+    /// The device manufacturer's ID as assigned by the SBS Implementers' Forum or the PCI SIG.
+    u16 vendor_id;
+
+    /// Device ID
+    ///
+    /// The device ID as assigned by the device manufacturer
+    /// (identified by the Vendor ID field).
+    u16 device_id;
+
+    /// Interface
+    ///
+    /// Identifies the protocol layer interfaces supported over the SMBus connection by the device. For example, ASF and IPMI.
+    ///
+    /// NOTE: The values 0 and 1 in the SMBus Version field (bits [3:0]) support use of the UDID definition in other specifications.
+    bitfield<u16> {
+
+        /// Reserved
+        ///
+        /// Reserved for future definition under the SMBus specifications
+        [15:8] RESERVED;
+
+        /// ZONE
+        ///
+        /// Device supports ZONE WRITE and ZONE READ protocols
+        [7] ZONE;
+
+        /// IPMI
+        ///
+        /// Device supports additional interface access and capabilities per IPMI specifications
+        [6] IPMI;
+
+        /// ASF
+        ///
+        /// Device supports additional interface access and capabilities per ASF specifications
+        [5] ASF;
+
+        /// OEM
+        ///
+        /// Device supports vendor-specific access and capabilities per the
+        /// Subsystem Vendor ID and Subsystem Device ID fields returned
+        /// by discoverable SMBus devices.
+        ///
+        /// The Subsystem Vendor ID identifies the vendor or defining body
+        /// that has specified the behavior of the device. The Subsystem
+        /// Device ID is used in conjunction with the System Vendor ID to
+        /// specify a particular level of functional equivalence for the
+        /// device.
+        [4] OEM;
+
+        /// SMBus Version
+        ///
+        /// These bits define the SMBus version as defined here:
+        ///
+        ///   0 - SMBus 1.0 - do not use in ARPable devices
+        ///   1 - SMBus 1.1 - do not use in ARPable devices
+        ///   2 - Reserved
+        ///   3 - Reserved
+        ///   4 - SMBus Version 2.0
+        ///   5 - SMBus Version 3.0
+        ///   6 - SMBus Version 3.1
+        ///   7 - SMBus Version 3.2
+        ///
+        ///   All other values reserved
+        [3:0] SMBUS_VERSION;
+    } interface;
+
+    /// Subsystem Vendor ID
+    ///
+    /// This field may hold a value derived from any of several sources:
+    ///
+    /// - The device manufacturer's ID as assigned by the SBS Implementers' Forum or the PCI SIG.
+    /// - The device OEM's ID as assigned by the SBS Implementers' Forum or the PCI SIG.
+    /// - A value that, in combination with the Subsystem Device ID, can be used to identify an organization or industry group that has defined a particular common device interface specification.
+    ///
+    ///
+    /// The SubSystem Vendor ID can be specified as 0 if the SubSystem fields
+    /// are unsupported. If the SubSystem Vendor ID is 0, the SubSystem Device ID
+    /// must also be 0. These fields may not be supported for inexpensive or generic
+    /// type sensors that do not require subsystem identification/differentiation. If these
+    /// fields are supported, it is required that the values be stored in some form of non-
+    /// volatile storage.
+    ///
+    ///
+    /// This field is used to provide a unique ID for functionally equivalent devices. This
+    /// is for devices that would otherwise return identical UDIDs for the purpose of address
+    /// assignment. This field is defined by the device manufacturer (as specified by the
+    /// Vendor ID field) who may employ a central numbering scheme or a random
+    /// number scheme for dynamic address devices. The data in this field is irrelevant for
+    /// devices that do not support dynamic addressing.
+    /// The rules of this field are stated here for clarity:
+    /// 1. Devices that support an assigned device address must support a unique ID in
+    /// this field.
+    /// 2. If a pre-assigned unique ID is used, at least 16-bits must be unique. However, a
+    /// 32-bit pre-assigned unique ID is recommended.
+    /// 3. If a random number is implemented in this field, Random Number Requirements
+    /// must be met.
+    /// 4. Devices that support a fixed device address must still implement this field but not
+    /// uniquely.
+    /// Uniqueness is important to guarantee that two like devices are identified discretely. It
+    /// is the responsibility of the device/system manufacturer to determine the
+    /// possibility of like devices, and the mechanism for providing uniqueness via the
+    /// UDID and target address fields.
+    u16 subsystem_vendor_id;
+
+    /// Subsystem Device ID
+    ///
+    /// The subsystem ID identifies a specific interface, implementation, or device. The Subsystem ID is defined by the party identified by the Subsystem Vendor ID field.
+    u16 subsystem_device_id;
+
+    /// Vendor-specific ID
+    ///
+    /// A unique number per device. See detail below.
+    u32 vendor_specific_id;
+}

@@ -1,0 +1,6 @@
+
+
+/// This logical device represents the functions associated with configuration and operation of message authentication and routing, both internal to the BMC and among the different interfaces to the BMC.
+interface IpmiMessageHandler {
+
+}

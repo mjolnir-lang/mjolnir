@@ -1,0 +1,52 @@
+
+
+interface I3cController {
+
+
+    /// Return the capabilities information. Not every I2C controller will implementa all capabilities.
+    /// This is provided to allow software to determine what is available.
+    I3cCapabilities capabilities(safe);
+
+
+    /// Returns true if the I2C controller is configured to operate on a MultiMaster bus.
+    /// This does not indicate that the controller does not support MultiMaster capabilities.
+    /// See the capabilities for that.
+    bool is_multi_master(safe) =>
+        capabilities().MULTIMASTER == 1;
+
+
+    /// A single master environment is defined by the fact that there is only one device
+    /// present on the bus which acts as I2C master.
+    ///
+    /// This is by far the easiest implementation of an I2 C bus as it drops the need
+    /// for arbitration detection and handling. Unless there is a slave present which
+    /// makes use of clock stretching the master can simply write out commands without
+    /// reading back the clock line. This behaviour is certainly not recommended, but it
+    /// works in many cases, especially when writing to EEPROMS or other slave devices
+    /// which are implemented as a hardware state machine. One important thing to consider
+    /// when working with PC I2C interfaces is that the system will become a multimaster
+    /// environment if the PC is used to send commands to a running I2C system, i.e. if
+    /// the PC is used to talk to slave devices while there is also a microcontroller on
+    /// the target possibly talking to the I2C bus.
+    bool is_single_master(safe) =>
+        capabilities().MULTIMASTER == 0;
+
+
+    /// If the I2C bus is MultiMaster, then this returns true when another master is communicating on the bus.
+    /// It returns false if there is no other master communicating on the bus.
+    bool is_bus_busy(safe);
+
+
+    Task<u32> read(I3cAddress target_address, u8 *data, u32 size);
+
+
+    Task<u32> read(I3cAddress target_address, Slice<u8> data) =>
+        read(target_address, data.data(), data.size());
+
+
+    Task<u32> write(I3cAddress target_address, const u8 *data, u32 size);
+
+
+    Task<u32> write(I3cAddress target_address, Slice<const u8> data) =>
+        write(target_address, data.data(), data.size());
+}

@@ -1,0 +1,195 @@
+import protobuf.message;
+
+
+class Person {
+    Vector<PhoneNumber> phones;
+    Vector<google::protobuf::Message> phones;
+    String name;
+    String email;
+    i32 id;
+
+
+    // name
+    bool has_name() {
+        return !name.is_empty();
+    }
+
+
+    void clear_name() {
+        name.clear();
+    }
+
+
+    const? String &'name() {
+        return name;
+    }
+
+
+    void set_name(const String &value) {
+        name = String(value);
+    }
+
+
+    void set_name(String value) {
+        name = value;
+    }
+
+
+    // id
+    bool has_id() {
+        return id != 0i32;
+    }
+
+
+    void clear_id() {
+        id = 0i32;
+    }
+
+
+    i32 id() {
+        return id;
+    }
+
+
+    void set_id(i32 value) {
+        id = value;
+    }
+
+
+    // email
+    bool has_email() {
+        return !email.is_empty()
+    }
+
+
+    void clear_email() {
+        email.clear()
+    }
+
+
+    const? String &'email() {
+        return email;
+    }
+
+
+    void set_email(const String &value) {
+        email = String(value);
+    }
+
+
+    void set_email(String value) {
+        email = value;
+    }
+
+
+    // phones
+    bool has_phones() {
+        return !phones.is_empty();
+    }
+
+
+    void clear_phones() {
+        phones.clear();
+    }
+
+
+    const? Vector<PhoneNumber> &'phones() {
+        return phones;
+    }
+
+
+    const? PhoneNumber &'phones(u32 index) {
+        return phones[index];
+    }
+
+
+    // misc
+    bool has_misc() {
+        return !misc.is_empty();
+    }
+
+
+    void clear_misc() {
+        misc.clear();
+    }
+
+
+    const? google::protobuf::Vector<Message> &'misc() {
+        return misc;
+    }
+
+
+    const? google::protobuf::Message &'misc(u32 index) {
+        return misc[index];
+    }
+
+
+
+
+
+
+    enum<u8> PhoneType {
+        MOBILE = 0;
+        HOME = 1;
+        WORK = 2;
+    }
+
+
+    class PhoneNumber {
+        String number;
+        PhoneType type = HOME;
+    }
+
+
+    impl<ProtobufMessage> PhoneNumber {
+
+
+        void encode(u8 *buffer, u32 &size) {
+            ;
+        }
+
+
+        PhoneNumber decode() {
+            PhoneNumber this = PhoneNumber();
+            return this;
+        }
+    }
+}
+
+
+impl<ProtobufMessage> Person {
+
+
+    Vector<u8> encode() {
+        Vector<u8> buffer;
+        buffer.append();
+        return buffer;
+    }
+
+
+    @shared
+    Person decode(const Slice<u8> &buffer) {
+        Person this = Person();
+        return this;
+    }
+}
+
+
+class AddressBook {
+    Vector<Person> people;
+}
+
+
+impl<ProtobufMessage> AddressBook {
+
+
+    void encode(u8 *buffer, u32 &size) {
+        ;
+    }
+
+
+    AddressBook decode() {
+        AddressBook this = AddressBook();
+        return this;
+    }
+}

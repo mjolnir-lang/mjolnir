@@ -1,0 +1,147 @@
+
+
+/// Uniqueness required
+/// Any device that exists on the System Management Bus as a target has a unique
+/// address called the Target Address.
+///
+/// 6.2.2 SMBus address types
+/// Several SMBus devices can be used simultaneously in an actual system. In case of
+/// device address contention the designer may use either programmable features
+/// implemented in SMBus devices to resolve such contention or/and multiple SMBus
+/// branches within the same system to spread devices that use the same address.
+/// There are several types of addresses currently in use in SMBus systems. Table 17
+/// in Appendix C provides a complete list of available, reserved, special purpose, and
+/// pre-assigned SMBus addresses.
+///
+/// 6.2.2.1 Reserved addresses
+/// SMBus, Access.bus and I 2 C reserve several addresses for specific bus functions
+/// as defined in Table 17. These addresses must not be used by or assigned to any
+/// SMBus target device unless otherwise detailed by this specification.
+/// All other addresses are available for address assignment for dynamic address
+/// devices and/or for miscellaneous devices. Miscellaneous device addresses are
+/// discussed in Section 6.2.2.4.
+///
+///
+/// Purpose-assigned addresses
+/// These addresses are assigned by the SMBus Working Group to specific types of
+/// devices. Each device type that obtains an assigned address has to have a SMBus
+/// specification associated with it. Some systems using SMBus assume that if a device
+/// exists at a purpose-assigned address then the device complies with the
+/// associated specifications for that address. For example, SMBus application to
+/// Smart Battery implementations assumes that Smart Battery devices and controllers
+/// are at their purpose-assigned addresses. Thus, devices that do not meet the
+/// purpose-assigned address specifications for Smart Battery devices cannot be
+/// used in Smart Battery applications.
+/// Other SMBus implementations do not rely solely on the device address to
+/// identify a device's functionality. In these applications, devices may have
+/// addresses that overlap with the purpose-assigned addresses.
+/// The device manufacturer is forewarned that this may preclude use of that device
+/// in other applications. In general, purpose-assigned addresses should be avoided
+/// except for devices that are intended to meet the specification for the
+/// corresponding address(es). The device manufacturer should consult the SMBus
+/// WG to get the latest information on purpose-assigned addresses as a guide to
+/// whether their address assignment is disallowed in certain SMBus applications.
+///
+/// 6.2.2.3 Prototype addresses
+/// The Prototype addresses (1001 0XXb) are reserved for device prototyping and
+/// experimenting in applications that utilize purpose-assigned addresses. They are
+/// not intended for production parts and should never be assigned to any device.
+///
+/// 6.2.2.4 Miscellaneous device addresses
+/// Manufacturers have produced and may continue producing SMBus compatible
+/// devices for specific system purposes, for which they do not need to implement the
+/// complete SMBus specification, or for which they do not require explicit support
+/// from the operating system. Such devices, for example, may be port expanders, D/A
+/// circuits, etc.
+///
+/// 6.2.2.5 Dynamically assigned addresses
+/// Version 2.0 of the SMBus specification introduced the concept of dynamically
+/// assigned addresses using the Address Resolution Protocol (ARP). This is
+/// detailed in Section 6.6.
+///
+/// 6.2.2.6 SMBus Alert Response Address
+/// The SMBus Alert Response Address (0001 100b) can be a substitute for device
+/// controller capability. See Appendix A for details.
+///
+/// 6.2.2.7 SMBus Device Default Address
+/// The SMBus Device Default Address (1100 001b) is reserved for use by the
+/// SMBus Address Resolution Protocol, which allows addresses to be assigned
+/// dynamically. See Section 6.5.10 for details
+///
+/// 6.2.2.8 SMBus Host Address
+/// The Host has the lowest legitimate address (0001 000b) so that messages going
+/// to the Host have the highest priority with respect to bus arbitration.
+///
+/// 10-bit Target Addresses
+/// All 10-bit target addresses are reserved for future use and are outside the scope
+/// of this specification.
+@api(1.0)
+enum<u8> SmBusAddress {
+
+    /// General Call Address
+    GENERAL_CALL_ADDRESS = 0b0000'000;
+
+    /// CBUS Address
+    CBUS_ADDRESS = 0b0000'001;
+
+    /// Reserved for different bus format
+    _ = 0b0000'010;
+    
+    /// Reserved for future use
+    _ = 0b0000'011;
+
+    /// 0000 1XX
+    /// HS Mode Controller Code
+
+    /// SMBus Host
+    SMBUS_HOST = 0b0001'000;
+
+    /// Smart Battery Charger
+    SMART_BATTERY_CHARGER = 0b0001'001;
+
+    /// Smart Battery Selector
+    SMART_BATTERY_SELECTOR = 0b0001'010;
+
+    /// Smart Battery System Manager
+    SMART_BATTERY_SYSTEM_MANAGER = SMART_BATTERY_SELECTOR;
+
+    /// Smart Battery
+    SMART_BATTERY = 0b0001'011;
+
+    /// SMBus Alert Response Address
+    SMBUS_ALERT_RESPONSE_ADDRESS = 0b0001'100;
+
+    /// PMBus ZONE READ
+    PMBUS_ZONE_READ = 0b0101'000;
+
+    /// Reserved by previous versions of the SMBus specification for LCD Contrast Controller. This address may be reassigned in future versions of the SMBus specification.
+    @deprecated(3)
+    _ = 0b0101'100;
+
+    /// Reserved by previous versions of the SMBus specification for CCFL Backlight Driver. This address may be reassigned in future versions of the SMBus specification.
+    @deprecated(3)
+    _ = 0b0101'101;
+
+    /// PMBus ZONE WRITE
+    PMBUS_ZONE_READ = 0b0110'111;
+
+    /// Reserved by previous versions of the SMBus specification for PCMCIA Socket Controllers (4 addresses). These addresses may be reassigned in future versions of the SMBus specification.
+    @deprecated(3)
+    _ = 0b1000'000;
+
+    /// Reserved by previous versions of the SMBus specification for (VGA) Graphics Controller. This address may be reassigned in future versions of the SMBus specification.
+    @deprecated(3)
+    _ = 0b1000'100;
+
+    /// Prototype Addresses
+    PROTOTYPE_ADDRESSES = 0b1001'000;
+
+    /// SMBus Device Default Address
+    SMBUS_DEVICE_DEFAULT_ADDRESS = 0b1100'001;
+
+    /// 10-bit target addressing
+    _ = 0b1111'000;
+
+    /// Reserved for future use
+    _ = 0b1111'100;
+}

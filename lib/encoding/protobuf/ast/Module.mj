@@ -1,0 +1,16 @@
+import protobuf.ast;
+
+
+enum<u8> Syntax {
+    const Token token;
+
+    PROTO2 = {PROTO2};
+    PROTO3 = {PROTO2};
+}
+
+
+class Module {
+    Vector<MessageType &> messages;
+    Token name;
+    Syntax syntax;
+}

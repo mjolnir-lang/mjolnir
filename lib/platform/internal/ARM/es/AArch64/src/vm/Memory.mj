@@ -1,0 +1,728 @@
+
+
+class Memory {
+
+    @shared
+    const u32 MEMORY_SIZE = 0xFFFFu;
+
+    u16[MEMORY_SIZE] memory;
+
+
+    @internal
+    void load(u8 *reg, u16 address) {
+        // Check for address bounds
+        // Memory access handlers
+        // Memory mapped I/O
+    }
+
+
+    @internal
+    void load(u16 *reg, u16 address) {}
+
+
+    @internal
+    void store(u8 *reg, u16 address) {}
+
+
+    @internal
+    void store(u16 *reg, u16 address) {}
+
+
+
+
+
+    struct sections {
+
+        /// Typically ROM or flash memory. Memory required from address 0x0 to
+        /// support the vector table for system boot code on reset.
+        u32[0x2000'0000u] code;
+
+        /// SRAM region typically used for on-chip RAM.
+        u32[0x2000'0000u] sram;
+
+        /// On-chip peripheral address space.
+        u32[0x2000'0000u] peripheral;
+
+        /// Memory with writeback, write allocate cache attribute for L2/L3
+        /// cache support.
+        u32[0x2000'0000u] ram0;
+
+        /// Memory with Write-Through cache attribute.
+        u32[0x2000'0000u] ram1;
+
+        /// Shared device space.
+        u32[0x2000'0000u] device0;
+
+        /// Non-shared device space.
+        u32[0x2000'0000u] device1;
+
+        union {
+            /// System segment for the PPB and vendor system peripherals.
+            u32[0x2000'0000u] system;
+
+            struct {
+                u32[0x10'0000u] ppb;
+                u32[0x1FE0'0000u] ppb;
+            }
+        }
+    }
+
+
+
+
+    /// System Control Space (SCS)
+    ///
+    /// The SCS is a memory-mapped 4KB address space that provides 32-bit registers for configuration, status reporting
+    /// and control. The SCS registers divide into the following groups:
+    ///
+    /// - system control and identification.
+    /// - the CPUID processor identification space.
+    /// - system configuration and status.
+    /// - an optional system timer, SysTick.
+    /// - a Nested Vectored Interrupt Controller (NVIC).
+    /// - system debug, see Chapter C1 ARMv6-M Debug.
+    @offset(0xE000E000)
+    @size(0xE000E000)
+    @range(0xE000E000, 0xE000EFFF)
+    struct scs {
+
+    }
+
+
+    ///
+    /// System control and ID registers
+    ///
+
+
+    /// The Auxiliary Control Register (ACTLR)
+    ///
+    /// RW
+    @offset(0xE000E008)
+    u32 actlr;
+
+    /// CPUID Base Register (CPUID)
+    ///
+    /// RO
+    @offset(0xE000ED00)
+    bitfield<u32> cpuid {
+
+        /// This field defines the implementer:
+        /// 0x41 ARM Limited. This is ASCII character A.
+        [31:24] u8 implementer;
+
+        /// implementation defined
+        [23:20] u8 variant;
+
+        /// This field defines the architecture:
+        /// 0xC ARMv6-M.
+        [19:16] u8 architecture;
+
+        /// implementation defined
+        [15:4] u16 partno;
+
+        /// implementation defined
+        [3:0] u8 revision;
+    }
+
+    /// Interrupt Control State Register (ICSR)
+    ///
+    @offset(0xE000ED04)
+    @reset(0x00000000)
+    bitfield<u32> icsr {
+        [31] RW NMIPENDSET Activates an NMI exception or reads back the current state:
+        0 Do not activate.
+        1 Activate NMI exception.
+        Because NMI is the highest priority exception, it activates as soon as it is
+        registered.
+        [30:29] - - Reserved.
+        [28] RW PENDSVSETa Sets a pending PendSV interrupt or reads back the current state:
+        0 Do not set.
+        1 Set pending PendSV interrupt.
+        Use this normally to request a context switch.
+        [27] WO PENDSVCLR Clears a pending PendSV interrupt:
+        0 Do not clear.
+        1 Clear pending PendSV.
+        [26] RW PENDSTSET b Sets a pending SysTick or reads back the current state:
+        0 Do not set.
+        1 Set pending SysTick.
+        When SysTick is not implemented, this bit is RAZ/WI.
+        [25] WO PENDSTCLR Clears a pending SysTick, whether set here or by the timer hardware:
+        0 Do not clear.
+        1 Clear pending SysTick.
+        When SysTick is not implemented, this bit is reserved.
+        [24] - - Reserved.
+        [23] RO ISRPREEMPT Indicates whether a pending exception will be serviced on exit from debug
+        halt state:
+        0 Will not service.
+        1 Will service a pending exception.
+        This bit applies to the Debug Extension only, otherwise it is reserved.
+        [22] RO ISRPENDING Indicates if an external configurable, NVIC generated, interrupt is pending:
+        0 Interrupt is not pending.
+        1 Interrupt is pending.
+        This bit applies to the Debug Extension only, otherwise it is reserved.
+        [21] - - Reserved
+        [20:12] RO VECTPENDING The exception number for the highest priority pending exception.
+        0 No pending exceptions.
+        The pending state includes the effect of memory-mapped enable and mask
+        registers. It does not include the PRIMASK special-purpose register
+        qualifier.
+        [11:9] - - Reserved.
+        [8:0] RO VECTACTIVE The exception number c for the current executing exception.
+        0 Thread mode.
+        This field applies to the Debug Extension only, otherwise it is reserved
+    }
+
+    /// Vector Table Offset Register (VTOR)
+    ///
+    @offset(0xE000ED08)
+    @reset(0x00000000)
+    bitfield<u32> vtor {
+
+        /// Table offset address
+        ///
+        /// The number of implemented bits within TBLOFF are IMPLEMENTATION DEFINED.
+        [31:7] TBLOFF;
+
+        @reserved
+        [6:0];
+    }
+
+    /// Application Interrupt and Reset Control Register (AIRCR)
+    @offset(0xE000ED0C)
+    bitfield<u32> aircr {
+
+        /// Vector Key (VECTKEY)
+        ///
+        /// The value `0x05FA` must be written to this register, otherwise the register write is UNPREDICTABLE.
+        @wo
+        [31:16] vectkey;
+
+        /// Vector Key Status (VECTKEYSTAT)
+        @ro
+        [31:16] vectkeystat;
+
+        /// (ENDIANNESS)
+        ///
+        /// Indicates the memory system data endianness:
+        /// 0 - little endian.
+        /// 1 - big endian.
+        /// See Endian support on page A3-44 for more information.
+        @ro
+        [15] endianness;
+
+        @reserved
+        [14:3];
+
+        /// System Reset Request (SYSRESETREQ)
+        ///
+        /// 0 - do not request a reset.
+        /// 1 - request reset.
+        ///
+        /// Writing 1 to this bit asserts a signal to request a reset by the external
+        /// system. The system components that are reset by this request are
+        /// IMPLEMENTATION DEFINED . A Local reset is required as part of a system
+        /// reset request.
+        ///
+        /// A Local reset clears this bit to 0.
+        /// See Reset management on page B1-208 for more information.
+        @wo
+        [2] sysresetreq;
+
+        /// (VECTCLRACTIVE)
+        ///
+        /// Clears all active state information for fixed and configurable exceptions:
+        /// 0 do not clear state information.
+        /// 1 clear state information.
+        /// The effect of writing a 1 to this bit if the processor is not halted in Debug state is UNPREDICTABLE.
+        @wo
+        [1] vectclractive;
+
+        @reserved
+        [0];
+    }
+
+    /// Optional System Control Register (SCR)
+    @offset(0xE000ED10)
+    bitfield<u32> scr {
+
+        @reserved
+        [31:5];
+
+        /// (SEVONPEND)
+        ///
+        /// Determines whether an interrupt transition from inactive state to pending state is a wakeup event:
+        /// 0 transitions from inactive to pending are not wakeup events.
+        /// 1 transitions from inactive to pending are wakeup events.
+        /// See WFE on page A6-174 for more information.
+        [4] sevonpend;
+
+        @reserved
+        [3];
+
+        /// (SLEEPDEEP)
+        ///
+        /// Provides a qualifying hint indicating that waking from sleep might take longer. An
+        /// implementation can use this bit to select between two alternative sleep states:
+        /// 0 selected sleep state is not deep sleep.
+        /// 1 selected sleep state is deep sleep.
+        /// Details of the implemented sleep states, if any, and details of the use of this bit, are
+        /// IMPLEMENTATION DEFINED .
+        /// If the processor does not implement a deep sleep state then this bit can be RAZ/WI.
+        [2] sleepdeep;
+
+        /// (SLEEPONEXIT)
+        ///
+        /// Determines whether, on an exit from an ISR that returns to the base level of execution
+        /// priority, the processor enters a sleep state:
+        /// 0 do not enter sleep state.
+        /// 1 enter sleep state.
+        /// See Power management on page B1-208 for more information.
+        [1] sleeponexit;
+
+        @reserved
+        [0];
+    }
+
+    /// RO bits [9:3] = 0b1111111 Configuration and Control Register, CCR on page B3-234
+    @offset(0xE000ED14)
+    @ro
+    bitfield<u32> ccr {
+
+        @reserved
+        [31:10];
+
+        /// 1 On exception entry, the SP used prior to the exception is adjusted to
+        /// be 8-byte aligned and the context to restore it is saved. The SP is
+        /// restored on the associated exception return.
+        [9] stkalign;
+        
+        @reserved
+        [8:4];
+
+        /// 1 unaligned word and halfword accesses generate a HardFault exception.
+        [3] unalign_trp;
+
+        @reserved
+        [2:0];
+    }
+
+    /// System Handler Priority Register 2 (SHPR2)
+    @offset(0xE000ED1C)
+    @rw
+    bitfield<u32> shpr2 {
+
+        /// Priority of system handler 11, SVCall.
+        [31:30] pri_11;
+
+        @reserved
+        [29:0];
+    }
+
+    /// System Handler Priority Register 3 (SHPR3)
+    @offset(0xE000ED20)
+    @rw
+    bitfield<u32> shpr3 {
+
+        /// Priority of system handler 15, SysTick.
+        [31:30] pri_15;
+
+        @reserved
+        [29:24];
+
+        /// Priority of system handler 14, PendSV.
+        [23:2] pri_14;
+
+        @reserved
+        [21:0];
+    }
+
+    /// System Handler Control and State Register (SHCSR)
+    @offset(0xE000ED24)
+    @reset(0x00000000)
+    @rw
+    bitfield<u32> shcsr {
+
+        @reserved
+        [31:19];
+
+        // UsageFault Enable
+        [18] usgfaultena;
+
+        // BusFault Enable
+        [17] busfaultena;
+
+        // MemManage Enable
+        [16] memfaultena;
+
+        @reserved
+        [15:9];
+
+        // SVCall Pending
+        [8] svcallpended;
+
+        // BusFault Pending
+        [7] busfaultpended;
+
+        // MemManage Pending
+        [6] memfaultpended;
+
+        // UsageFault Pending
+        [5] usgfaultpended;
+
+        @reserved
+        [4:3];
+
+        // SVCall Active
+        [2] svcallact;
+
+        // Debug Monitor Active
+        [1] monitoract;
+
+        // PendSV Active
+        [0] pendsvact;
+    }
+
+    /// Debug Fault Status Register (DFSR)
+    @offset(0xE000ED30)
+    @reset(0x00000000)
+    @rw
+    bitfield<u32> dfsr {
+
+        @reserved
+        [31:5];
+
+        /// EXTERNAL
+        ///
+        /// Indicates an asynchronous debug event generated because of EDBGRQ being asserted:
+        ///     0 - no EDBGRQ debug event.
+        ///     1 - EDBGRQ debug event.
+        [4] external;
+
+        [3] VCATCH Indicates whether a vector catch debug event was generated:
+        0 no vector catch debug event generated.
+        1 vector catch debug event generated.
+        The corresponding FSR shows the primary cause of the exception.
+        [2] DWTTRAP Indicates a debug event generated by the DWT:
+        0 no debug events generated by the DWT.
+        1 at least one debug event generated by the DWT.
+        [1] BKPT Indicates a debug event generated by BKPT instruction execution or a breakpoint match in the BPU:
+        0 no breakpoint debug event.
+        1 at least one breakpoint debug event.
+        [0] HALTED Indicates a debug event generated by a C_HALT or C_STEP request, triggered by a write to the DHCSR:
+        0 no active halt request debug event.
+        1 halt request debug event active.
+        See Debug Halting Control and Status Register, DHCSR for more information.
+    }
+
+
+
+
+    ///
+    /// SysTick
+    ///
+
+
+    /// SysTick Control and Status Register (SYST_CSR)
+    @offset(0xE000E010)
+    @reset(0x00000000 or 0x00000004)
+    @rw
+    bitfield<u32> syst_csr {
+
+        @reserved
+        [31:17];
+
+        /// COUNTFLAG
+        ///
+        /// Indicates whether the counter has counted to 0 since the last read of this register:
+        /// 0 - timer has not counted to 0.
+        /// 1 - timer has counted to 0.
+        /// COUNTFLAG is set to 1 by a count transition from 1 to 0.
+        /// COUNTFLAG is cleared to 0 by a read of this register, and by any write to the Current Value register.
+        @ro
+        [16] countflag;
+
+        @reserved
+        [15:3];
+
+        /// CLKSOURCE
+        ///
+        /// Indicates the SysTick clock source:
+        /// 0 - SysTick uses the optional external reference clock.
+        /// 1 - SysTick uses the processor clock.
+        /// If no external clock is provided, this bit reads as one and ignores writes.
+        @rw
+        [2] clksource;
+
+        /// TICKINT
+        ///
+        /// Indicates whether counting to 0 causes the status of the SysTick exception to change to pending:
+        /// 0 - count to 0 does not affect the SysTick exception status.
+        /// 1 - count to 0 changes the SysTick exception status to pending.
+        /// Changing the value of the counter to 0 by writing zero to the SysTick Current Value register to 0 never changes the status of the SysTick exception.
+        @rw
+        [1] tickint;
+
+        /// ENABLE
+        ///
+        /// Indicates the enabled status of the SysTick counter:
+        /// 0 - counter is disabled.
+        /// 1 - counter is operating.
+        @rw
+        [0] enable;
+    }
+
+    /// SysTick Reload Value Register (SYST_RVR)
+    @offset(0xE000E014)
+    @rw
+    bitfield<u32> syst_rvr {
+
+        @reserved
+        [31:24];
+
+        /// RELOAD
+        ///
+        /// The value to load into the SYST_CVR register when the counter reaches 0.
+        [23:0] reload;
+    }
+
+    /// SysTick Current Value Register (SYST_CVR)
+    @offset(0xE000E018)
+    @rw
+    bitfield<u32> syst_cvr {
+
+        @reserved
+        [31:24];
+
+        /// CURRENT
+        ///
+        /// Current counter value.
+        /// This is the value of the counter at the time it is sampled.
+        [23:0] current;
+    }
+
+    /// SysTick Calibration Value Register (SYST_CALIB)
+    @offset(0xE000E01C)
+    @ro
+    bitfield<u32> syst_calib {
+
+        /// NOREF
+        ///
+        /// Indicates whether the IMPLEMENTATION DEFINED reference clock is provided:
+        /// 0 - the reference clock is implemented.
+        /// 1 - the reference clock is not implemented.
+        /// When this bit is 1, the CLKSOURCE bit of the SYST_CSR register is forced to 1 and cannot be cleared to 0.
+        [32] noref;
+
+        /// SKEW
+        ///
+        /// Indicates whether the 10ms calibration value is exact:
+        /// 0 - 10 ms calibration value is exact.
+        /// 1 - 10 ms calibration value is inexact, because of the clock frequency.
+        [30] skew;
+
+        @reserved
+        [29:24];
+
+        /// TENMS
+        ///
+        /// Optionally, holds a reload value to be used for 10 ms (100 Hz) timing, subject to system clock skew errors. If this field is zero, the calibration value is not known.
+        [23:0] tenms;
+    }
+
+    @reserved(0xE000E0FF)
+
+    /// Interrupt Set-Enable Register (NVIC_ISER)
+    ///
+    @offset(0xE000E100)
+    bitfield<u32> nvic_iser {
+
+    @reserved(0xE000E104, 0xE000E17F)
+
+    /// Interrupt Clear Enable Register (NVIC_ICER)
+    ///
+    @offset(0xE000E180)
+    bitfield<u32> nvic_icer {
+
+    @reserved(0xE000E184, 0xE000E1FF)
+
+    /// Interrupt Set-Pending Register (NVIC_ISPR)
+    ///
+    @offset(0xE000E200)
+    bitfield<u32> nvic_ispr {
+
+    @reserved(0xE000E204, 0xE000E27F)
+
+    /// Interrupt Clear-Pending Register (NVIC_ICPR)
+    ///
+    @offset(0xE000E280)
+    bitfield<u32> nvic_icpr {
+
+    @reserved(0xE000E300, 0xE000E3FC)
+    
+    /// Interrupt Priority Registers (NVIC_IPR0 - NVIC_IPR7)
+    ///
+    @offset(0xE000E400)
+    bitfield<u32> NvicIpr nvic_ipr {
+
+        /// Priority of interrupt number N + 3
+        [31:30] pri_n3;
+
+        @reserved
+        [29:24];
+
+        /// Priority of interrupt number N + 2
+        [23:22] pri_n2;
+
+        @reserved
+        [21:16];
+
+        /// Priority of interrupt number N + 1
+        [15:14] pri_n1;
+
+        @reserved
+        [13:8];
+
+        /// Priority of interrupt number N
+        [7:6] pri_n0;
+
+        @reserved
+        [5:0];
+    }
+
+    /// Interrupt Priority Register 0 (NVIC_IPR0)
+    @offset(0xE000E400)
+    NvicIpr[8] nvic_ipr;
+
+    @reserved(0xE000E420, 0xE000E43C)
+
+
+    /// MPU Type Register, (MPU_TYPE)
+    @offset(0xE000ED90)
+    @ro
+    bitfield<u32> mpu_type {
+
+        @reserved
+        [31:24];
+
+        /// IREGION
+        ///
+        /// Instruction region. RAZ. ARMv6-M only supports a unified MPU.
+        [23:16] iregion;
+
+        /// DREGION
+        ///
+        /// Number of regions supported by the MPU. If this field reads-as-zero the processor does not implement an MPU.
+        [15:8] dregion;
+
+        @reserved
+        [7:1];
+
+        /// SEPARATE
+        ///
+        /// Indicates support for separate instruction and data address maps. RAZ. ARMv6-M only supports a unified MPU.
+        [0] separate;
+    }
+
+    /// MPU Control Register (MPU_CTRL)
+    @offset(0xE000ED94)
+    @rw
+    bitfield<u32> mpu_ctrl {
+
+        @reserved
+        [31:3];
+
+        /// PRIVDEFENA
+        ///
+        /// When the ENABLE bit is set to 1, the meaning of this bit is:
+        /// 0 Disables the default memory map. Any instruction or data access that does not access a defined region faults.
+        /// 1 Enables the default memory map as a background region for privileged access. The system address map on page B3-224 describes the default memory map.
+        /// When the ENABLE bit is set to 0, the processor ignores the PRIVDEFENA bit.
+        [2] privdefena;
+
+        /// HFNMIENA
+        ///
+        /// The meaning of this bit is:
+        /// 0 disables the MPU for HardFaults and NMIs.
+        /// 1 when the ENABLE bit is set to 1, enables the MPU for HardFaults and NMIs.
+        /// Note
+        /// If HFNMIENA is set to 1 when ENABLE is set to 0, behavior is UNPREDICTABLE.
+        [1] hfnmiena;
+ 
+        /// ENABLE
+        ///
+        /// Enables the MPU:
+        /// 0 - The MPU is disabled. Privileged and unprivileged accesses use the default memory map.
+        /// 1 - The MPU is enabled.
+        [0] enable;
+    }
+
+    /// MPU Region Number Register (MPU_RNR)
+    @offset(0xE000ED98)
+    @rw
+    bitfield<u32> mpu_rnr {
+
+        @reserved
+        [31:8];
+
+        /// REGION
+        ///
+        /// Indicates the memory region accessed by MPU_RBAR and MPU_RASR.
+        [7:0] region;
+    }
+
+    /// MPU Region Base Address Register (MPU_RBAR)
+    @offset(0xE000ED9C)
+    @rw
+    bitfield<u32> mpu_rbar {
+
+        /// ADDR
+        ///
+        /// Base address of the region.
+        [31:8] addr;
+
+        @reserved
+        [7:5];
+
+        [4] VALID On writes to the register, indicates whether the write must update the base address of the
+        region identified by the REGION field. updating the MPU_RNR to indicate this new region:
+        0 Update the base address of the region indicated by MPU_RNR, ignoring the
+        value of the REGION field.
+        1 Update the least significant four bits of the MPU_RNR.REGION field with
+        MPU_RBAR.REGION field value, writing 0b0000 to bits [7:4] of the
+        MPU_RBAR.REGION field, and updating the base address of that region.
+        This bit reads as zero.
+
+        [3:0] REGION On writes, can specify the number of the region to update, see VALID field description.
+        On reads, returns bits [3:0] of MPU_RNR
+    }
+
+    /// MPU Region Attribute and Size Register (MPU_RASR)
+    @offset(0xE000EDA0)
+    @rw
+    bitfield<u32> mpu_rasr {
+        [31:16] ATTRS The MPU Region Attribute field, This field has the following subfields, defined in Region
+        attribute control:
+        XN MPU_RASR[28]
+        AP[2:0] MPU_RASR[26:24]
+        TEX[2:0] MPU_RASR[21:19]
+        S MPU_RASR[18]
+        C MPU_RASR[17]
+        B MPU_RASR[16]
+        [15:8] SRD Subregion Disable. For regions of 256 bytes or larger, each bit of this field controls whether
+        one of the eight equal subregions is enabled, see Memory region subregions:
+        0 subregion enabled.
+        1 subregion disabled.
+        [7:6] - Reserved
+        [5:1] SIZE Indicates the region size.
+        The permitted values for SIZE are 7-31, that is 0b00111-0b11111. The associated region size,
+        in bytes, is 2 (SIZE+1). SIZE field values less than 7 are reserved, because the smallest
+        supported region size is 256 bytes.
+        [0] ENABLE Enables this region:
+        0 when the MPU is enabled, this region is disabled.
+        1 When the MPU is enabled, this region is enabled.
+        Enabling a region has no effect unless the MPU_CTRL.ENABLE bit is set to 1, to enable
+        the MPU.
+    }
+
+    @reserved(0xE000EDA4, 0xE000EDEF)
+}

@@ -1,0 +1,93 @@
+import LpSpiRegisters;
+
+
+class LpSpi {
+
+    shared {
+        LpSpiRegisters LPSPI1 @0x40394000;
+        LpSpiRegisters LPSPI2 @0x40398000;
+        LpSpiRegisters LPSPI3 @0x4039C000;
+        LpSpiRegisters LPSPI4 @0x403A0000;
+    }
+
+
+    LpSpiRegisters &reg;
+
+
+    LpSpi(LpSpiRegisters &reg) {
+        this.reg = reg;
+    }
+
+
+    ~LpSpi() {
+        ;
+    }
+
+
+    void set_miso() {
+        ;
+    }
+
+
+    void set_mosi() {
+        ;
+    }
+
+
+    void set_sck() {
+        ;
+    }
+
+
+    void set_cs() {
+        ;
+    }
+
+
+    void init() {
+        ;
+    }
+
+
+    void reset() {
+        ;
+    }
+
+
+    void disable() {
+        ;
+    }
+
+
+    void config(const SpiConfig &spi_config) {
+        ;
+    }
+
+
+    void transfer(void *write_buffer, void *read_buffer, u32 size) {
+        ;
+    }
+
+
+    // Read from the SPI receiver.
+    //
+    // Parameters:
+    // - `buffer` The pointer to the buffer to store the received data.
+    // - `size` The number of words to read
+    // Returns:
+    // Fails:
+    void read(void *buffer, u32 size) {
+        ;
+    }
+
+
+    // Write to the SPI transmitter.
+    void write(void *buffer, u32 size) {
+        ;
+    }
+
+
+    void isr() {
+        ;
+    }
+}

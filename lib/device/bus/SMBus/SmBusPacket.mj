@@ -1,0 +1,69 @@
+
+
+struct SmBusQuickCommandFrame {
+    SmBusAddress target_address;
+    u8 data_byte;
+    u8 pec;
+};
+
+
+struct SmBusSendByteFrame {
+    SmBusAddress target_address;
+    u8 data_byte;
+    u8 pec;
+};
+
+
+struct SmBusReceiveByteFrame {
+    SmBusAddress target_address;
+    u8 data_byte;
+    u8 pec;
+};
+
+
+struct SmBusWriteByteFrame {
+    SmBusAddress target_address;
+    u8 command_code;
+    u8 data_byte;
+    u8 pec;
+};
+
+
+struct SmBusWriteWordFrame {
+    SmBusAddress target_address;
+    u8 command_code;
+    u8 data_byte_low;
+    u8 data_byte_high;
+    u8 pec;
+};
+
+
+struct SmBusReadByteFrame {
+    SmBusAddress target_address;
+    u8 command_code;
+    SmBusAddress target_address;
+    u8 data_byte;
+    u8 pec;
+};
+
+
+struct SmBusReadWordFrame {
+    SmBusAddress target_address;
+    u8 command_code;
+    SmBusAddress target_address;
+    u8 data_byte_low;
+    u8 data_byte_high;
+    u8 pec;
+};
+
+
+struct SmBusProcessCallFrame {
+    SmBusAddress target_address;
+    u8 command_code;
+    u8 data_byte_low;
+    u8 data_byte_high;
+    SmBusAddress target_address;
+    u8 data_byte_low;
+    u8 data_byte_high;
+    u8 pec;
+};

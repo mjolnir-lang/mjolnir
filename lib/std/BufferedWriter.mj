@@ -1,0 +1,9 @@
+
+
+interface BufferedWriter<type T> {
+    implements Writer<T>
+
+
+    // Write Make sure all bytes have been written out.
+    void flush()
+}

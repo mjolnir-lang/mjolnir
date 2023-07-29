@@ -1,0 +1,40 @@
+
+
+/// BIC, BICS (immediate) [A1]
+bitfield<u32> BicImmediateA1 {
+    [31:28] Cond cond;
+    [27:21] = 0b0011110u;
+    [20] bool s;
+    [19:16] u8 rn;
+    [15:12] u8 rd;
+    [11:0] u16 imm12;
+}
+
+
+/// BIC, BICS (register) [A1]
+bitfield<u32> BicRegisterA1 {
+    [31:28] Cond cond;
+    [27:21] = 0b0001110u;
+    [20] bool s;
+    [19:16] u8 rn;
+    [15:12] u8 rd;
+    [11:7] u8 imm5;
+    [6:5] ShiftType stype;
+    [4] = 0;
+    [3:0] u8 rm;
+}
+
+
+/// BIC, BICS (register-shifted register) [A1]
+bitfield<u32> BicRegisterShiftedRegisterA1 {
+    [31:28] Cond cond;
+    [27:21] = 0b0001110u;
+    [20] bool s;
+    [19:16] u8 rn;
+    [15:12] u8 rd;
+    [11:8] u8 s;
+    [7] = 0;
+    [6:5] ShiftType stype;
+    [4] = 1;
+    [3:0] u8 rm;
+}

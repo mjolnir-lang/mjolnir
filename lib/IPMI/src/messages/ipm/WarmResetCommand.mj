@@ -1,0 +1,20 @@
+
+
+/// Warm Reset Command
+///
+/// This command directs the Responder to perform a 'Warm Reset' of itself.
+/// Communications interfaces shall be reset, but current configurations of
+/// interrupt enables, thresholds, etc. will be left alone. A warm reset does
+/// not initiate the Self Test. The intent of the Warm Reset command is to
+/// provide a mechanism for cleaning up the internal state of the device and
+/// its communication interfaces. A Warm Reset will reset communication state
+/// information such as sequence number and retry tracking, but shall not reset
+/// interface configuration information such as addresses, enables, etc. An
+/// application may try a Warm Reset if it determines a non-responsive
+/// communication interface - but it must also be capable of handling the side
+/// effects.
+class WarmResetCommand {
+    struct Response response {
+        CompletionCode completion_code;
+    }
+}

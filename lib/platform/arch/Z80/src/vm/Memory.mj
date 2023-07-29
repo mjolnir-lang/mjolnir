@@ -1,0 +1,29 @@
+
+
+class Memory {
+
+    @shared
+    const u32 MEMORY_SIZE = 0xFFFFu;
+
+    u16[MEMORY_SIZE] memory;
+
+
+    @internal
+    void load(u8 *reg, u16 address) {
+        // Check for address bounds
+        // Memory access handlers
+        // Memory mapped I/O
+    }
+
+
+    @internal
+    void load(u16 *reg, u16 address) {}
+
+
+    @internal
+    void store(u8 *reg, u16 address) {}
+
+
+    @internal
+    void store(u16 *reg, u16 address) {}
+}

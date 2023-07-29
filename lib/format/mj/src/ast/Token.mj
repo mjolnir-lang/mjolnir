@@ -1,0 +1,185 @@
+#pragma once
+
+#include "std/StringView.hpp"
+
+
+enum class MjTokenType : u8 {
+    EOT        = 0, // End of Text
+    OPERATOR   = 1, // Operator
+    KEYWORD    = 2, // Keyword
+    IDENTIFIER = 3, // An Identifier
+    NUMBER     = 4, // A numberic literal
+    STRING     = 5, // A string literal
+    COMMENT    = 6, // A comment
+};
+
+
+struct MjTokenInfo {
+    const StringView string;
+    const MjToken &token;
+};
+
+
+struct MjToken {
+public:
+    static const MjToken EOT;
+    static const MjToken LSR_SET;
+    static const MjToken LSR;
+    static const MjToken LSL_SET;
+    static const MjToken ASR_SET;
+    static const MjToken LSL;
+    static const MjToken ASR;
+    static const MjToken SCOPE;
+    static const MjToken PTR;
+    static const MjToken INC;
+    static const MjToken DEC;
+    static const MjToken LAND;
+    static const MjToken LXOR;
+    static const MjToken LOR;
+    static const MjToken MUL_SET;
+    static const MjToken DIV_SET;
+    static const MjToken REM_SET;
+    static const MjToken ADD_SET;
+    static const MjToken SUB_SET;
+    static const MjToken AND_SET;
+    static const MjToken XOR_SET;
+    static const MjToken OR_SET;
+    static const MjToken LEQ;
+    static const MjToken GEQ;
+    static const MjToken EQU;
+    static const MjToken NEQ;
+    static const MjToken LES;
+    static const MjToken GTR;
+    static const MjToken LAMBDA;
+    static const MjToken DOT;
+    static const MjToken NOT;
+    static const MjToken INV;
+    static const MjToken MUL;
+    static const MjToken DIV;
+    static const MjToken REM;
+    static const MjToken ADD;
+    static const MjToken SUB;
+    static const MjToken AND;
+    static const MjToken XOR;
+    static const MjToken OR;
+    static const MjToken SET;
+    static const MjToken QUESTION;
+    static const MjToken COLON;
+    static const MjToken SEMICOLON;
+    static const MjToken COMMA;
+    static const MjToken OP;
+    static const MjToken CP;
+    static const MjToken OS;
+    static const MjToken CS;
+    static const MjToken OB;
+    static const MjToken CB;
+    static const MjToken AT;
+    static const MjToken AS;
+    static const MjToken ASM;
+    static const MjToken BREAK;
+    static const MjToken CLASS;
+    static const MjToken CONST;
+    static const MjToken CONTINUE;
+    static const MjToken DO;
+    static const MjToken ELSE;
+    static const MjToken ENUM;
+    static const MjToken FAIL;
+    static const MjToken FOR;
+    static const MjToken IF;
+    static const MjToken IMPLEMENTS;
+    static const MjToken IMPORT;
+    static const MjToken IN;
+    static const MjToken INTERFACE;
+    static const MjToken IS;
+    static const MjToken LOOP;
+    static const MjToken MATCH;
+    static const MjToken RETURN;
+    static const MjToken SHARED;
+    static const MjToken STRUCT;
+    static const MjToken TYPE;
+    static const MjToken UNION;
+    static const MjToken UNTIL;
+    static const MjToken VOID;
+    static const MjToken VARIANT;
+    static const MjToken VOLATILE;
+    static const MjToken WHEN;
+    static const MjToken WHILE;
+    static const MjToken YIELD;
+    static const MjToken PLACEHOLDER;
+    static const MjToken THIS;
+    static const MjToken FALSE;
+    static const MjToken TRUE;
+    static const MjToken NONE;
+    static const MjToken U8;
+    static const MjToken U16;
+    static const MjToken U32;
+    static const MjToken U64;
+    static const MjToken I8;
+    static const MjToken I16;
+    static const MjToken I32;
+    static const MjToken I64;
+    static const MjToken F32;
+    static const MjToken F64;
+    static const MjToken STRING;
+    static const MjToken BOOL;
+    static const MjToken OA;
+    static const MjToken CA;
+public:
+    StringView text;
+    MjTokenType type;
+    u32 count;
+
+
+    MjToken(
+        StringView text,
+        MjTokenType type
+    ) :
+        text(text),
+        type(type)
+    {}
+
+
+    bool is_operator() const {
+        return type == MjTokenType::OPERATOR;
+    }
+
+
+    bool is_keyword() const {
+        return type == MjTokenType::KEYWORD;
+    }
+
+
+    bool is_identifier() const {
+        return type == MjTokenType::IDENTIFIER || type == MjTokenType::KEYWORD;
+    }
+
+
+    bool is_number() const {
+        return type == MjTokenType::NUMBER;
+    }
+
+
+    bool is_string() const {
+        return type == MjTokenType::STRING;
+    }
+
+
+    bool is_comment() const {
+        return type == MjTokenType::COMMENT;
+    }
+
+
+    bool operator==(const MjToken &&other) const {
+        return this == &other;
+    }
+
+
+    bool operator!=(const MjToken &&other) const {
+        return this != &other;
+    }
+
+
+    operator StringView() const {
+        return text;
+    }
+};

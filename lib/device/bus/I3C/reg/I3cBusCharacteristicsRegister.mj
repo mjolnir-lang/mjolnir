@@ -1,0 +1,82 @@
+
+
+/// Bus Characteristics Register (BCR)
+///
+/// Each I3C Device that is connected to the I3C Bus shall have an associated
+/// read-only Bus Characteristics Register (BCR). This read-only register
+/// describes the I3C compliant Device's role and capabilities for use in
+/// Dynamic Address assignment and Common Command Codes.
+bitfield<u8> I3cBusCharacteristicsRegister {
+
+    /// Device Role
+    ///
+    /// 0 - I3C Target
+    /// 1 - I3C Controller capable
+    /// 2 - Reserved for future definition by MIPI Alliance I3C WG
+    /// 3 - Reserved for future definition by MIPI Alliance I3C WG
+    ///
+    /// NOTE: The BCR Device Role bits for any I3C Device capable of acting as
+    /// I3C Controller (either Primary Controller or Secondary Controller) are
+    /// `1`. The Primary Controller identifies itself to the Targets with the
+    /// DEFTGTS CCC (Section 5.1.9.3.7); its Static Address is the value
+    /// `0x7E`.
+    [7:6] device_role;
+
+    /// Advanced Capabilities
+    ///
+    /// 1 - Supports optional advanced capabilities. Use GETCAPS CCC (Section 5.1.9.3.19) to determine which ones.
+    /// 0 - Does not support optional advanced capabilities
+    ///
+    /// NOTE: In I3C v1.0, bit BCR[5] only indicated HDR support, and that the
+    /// Controller should use the GETHDRCAPS CCC to determine what HDR Modes
+    /// were supported. In I3C v1.1 and above, bit BCR[5] now indicates that
+    /// the Controller should use the same CCC (now renamed GETCAPS) to
+    /// determine what advanced features the I3C Device supports, including
+    /// (but no longer limited to) HDR. Note that the I3C v1.0 method is fully
+    /// interoperable with the I3C v1.1 and above method.
+    [5] advanced_capabilities;
+
+    /// Virtual Target Support
+    ///
+    /// 0 - Is not a Virtual Target and does not expose other downstream Device(s)
+    /// 1 - Is a Virtual Target, or exposes other downstream Device(s)
+    ///
+    /// NOTE: In I3C v1.0, bit BCR[4] only indicated Bridge Devices required to
+    /// comply with the I3C Specification. In I3C v1.1 and above, bit BCR[4]
+    /// now indicates that the Device is a Virtual Target or exposes other
+    /// downstream Devices, and that the Controller should use the GETCAPS CCC
+    /// with Defining Byte VTCAPS (Section 5.1.9.3.19) to determine what
+    /// features and capabilities the I3C Device supports, including (but no
+    /// longer limited to) Bridge Devices.
+    [4] virtual_target_support;
+
+    /// Offline Capable
+    ///
+    /// 0 - Device will always respond to I3C Bus commands
+    /// 1 - Device will not always respond to I3C Bus commands
+    ///
+    /// NOTE: Offline Capable Devices retain the Dynamic Address, and are
+    /// specified in Section 2.2.
+    [3] offline_capable;
+
+    /// IBI Payload
+    ///
+    /// 0 - No data bytes follow the accepted IBI
+    /// 1 - One data byte (MDB) shall follow the accepted IBI, and additional data bytes may follow; see also the Set/Get Maximum Read Length CCC (Section 5.1.9.3.6). Data byte continuation is indicated by T-Bit per Section 5.1.2.3.4. See also Section 5.1.8 on use of IBI Payloads for Timing Control.
+    [2] ibi_payload;
+
+    /// IBI Request Capable
+    ///
+    /// 0 - Not Capable
+    /// 1 - Capable
+    [1] ibi_request_capable
+
+    /// Max Data Speed Limitation
+    ///
+    /// 0 - No Limitation
+    /// 1 - Limitation
+    ///
+    /// NOTE: Controller shall use the GETMXDS CCC to interrogate the Target
+    /// for specific limitation.
+    [0] max_data_speed_limitation;
+}

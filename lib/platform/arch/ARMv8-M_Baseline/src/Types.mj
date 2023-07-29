@@ -1,0 +1,89 @@
+
+
+struct u8 {
+    sizeof = 1;
+    alignof = 1;
+
+
+    u8 {+}(u8 other);
+    u8 {-}(u8 other);
+    u8 {*}(u8 other);
+    u8 {/}(u8 other);
+    u8 {%}(u8 other);
+    u8 {=}(u8 other);
+    u8 {<<}(u32 n);
+    u8 {>>}(u32 n);
+    u8 {&}(u8 other);
+    u8 {|}(u8 other);
+    u8 {^}(u8 other);
+    u8 {++}();
+    u8 {++}();
+    u8 {--}();
+    u8 {--}();
+    u8 {~}();
+    bool {!}();
+    u8 {+}();
+    u8 {-}();
+    u8 *{&}();
+    bool {<}();
+    bool {>}();
+    bool {<=}();
+    bool {>=}();
+    bool {==}();
+    bool {!=}();
+
+    // Function call.
+    bool {()}();
+
+    // Explicit cast to 'bool'.
+    bool {(bool)}();
+
+    // Implicit cast to 'bool'.
+    bool {}();
+}
+
+
+struct f32 {
+    sizeof = 4;
+    alignof = 4;
+
+
+    bitfield<u32> Parts {
+        sign[31];
+        exponent[31:23];
+        mantissa[23:0];
+    }
+
+
+    Parts &{.}() {
+        return (Parts &) this;
+    }
+
+
+    Parts *{->}() {
+        return (Parts *) &this;
+    }
+}
+
+
+struct f64 {
+    sizeof = 8;
+    alignof = 8; // Maybe 4?
+
+
+    bitfield<u64> Parts {
+        sign[63:64];
+        exponent[53:63];
+        mantissa[0:53];
+    }
+
+
+    Parts &{.}() {
+        return (Parts &) this;
+    }
+
+
+    Parts *{->}() {
+        return (Parts *) &this;
+    }
+}

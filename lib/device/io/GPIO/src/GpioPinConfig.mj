@@ -1,0 +1,12 @@
+
+
+struct GpioPinConfig {
+    SignalState signal_state;
+    PinMode pin_mode;
+    IrqMode irq_mode;
+    u32 slew_rate;
+    u8 drive_strength;
+    bool hysterisis;
+    bool debounce;
+    bool value;
+}

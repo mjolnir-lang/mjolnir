@@ -1,0 +1,22 @@
+import wayland-server-core;
+
+
+struct WlPrivSignal {
+    WlList listener_list;
+    WlList emit_list;
+
+
+    WlPrivSignal();
+
+
+    void add(WlListener *listener);
+
+
+    WlListener *get(WlNotifyFunc notify);
+
+
+    void emit(void *data);
+
+
+    void final_emit(void *data);
+}

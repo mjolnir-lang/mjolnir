@@ -1,0 +1,40 @@
+import encoding.unicode;
+
+
+/// An adapter for converting UTF-8 data streams into Unicode codepoints.
+class Utf8StreamDecoder {
+    Readable<u8> &input;
+
+
+    Utf8StreamDecoder(Readable<u8> &'input) {
+        this.input = input;
+    }
+}
+
+
+impl<Readable<UnicodeCodepoint>> Utf8StreamDecoder {
+    
+
+    // Return true if there are no codepoints available to be read.
+    bool is_empty(safe) {
+        return input.is_empty();
+    }
+
+
+    // The number of codepoints available to be read.
+    u32 size(safe) {
+        input.size();
+    }
+
+
+    // Read multiple codepoints.
+    void read(UnicodeCodepoint *data, u32 size) {
+        Utf8::decode(input, data, size);
+    }
+
+
+    // Skip multiple codepoints.
+    void skip(u32 size) {
+        Utf8::decode_skip(input, size);
+    }
+}

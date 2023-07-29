@@ -1,0 +1,825 @@
+/// Workspace Symbols Request (:leftwards_arrow_with_hook:)
+/// 
+/// The workspace symbol request is sent from the client to the server to list project-wide symbols matching the query String. Since 3.17.0 servers can also provider a handler for workspaceSymbol/resolve requests. This allows servers to return workspace symbols without a range for a workspace/symbol request. Clients then need to resolve the range when necessary using the workspaceSymbol/resolve request. Servers can only use this new model if clients advertise support for it via the workspace.symbol.resolveSupport capability.
+/// 
+/// Client Capability:
+/// 
+///     property path (optional): workspace.symbol
+///     property type: WorkspaceSymbolClientCapabilities defined as follows:
+
+struct LspWorkspaceSymbolClientCapabilities {
+
+    /// Symbol request supports dynamic registration.
+    bool dynamic_registration;
+
+    /// Specific capabilities for the `SymbolKind` in the `workspace/symbol` request.
+    struct {
+
+        /// The symbol kind values the client supports. When this
+        /// property exists the client also guarantees that it will
+        /// handle values outside its set gracefully and falls back
+        /// to a default value when unknown.
+        ///
+        /// If this property is not present the client only supports
+        /// the symbol kinds from `File` to `Array` as defined in
+        /// the initial version of the protocol.
+        List<LspSymbolKind> value_set;
+    } symbol_kind;
+
+    /// The client supports tags on `SymbolInformation` and `WorkspaceSymbol`.
+    /// Clients supporting tags have to handle unknown tags gracefully.
+    @api(3.16)
+    struct {
+
+        /// The tags supported by the client.
+        List<SymbolTag> value_set;
+    } tag_support;
+
+    /// The client support partial workspace symbols. The client will send the
+    /// request `workspaceSymbol/resolve` to the server to resolve additional
+    /// properties.
+    @api(3.17)
+    struct {
+
+        /// The properties that a client can resolve lazily. Usually
+        /// `location.range`
+        String[] properties;
+    } resolve_support;
+}
+
+/// Server Capability:
+/// 
+///     property path (optional): workspaceSymbolProvider
+///     property type: bool | WorkspaceSymbolOptions where WorkspaceSymbolOptions is defined as follows:
+
+struct LspWorkspaceSymbolOptions extends LspWorkDoneProgressOptions {
+
+    /// The server provides support to resolve additional
+    /// information for a workspace symbol.
+    @api(3.17)
+    bool resolve_provider;
+}
+
+/// Registration Options: WorkspaceSymbolRegistrationOptions defined as follows:
+
+struct LspWorkspaceSymbolRegistrationOptions
+    implements LspWorkspaceSymbolOptions;
+}
+
+/// Request:
+/// 
+///     method: ‘workspace/symbol’
+///     params: WorkspaceSymbolParams defined as follows:
+
+
+/// The parameters of a Workspace Symbol Request.
+struct LspWorkspaceSymbolParams extends LspWorkDoneProgressParams,
+    LspPartialResultParams {
+
+    /// A query String to filter symbols by. Clients may send an empty
+    /// String here to request all symbols.
+    String query;
+}
+
+/// Response:
+/// 
+///     result: SymbolInformation[] | WorkspaceSymbol[] | null. See above for the definition of SymbolInformation. It is recommended that you use the new WorkspaceSymbol. However whether the workspace symbol can return a location without a range depends on the client capability workspace.symbol.resolveSupport. WorkspaceSymbolwhich is defined as follows:
+
+
+/// A special workspace symbol that supports locations without a range
+@api(3.17)
+struct LspWorkspaceSymbol {
+
+    /// The name of this symbol.
+    String name;
+
+    /// The kind of this symbol.
+    LspSymbolKind kind;
+
+    /// Tags for this completion item.
+    LspSymbolTag[] tags;
+
+    /// The name of the symbol containing this symbol. This information is for
+    /// user interface purposes (e.g. to render a qualifier in the user interface
+    /// if necessary). It can't be used to re-infer a hierarchy for the document
+    /// symbols.
+    String container_name;
+
+    /// The location of this symbol. Whether a server is allowed to
+    /// return a location without a range depends on the client
+    /// capability `workspace.symbol.resolveSupport`.
+    ///
+    /// See also `SymbolInformation.location`.
+    LspLocation | { uri: LspDocumentUri } location;
+
+    /// A data entry field that is preserved on a workspace symbol between a
+    /// workspace symbol request and a workspace symbol resolve request.
+    LspAny data;
+}
+
+
+///     partial result: SymbolInformation[] | WorkspaceSymbol[] as defined above.
+///     error: code and message set in case an exception happens during the workspace symbol request.
+/// 
+/// Workspace Symbol Resolve Request (:leftwards_arrow_with_hook:)
+/// 
+/// The request is sent from the client to the server to resolve additional information for a given workspace symbol.
+/// 
+/// Request:
+/// 
+///     method: ‘workspaceSymbol/resolve’
+///     params: WorkspaceSymbol
+/// 
+/// Response:
+/// 
+///     result: WorkspaceSymbol
+///     error: code and message set in case an exception happens during the workspace symbol resolve request.
+/// 
+/// Configuration Request (:arrow_right_hook:)
+/// 
+///     Since version 3.6.0
+/// 
+/// The workspace/configuration request is sent from the server to the client to fetch configuration settings from the client. The request can fetch several configuration settings in one roundtrip. The order of the returned configuration settings correspond to the order of the passed ConfigurationItems (e.g. the first item in the response is the result for the first configuration item in the params).
+/// 
+/// A ConfigurationItem consists of the configuration section to ask for and an additional scope URI. The configuration section asked for is defined by the server and doesn’t necessarily need to correspond to the configuration store used by the client. So a server might ask for a configuration cpp.formatterOptions but the client stores the configuration in an XML store layout differently. It is up to the client to do the necessary conversion. If a scope URI is provided the client should return the setting scoped to the provided resource. If the client for example uses EditorConfig to manage its settings the configuration should be returned for the passed resource URI. If the client can’t provide a configuration setting for a given scope then null needs to be present in the returned array.
+/// 
+/// Client Capability:
+/// 
+///     property path (optional): workspace.configuration
+///     property type: bool
+/// 
+/// Request:
+/// 
+///     method: ‘workspace/configuration’
+///     params: ConfigurationParams defined as follows
+
+struct LspConfigurationParams {
+    LspConfigurationItem[] items;
+}
+
+struct LspConfigurationItem {
+
+    /// The scope to get the configuration section for.
+    LspDocumentUri scope_uri;
+
+    /// The configuration section asked for.
+    String section;
+}
+
+/// Response:
+/// 
+///     result: LSPAny[]
+///     error: code and message set in case an exception happens during the ‘workspace/configuration’ request
+/// 
+/// DidChangeConfiguration Notification (:arrow_right:)
+/// 
+/// A notification sent from the client to the server to signal the change of configuration settings.
+/// 
+/// Client Capability:
+/// 
+///     property path (optional): workspace.didChangeConfiguration
+///     property type: DidChangeConfigurationClientCapabilities defined as follows:
+
+struct LspDidChangeConfigurationClientCapabilities {
+
+    /// Did change configuration notification supports dynamic registration.
+    bool dynamic_registration;
+}
+
+/// Notification:
+/// 
+///     method: ‘workspace/didChangeConfiguration’,
+///     params: DidChangeConfigurationParams defined as follows:
+
+struct LspDidChangeConfigurationParams {
+
+    /// The actual changed settings
+    LspAny settings;
+}
+
+/// Workspace folders request (:arrow_right_hook:)
+/// 
+///     Since version 3.6.0
+/// 
+/// Many tools support more than one root folder per workspace. Examples for this are VS Code’s multi-root support, Atom’s project folder support or Sublime’s project support. If a client workspace consists of multiple roots then a server typically needs to know about this. The protocol up to now assumes one root folder which is announced to the server by the rootUri property of the InitializeParams. If the client supports workspace folders and announces them via the corresponding workspaceFolders client capability, the InitializeParams contain an additional property workspaceFolders with the configured workspace folders when the server starts.
+/// 
+/// The workspace/workspaceFolders request is sent from the server to the client to fetch the current open list of workspace folders. Returns null in the response if only a single file is open in the tool. Returns an empty array if a workspace is open but no folders are configured.
+/// 
+/// Client Capability:
+/// 
+///     property path (optional): workspace.workspaceFolders
+///     property type: bool
+/// 
+/// Server Capability:
+/// 
+///     property path (optional): workspace.workspaceFolders
+///     property type: WorkspaceFoldersServerCapabilities defined as follows:
+
+struct LspWorkspaceFoldersServerCapabilities {
+
+    /// The server has support for workspace folders
+    bool supported;
+
+    /// Whether the server wants to receive workspace folder
+    /// change notifications.
+    ///
+    /// If a String is provided, the string is treated as an ID
+    /// under which the notification is registered on the client
+    /// side. The ID can be used to unregister for these events
+    /// using the `client/unregisterCapability` request.
+    String | bool change_notifications;
+}
+
+/// Request:
+/// 
+///     method: workspace/workspaceFolders
+///     params: none
+/// 
+/// Response:
+/// 
+///     result: WorkspaceFolder[] | null defined as follows:
+
+struct LspWorkspaceFolder {
+
+    /// The associated URI for this workspace folder.
+    DocumentUri uri;
+
+    /// The name of the workspace folder. Used to refer to this
+    /// workspace folder in the user interface.
+    String name;
+}
+
+///     error: code and message set in case an exception happens during the ‘workspace/workspaceFolders’ request
+/// 
+/// DidChangeWorkspaceFolders Notification (:arrow_right:)
+/// 
+///     Since version 3.6.0
+/// 
+/// The workspace/didChangeWorkspaceFolders notification is sent from the client to the server to inform the server about workspace folder configuration changes. The notification is sent by default if both client capability workspace.workspaceFolders and the server capability workspace.workspaceFolders.supported are true; or if the server has registered itself to receive this notification. To register for the workspace/didChangeWorkspaceFolders send a client/registerCapability request from the server to the client. The registration parameter must have a registrations item of the following form, where id is a unique id used to unregister the capability (the example uses a UUID):
+/// 
+/// {
+///     id: "28c6150c-bd7b-11e7-abc4-cec278b6b50a",
+///     method: "workspace/didChangeWorkspaceFolders"
+/// }
+/// 
+/// Notification:
+/// 
+///     method: ‘workspace/didChangeWorkspaceFolders’
+///     params: DidChangeWorkspaceFoldersParams defined as follows:
+
+struct LspDidChangeWorkspaceFoldersParams {
+
+    /// The actual workspace folder change event.
+    LspWorkspaceFoldersChangeEvent event;
+}
+
+
+/// The workspace folder change event.
+struct LspWorkspaceFoldersChangeEvent {
+
+    /// The array of added workspace folders
+    LspWorkspaceFolder[] added;
+
+
+    /// The array of the removed workspace folders
+    LspWorkspaceFolder[] removed;
+}
+
+/// WillCreateFiles Request (:leftwards_arrow_with_hook:)
+/// 
+/// The will create files request is sent from the client to the server before files are actually created as long as the creation is triggered from within the client either by a user action or by applying a workspace edit. The request can return a WorkspaceEdit which will be applied to workspace before the files are created. Hence the WorkspaceEdit can not manipulate the content of the files to be created. Please note that clients might drop results if computing the edit took too long or if a server constantly fails on this request. This is done to keep creates fast and reliable.
+/// 
+/// Client Capability:
+/// 
+///     property name (optional): workspace.fileOperations.willCreate
+///     property type: bool
+/// 
+/// The capability indicates that the client supports sending workspace/willCreateFiles requests.
+/// 
+/// Server Capability:
+/// 
+///     property name (optional): workspace.fileOperations.willCreate
+///     property type: FileOperationRegistrationOptions where FileOperationRegistrationOptions is defined as follows:
+
+
+/// The options to register for file operations.
+@api(3.16)
+struct LspFileOperationRegistrationOptions {
+
+    /// The actual filters.
+    LspFileOperationFilter[] filters;
+}
+
+
+/// A pattern kind describing if a glob pattern matches a file a folder or
+/// both.
+@api(3.16)
+enum<StringView> LspFileOperationPatternKind {
+
+    /// The pattern matches a file only.
+    FILE = "file";
+
+    /// The pattern matches a folder only.
+    FOLDER = "folder";
+}
+
+
+/// Matching options for the file operation pattern.
+@api(3.16)
+struct LspFileOperationPatternOptions {
+
+
+    /// The pattern should be matched ignoring casing.
+    bool ignore_case;
+}
+
+
+/// A pattern to describe in which file operation requests or notifications
+/// the server is interested in.
+@api(3.16)
+struct LspFileOperationPattern {
+
+    /// The glob pattern to match. Glob patterns can have the following syntax:
+    /// - `*` to match one or more characters in a path segment
+    /// - `` to match on one character in a path segment
+    /// - `**` to match any number of path segments, including none
+    /// - `{}` to group sub patterns into an OR expression. (e.g. `**​/*.{ts,js}`
+    ///   matches all TypeScript and JavaScript files)
+    /// - `[]` to declare a range of characters to match in a path segment
+    ///   (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)
+    /// - `[!...]` to negate a range of characters to match in a path segment
+    ///   (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but
+    ///   not `example.0`)
+    String glob;
+
+
+    /// Whether to match files or folders with this pattern.
+    ///
+    /// Matches both if undefined.
+    LspFileOperationPatternKind matches;
+
+    /// Additional options used during matching.
+    LspFileOperationPatternOptions options;
+}
+
+
+/// A filter to describe in which file operation requests or notifications
+/// the server is interested in.
+@api(3.16)
+struct LspFileOperationFilter {
+
+    /// A Uri like `file` or `untitled`.
+    String scheme;
+
+    /// The actual file operation pattern.
+    LspFileOperationPattern pattern;
+}
+
+/// The capability indicates that the server is interested in receiving workspace/willCreateFiles requests.
+/// 
+/// Registration Options: none
+/// 
+/// Request:
+/// 
+///     method: ‘workspace/willCreateFiles’
+///     params: CreateFilesParams defined as follows:
+
+
+/// The parameters sent in notifications/requests for user-initiated creation
+/// of files.
+@api(3.16)
+struct LspCreateFilesParams {
+
+    /// An array of all files/folders created in this operation.
+    List<LspFileCreate> files;
+}
+
+
+/// Represents information on a file/folder create.
+@api(3.16)
+struct LspFileCreate {
+
+    /// A file:// URI for the location of the file/folder being created.
+    String uri;
+}
+
+/// Response:
+/// 
+///     result:WorkspaceEdit | null
+///     error: code and message set in case an exception happens during the willCreateFiles request.
+/// 
+/// DidCreateFiles Notification (:arrow_right:)
+/// 
+/// The did create files notification is sent from the client to the server when files were created from within the client.
+/// 
+/// Client Capability:
+/// 
+///     property name (optional): workspace.fileOperations.didCreate
+///     property type: bool
+/// 
+/// The capability indicates that the client supports sending workspace/didCreateFiles notifications.
+/// 
+/// Server Capability:
+/// 
+///     property name (optional): workspace.fileOperations.didCreate
+///     property type: FileOperationRegistrationOptions
+/// 
+/// The capability indicates that the server is interested in receiving workspace/didCreateFiles notifications.
+/// 
+/// Notification:
+/// 
+///     method: ‘workspace/didCreateFiles’
+///     params: CreateFilesParams
+/// 
+/// WillRenameFiles Request (:leftwards_arrow_with_hook:)
+/// 
+/// The will rename files request is sent from the client to the server before files are actually renamed as long as the rename is triggered from within the client either by a user action or by applying a workspace edit. The request can return a WorkspaceEdit which will be applied to workspace before the files are renamed. Please note that clients might drop results if computing the edit took too long or if a server constantly fails on this request. This is done to keep renames fast and reliable.
+/// 
+/// Client Capability:
+/// 
+///     property name (optional): workspace.fileOperations.willRename
+///     property type: bool
+/// 
+/// The capability indicates that the client supports sending workspace/willRenameFiles requests.
+/// 
+/// Server Capability:
+/// 
+///     property name (optional): workspace.fileOperations.willRename
+///     property type: FileOperationRegistrationOptions
+/// 
+/// The capability indicates that the server is interested in receiving workspace/willRenameFiles requests.
+/// 
+/// Registration Options: none
+/// 
+/// Request:
+/// 
+///     method: ‘workspace/willRenameFiles’
+///     params: RenameFilesParams defined as follows:
+
+
+/// The parameters sent in notifications/requests for user-initiated renames
+/// of files.
+@api(3.16)
+struct LspRenameFilesParams {
+
+    /// An array of all files/folders renamed in this operation. When a folder
+    /// is renamed, only the folder will be included, and not its children.
+    List<LspFileRename> files;
+}
+
+
+/// Represents information on a file/folder rename.
+@api(3.16)
+struct LspFileRename {
+
+    /// A file:// URI for the original location of the file/folder being renamed.
+    String old_uri;
+
+    /// A file:// URI for the new location of the file/folder being renamed.
+    String new_uri;
+}
+
+/// Response:
+/// 
+///     result:WorkspaceEdit | null
+///     error: code and message set in case an exception happens during the workspace/willRenameFiles request.
+/// 
+/// DidRenameFiles Notification (:arrow_right:)
+/// 
+/// The did rename files notification is sent from the client to the server when files were renamed from within the client.
+/// 
+/// Client Capability:
+/// 
+///     property name (optional): workspace.fileOperations.didRename
+///     property type: bool
+/// 
+/// The capability indicates that the client supports sending workspace/didRenameFiles notifications.
+/// 
+/// Server Capability:
+/// 
+///     property name (optional): workspace.fileOperations.didRename
+///     property type: FileOperationRegistrationOptions
+/// 
+/// The capability indicates that the server is interested in receiving workspace/didRenameFiles notifications.
+/// 
+/// Notification:
+/// 
+///     method: ‘workspace/didRenameFiles’
+///     params: RenameFilesParams
+/// 
+/// WillDeleteFiles Request (:leftwards_arrow_with_hook:)
+/// 
+/// The will delete files request is sent from the client to the server before files are actually deleted as long as the deletion is triggered from within the client either by a user action or by applying a workspace edit. The request can return a WorkspaceEdit which will be applied to workspace before the files are deleted. Please note that clients might drop results if computing the edit took too long or if a server constantly fails on this request. This is done to keep deletes fast and reliable.
+/// 
+/// Client Capability:
+/// 
+///     property name (optional): workspace.fileOperations.willDelete
+///     property type: bool
+/// 
+/// The capability indicates that the client supports sending workspace/willDeleteFiles requests.
+/// 
+/// Server Capability:
+/// 
+///     property name (optional): workspace.fileOperations.willDelete
+///     property type: FileOperationRegistrationOptions
+/// 
+/// The capability indicates that the server is interested in receiving workspace/willDeleteFiles requests.
+/// 
+/// Registration Options: none
+/// 
+/// Request:
+/// 
+///     method: workspace/willDeleteFiles
+///     params: DeleteFilesParams defined as follows:
+
+
+/// The parameters sent in notifications/requests for user-initiated deletes
+/// of files.
+@api(3.16)
+struct LspDeleteFilesParams {
+
+    /// An array of all files/folders deleted in this operation.
+    List<LspFileDelete> files;
+}
+
+
+/// Represents information on a file/folder delete.
+@api(3.16)
+struct LspFileDelete {
+
+    /// A file:// URI for the location of the file/folder being deleted.
+    String uri;
+}
+
+/// Response:
+/// 
+///     result:WorkspaceEdit | null
+///     error: code and message set in case an exception happens during the workspace/willDeleteFiles request.
+/// 
+/// DidDeleteFiles Notification (:arrow_right:)
+/// 
+/// The did delete files notification is sent from the client to the server when files were deleted from within the client.
+/// 
+/// Client Capability:
+/// 
+///     property name (optional): workspace.fileOperations.didDelete
+///     property type: bool
+/// 
+/// The capability indicates that the client supports sending workspace/didDeleteFiles notifications.
+/// 
+/// Server Capability:
+/// 
+///     property name (optional): workspace.fileOperations.didDelete
+///     property type: FileOperationRegistrationOptions
+/// 
+/// The capability indicates that the server is interested in receiving workspace/didDeleteFiles notifications.
+/// 
+/// Notification:
+/// 
+///     method: ‘workspace/didDeleteFiles’
+///     params: DeleteFilesParams
+/// 
+/// DidChangeWatchedFiles Notification (:arrow_right:)
+/// 
+/// The watched files notification is sent from the client to the server when the client detects changes to files and folders watched by the language client (note although the name suggest that only file events are sent it is about file system events which include folders as well). It is recommended that servers register for these file system events using the registration mechanism. In former implementations clients pushed file events without the server actively asking for it.
+/// 
+/// Servers are allowed to run their own file system watching mechanism and not rely on clients to provide file system events. However this is not recommended due to the following reasons:
+/// 
+///     to our experience getting file system watching on disk right is challenging, especially if it needs to be supported across multiple OSes.
+///     file system watching is not for free especially if the implementation uses some sort of polling and keeps a file system tree in memory to compare time stamps (as for example some node modules do)
+///     a client usually starts more than one server. If every server runs its own file system watching it can become a CPU or memory problem.
+///     in general there are more server than client implementations. So this problem is better solved on the client side.
+/// 
+/// Client Capability:
+/// 
+///     property path (optional): workspace.didChangeWatchedFiles
+///     property type: DidChangeWatchedFilesClientCapabilities defined as follows:
+
+struct LspDidChangeWatchedFilesClientCapabilities {
+
+    /// Did change watched files notification supports dynamic registration.
+    /// Please note that the current protocol doesn't support static
+    /// configuration for file changes from the server side.
+    bool dynamic_registration;
+
+    /// Whether the client has support for relative patterns
+    /// or not.
+    @api(3.17)
+    bool relative_pattern_support;
+}
+
+/// Registration Options: LspDidChangeWatchedFilesRegistrationOptions defined as follows:
+
+
+/// Describe options to be used when registering for file system change events.
+////
+struct LspDidChangeWatchedFilesRegistrationOptions {
+
+    /// The watchers to register.
+    List<LspFileSystemWatcher> watchers;
+}
+
+
+/// The glob pattern to watch relative to the base path. Glob patterns can have
+/// the following syntax:
+/// - `*` to match one or more characters in a path segment
+/// - `` to match on one character in a path segment
+/// - `**` to match any number of path segments, including none
+/// - `{}` to group conditions (e.g. `**​/*.{ts,js}` matches all TypeScript
+///   and JavaScript files)
+/// - `[]` to declare a range of characters to match in a path segment
+///   (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)
+/// - `[!...]` to negate a range of characters to match in a path segment
+///   (e.g., `example.[!0-9]` to match on `example.a`, `example.b`,
+///   but not `example.0`)
+@api(3.17)
+type LspPattern = String;
+
+
+/// A relative pattern is a helper to construct glob patterns that are matched
+/// relatively to a base URI. The common value for a `baseUri` is a workspace
+/// folder root, but it can be another absolute URI as well.
+@api(3.17)
+struct LspRelativePattern {
+
+    /// A workspace folder or a base URI to which this pattern will be matched
+    /// against relatively.
+    LspWorkspaceFolder | LspUri base_uri;
+
+    /// The actual glob pattern;
+    LspPattern pattern;
+}
+
+
+/// The glob pattern. Either a String pattern or a relative pattern.
+@api(3.17)
+type LspGlobPattern = LspPattern | LspRelativePattern;
+
+struct LspFileSystemWatcher {
+
+    /// The glob pattern to watch. See {@link GlobPattern glob pattern}
+    /// for more detail.
+    @api(3.17)
+    LspGlobPattern glob_pattern;
+
+    /// The kind of events of interest. If omitted it defaults
+    /// to WatchKind.Create | WatchKind.Change | WatchKind.Delete
+    /// which is 7.
+    LspWatchKind kind;
+}
+
+enum<u8> LspWatchKind {
+
+    /// Interested in create events.
+    CREATE = 1;
+
+    /// Interested in change events
+    CHANGE = 2;
+
+    /// Interested in delete events
+    DELETE = 4;
+}
+
+/// Notification:
+/// 
+///     method: ‘workspace/didChangeWatchedFiles’
+///     params: DidChangeWatchedFilesParams defined as follows:
+/// 
+/// struct DidChangeWatchedFilesParams {
+/// 
+///     /// The actual file events.
+///     ////
+///     FileEvent[] changes;
+/// }
+/// 
+/// Where FileEvents are described as follows:
+
+
+/// An event describing a file change.
+struct LspFileEvent {
+
+    /// The file's URI.
+    LspDocumentUri uri;
+
+    /// The change type.
+    u32 type;
+}
+
+
+/// The file event type.
+enum<u8> LspFileChangeType {
+
+    /// The file got created.
+    CREATED = 1;
+
+    /// The file got changed.
+    CHANGED = 2;
+
+    /// The file got deleted.
+    DELETED = 3;
+}
+
+/// Execute a command (:leftwards_arrow_with_hook:)
+/// 
+/// The workspace/executeCommand request is sent from the client to the server to trigger command execution on the server. In most cases the server creates a WorkspaceEdit structure and applies the changes to the workspace using the request workspace/applyEdit which is sent from the server to the client.
+/// 
+/// Client Capability:
+/// 
+///     property path (optional): workspace.executeCommand
+///     property type: ExecuteCommandClientCapabilities defined as follows:
+
+struct LspExecuteCommandClientCapabilities {
+
+    /// Execute command supports dynamic registration.
+    bool dynamic_registration;
+}
+
+/// Server Capability:
+/// 
+///     property path (optional): executeCommandProvider
+///     property type: ExecuteCommandOptions defined as follows:
+
+struct LspExecuteCommandOptions extends LspWorkDoneProgressOptions {
+
+    /// The commands to be executed on the server
+    List<String> commands;
+}
+
+/// Registration Options: ExecuteCommandRegistrationOptions defined as follows:
+
+
+/// Execute command registration options.
+struct LspExecuteCommandRegistrationOptions
+    implements LspExecuteCommandOptions;
+}
+
+/// Request:
+/// 
+///     method: ‘workspace/executeCommand’
+///     params: ExecuteCommandParams defined as follows:
+
+struct LspExecuteCommandParams extends LspWorkDoneProgressParams {
+
+    /// Arguments that the command should be invoked with.
+    List<LspAny> arguments;
+
+    /// The identifier of the actual command handler.
+    String command;
+}
+
+/// The arguments are typically specified when a command is returned from the server to the client. Example requests that return a command are textDocument/codeAction or textDocument/codeLens.
+/// 
+/// Response:
+/// 
+///     result: LSPAny | null
+///     error: code and message set in case an exception happens during the request.
+/// 
+/// Applies a WorkspaceEdit (:arrow_right_hook:)
+/// 
+/// The workspace/applyEdit request is sent from the server to the client to modify resource on the client side.
+/// 
+/// Client Capability:
+/// 
+///     property path (optional): workspace.applyEdit
+///     property type: bool
+/// 
+/// See also the WorkspaceEditClientCapabilities for the supported capabilities of a workspace edit.
+/// 
+/// Request:
+/// 
+///     method: ‘workspace/applyEdit’
+///     params: ApplyWorkspaceEditParams defined as follows:
+
+struct LspApplyWorkspaceEditParams {
+
+    /// The edits to apply.
+    LspWorkspaceEdit edit;
+
+    /// An optional label of the workspace edit. This label is
+    /// presented in the user interface for example on an undo
+    /// stack to undo the workspace edit.
+    String label;
+}
+
+/// Response:
+/// 
+///     result: ApplyWorkspaceEditResult defined as follows:
+
+struct LspApplyWorkspaceEditResult {
+
+    /// An optional textual description for why the edit was not applied.
+    /// This may be used by the server for diagnostic logging or to provide
+    /// a suitable error for a request that triggered the edit.
+    String failure_reason;
+
+    /// Depending on the client's failure handling strategy `failedChange`
+    /// might contain the index of the change that failed. This property is
+    /// only available if the client signals a `failureHandling` strategy
+    /// in its client capabilities.
+    u32 failed_change;
+
+    /// Indicates whether the edit was applied or not.
+    bool applied;
+}
+
+///     error: code and message set in case an exception happens during the request.

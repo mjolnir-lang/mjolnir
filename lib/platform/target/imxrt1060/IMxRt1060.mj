@@ -1,0 +1,13 @@
+
+
+@address(0x403F0000)
+volatile LpI2cRegisters LPI2C1;
+
+@address(0x403F4000)
+volatile LpI2cRegisters LPI2C2;
+
+@address(0x403F8000)
+volatile LpI2cRegisters LPI2C3;
+
+@address(0x403FC000)
+volatile LpI2cRegisters LPI2C4;

@@ -1,0 +1,79 @@
+
+
+/// A `Parser` reads a text file and generates an AST.
+class Parser {
+    File &file;
+    u32 line;
+    u32 column;
+    StringArea token_data;
+    StringView token;
+
+
+    void assemble(File &file) {
+        do {
+            // Instruction Fetch, Decode, Execute, Writeback
+            struct strings {
+                StringView op;
+                StringView args[4];
+            }
+
+            match (strings.op) {
+                'LD' => match (strings.args[0]) {
+                    'A' => assemble(Ld-qq(op));
+                    'B' => assemble(Ld-qq(op));
+                    'C' => assemble(Ld-qq(op));
+                    'D' => assemble(Ld-qq(op));
+                    'E' => assemble(Ld-qq(op));
+                    'H' => assemble(Ld-qq(op));
+                    'L' => assemble(Ld-qq(op));
+                    'AF' => assemble(Ld-qq(op));
+                    'BC' => assemble(Ld-qq(op));
+                    'DE' => assemble(Ld-qq(op));
+                    'HL' => assemble(Ld-qq(op));
+                    'IX' => assemble(Ld-ix(op));
+                    'IY' => assemble(Ld-iy(op));
+                    ? => fail;
+                }
+                'PUSH' => match (strings.args[0]) {
+                    'AF' => assemble(Push-qq(op));
+                    'BC' => assemble(Push-qq(op));
+                    'DE' => assemble(Push-qq(op));
+                    'HL' => assemble(Push-qq(op));
+                    'IX' => assemble(Push-ix(op));
+                    'IY' => assemble(Push-iy(op));
+                    ? => fail;
+                }
+                'POP' => match (strings.args[0]) {
+                    'AF' => assemble(Pop-qq(op));
+                    'BC' => assemble(Pop-qq(op));
+                    'DE' => assemble(Pop-qq(op));
+                    'HL' => assemble(Pop-qq(op));
+                    'IX' => assemble(Pop-ix(op));
+                    'IY' => assemble(Pop-iy(op));
+                    ? => fail;
+                }
+                ? => fail;
+            }
+        }
+    }
+
+
+    Error parse(Program &program) {
+        ;
+    }
+
+
+    Error parse(Opcode &opcode) {
+        ;
+    }
+
+
+    Error parse(Push-qq &op) {
+        ;
+    }
+
+
+    Error parse(Push-ix &op) {
+        ;
+    }
+}

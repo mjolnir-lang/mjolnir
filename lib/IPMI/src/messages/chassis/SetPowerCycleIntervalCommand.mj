@@ -1,0 +1,20 @@
+
+
+/// Set Power Cycle Interval
+///
+/// This command provides a mechanism for configuring the power cycle interval
+/// for the system. This interval determines the time that system power will be
+/// powered down during a power cycle operation initiated by the Chassis
+/// Control command or the watchdog time. The setting is non-volatile.
+class SetPowerCycleIntervalCommand {
+    struct Request request {
+        /// Power Cycle Interval in seconds. 1-based.
+        /// 0 - no delay.
+        u8<s> power_cycle_interval;
+    }
+    struct Response response {
+
+        /// Completion Code
+        CompletionCode completion_code;
+    }
+}

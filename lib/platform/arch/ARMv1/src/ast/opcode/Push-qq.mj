@@ -1,0 +1,88 @@
+
+
+/// PUSH qq
+///
+/// Operation
+///
+/// ```
+/// *(sp - 2) = qq[0];
+/// *(sp - 1) = qq[1];
+/// ```
+///
+/// Description
+///
+/// The contents of the register pair `qq` are pushed to the external memory
+/// last-in, first-out (LIFO) stack. The Stack Pointer (SP) Register pair
+/// holds the 16-bit address of the current top of the Stack. This instruction
+/// first decrements SP and loads the high-order byte of register pair qq to
+/// the memory address specified by the SP. The SP is decremented again and
+/// loads the low-order byte of qq to the memory location corresponding to
+/// this new address in the SP. The operand qq identifies register pair BC, DE,
+/// HL, or AF, assembled as follows in the object code:
+///
+///   Pair  qq
+///   BC    00
+///   DE    01
+///   HL    10
+///   AF    11
+///
+/// Condition Bits Affected
+///
+/// None
+///
+/// Encoding
+///
+/// 1 1 q q 0 1 0 1
+class Push-qq {
+    bitfield<u8> Opcode {
+        [7:6] = 0b11u;
+        [5:4] qq;
+        [3:0] = 0b0101u;
+    }
+
+    @shared
+    const StringView MNEMONIC = 'PUSH';
+
+    /// This returns the encoded opcode byte.
+    @shared
+    u8 OPCODE(u8 qq) => Opcode(qq);
+
+
+    Push-qq(u8 qq) {
+        this = {
+            .qq = qq;
+        };
+    }
+}
+
+impl<Opcode> Push-qq {
+
+    ///
+    StringView mnemonic(safe) =>
+        MNEMONIC;
+
+
+    /// Condition Bits Affected
+    ///
+    /// None.
+    Flag clobberd_flags(safe) => {
+        .s = false;
+        .z = false;
+        .h = false;
+        .pv = false;
+        .n = false;
+        .c = false;
+    };
+
+
+    /// M Cycles
+    ///
+    /// 3
+    u8 m_cycles(safe) => 3;
+
+
+    /// T States
+    ///
+    /// 11 (5, 3, 3)
+    u8 t_states(safe) => 11;
+}

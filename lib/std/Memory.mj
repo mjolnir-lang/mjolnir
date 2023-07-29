@@ -1,0 +1,44 @@
+import platform
+
+
+class Memory {
+
+
+    // Move memory from one location to another where the locations may potentially overlap.
+    @shared
+    void move<T>(T *dst, const T *src, u32 size) {
+        platform.memmove(dst, src, size)
+    }
+
+
+    // Move memory from one location to another where the locations do not overlap.
+    @shared
+    void copy<T>(T *dst, const T *src, u32 size) {
+        platform.memcpy(dst, src, size)
+    }
+
+
+    // Allocate memory for a number of objects.
+    @shared
+    void allocate<T>(T *&memory, u32 size)? {
+        return try platform.allocate(size * sizeof(T)) {
+            fail
+        }
+    }
+
+
+    // Reallocate a previous allocation. The address may change, if the space cannot be resized inplace.
+    @shared
+    void reallocate<T>(T *&memory, u32 size)? {
+        return try platform.reallocate(memory, size * sizeof(T)) {
+            fail
+        }
+    }
+
+
+    // Free a previous allocation.
+    @shared
+    void free<T>(T *memory) {
+        platform.free(memory)
+    }
+}

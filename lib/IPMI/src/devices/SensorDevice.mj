@@ -1,0 +1,6 @@
+
+
+/// The SDR Device is the logical management device that provides the interface to the Sensor Data Records (SDR) for the system. The SDR Device provides a set of commands for storing and retrieving Sensor Data Records.
+interface IpmiSensorDevice {
+
+}

@@ -1,0 +1,124 @@
+
+
+class IpmiBmc {
+    List<Channel> channels;
+    ReceiveMessageQueue receive_message_queue;
+    EventMessageBuffer event_message_buffer;
+
+
+    IpmiBmc() {}
+
+
+    ~IpmiBmc() {}
+
+
+    /// `fail` If the network function is unrecognized.
+    @internal
+    void? process_command(Command &command) {
+        match (command.net_fn) {
+            CHASSIS => process_chassis_netfn(command);
+            BRIDGE => process_bridge_netfn(command);
+            SENSOR_EVENT => process_sensor_event_netfn(command);
+            APP => process_app_netfn(command);
+            FIRMWARE => process_firmware_netfn(command);
+            STORAGE => process_storage_netfn(command);
+            TRANSPORT => process_transport_netfn(command);
+            GROUP_EXTENSION => process_group_extension_netfn(command);
+            OEM_GROUP => process_oem_group_netfn(command);
+            CONTROLLER_SPECIFIC_OEM_GROUP => process_controller_specific_oem_group_netfn(command);
+            _ => fail;
+        }
+    }
+
+
+    /// `fail` If the command code is unrecognized.
+    @internal
+    void? process_app_netfn(Command &command) {
+        match (command.id) {
+            GET_DEVICE_ID => get_device_id(command as GetDeviceIdCommand);
+            BROADCAST_GET_DEVICE_ID => broadcast_get_device_id(command as BroadcastGetDeviceIdCommand);
+            COLD_RESET => cold_reset(command as ColdResetCommand);
+            WARM_RESET => warm_reset(command as WarmResetCommand);
+            GET_SELF_TEST_RESULTS => get_self_test_results(command as GetSelfTestResultsCommand);
+            MANUFACTURING_TEST_ON => manufacturing_test_on(command as ManufacturingTestOnCommand);
+            SET_ACPI_POWER_STATE => set_acpi_power_state(command as SetAcpiPowerStateCommand);
+            GET_ACPI_POWER_STATE => get_acpi_power_state(command as GetAcpiPowerStateCommand);
+            GET_DEVICE_GUID => get_device_guid(command as GetDeviceGuidCommand);
+            GET_NETFN_SUPPORT => get_netfn_support(command as GetNetFnSupportCommand);
+            GET_COMMAND_SUPPORT => get_command_support(command as Get CommandSupportCommand);
+            GET_COMMAND_SUBFUNCTION_SUPPORT => get_command_subfunction_support(command as GetCommandSubfunctionSupportCommand);
+            GET_CONFIGURABLE_COMMANDS => get_configurable_commands(command as GetConfigurableCommandsCommand);
+            GET_CONFIGURABLE_COMMAND_SUBFUNCTIONS => get_configurable_command_subfunctions(command as GetConfigurableCommandSubfunctionsCommand);
+            RESET_WATCHDOG_TIMER => reset_watchdog_timer(command as ResetWatchdogTimerCommand);
+            SET_WATCHDOG_TIMER => set_watchdog_timer(command as SetWatchdogTimerCommand);
+            GET_WATCHDOG_TIMER => get_watchdog_timer(command as GetWatchdogTimerCommand);
+            SET_BMC_GLOBAL_ENABLES => set_bmc_global_enables(command as SetBmcGlobalEnablesCommand);
+            GET_BMC_GLOBAL_ENABLES => get_bmc_global_enables(command as GetBmcGlobalEnablesCommand);
+            CLEAR_MESSAGE_FLAGS => clear_message_flags(command as ClearMessageFlagsCommand);
+            GET_MESSAGE_FLAGS => get_message_flags(command as GetMessageFlagsCommand);
+            ENABLE_MESSAGE_CHANNEL_RECEIVE => enable_message_channel_receive(command as EnableMessageChannelReceiveCommand);
+            GET_MESSAGE => get_message(command as GetMessageCommand);
+            SEND_MESSAGE => send_message(command as SendMessageCommand);
+            READ_EVENT_MESSAGE_BUFFER => read_event_message_buffer(command as ReadEventMessageBufferCommand);
+            GET_BT_INTERFACE_CAPABILITIES => get_bt_interface_capabilities(command as GetBtInterfaceCapabilitiesCommand);
+            GET_SYSTEM_GUID => get_system_guid(command as Get SystemGuidCommand);
+            GET_CHANNEL_AUTHENTICATION_CAPABILITIES => get_channel_authentication_capabilities(command as GetChannelAuthenticationCapabilitiesCommand);
+            GET_SESSION_CHALLENGE => get_session_challenge(command as GetSessionChallengeCommand);
+            ACTIVATE_SESSION => activate_session(command as ActivateSessionCommand);
+            SET_SESSION_PRIVILEGE_LEVEL => set_session_privilege_level(command as SetSessionPrivilegeLevelCommand);
+            CLOSE_SESSION => close_session(command as CloseSessionCommand);
+            GET_SESSION_INFO => get_session_info(command as GetSessionInfoCommand);
+            GET_AUTHCODE => get_authcode(command as GetAuthCodeCommand);
+            SET_CHANNEL_ACCESS => set_channel_access(command as SetChannelAccessCommand);
+            GET_CHANNEL_ACCESS => get_channel_access(command as GetChannelAccessCommand);
+            GET_CHANNEL_INFO_COMMAND => get_channel_info_command(command as GetChannelInfoCommandCommand);
+            SET_USER_ACCESS_COMMAND => set_user_access_command(command as SetUserAccessCommandCommand);
+            GET_USER_ACCESS_COMMAND => get_user_access_command(command as GetUserAccessCommandCommand);
+            SET_USER_NAME => set_user_name(command as SetUserNameCommand);
+            GET_USER_NAME_COMMAND => get_user_name_command(command as GetUserNameCommandCommand);
+            SET_USER_PASSWORD_COMMAND => set_user_password_command(command as SetUserPasswordCommandCommand);
+            ACTIVATE_PAYLOAD => activate_payload(command as ActivatePayloadCommand);
+            DEACTIVATE_PAYLOAD => deactivate_payload(command as DeactivatePayloadCommand);
+            GET_PAYLOAD_ACTIVATION_STATUS => get_payload_activation_status(command as GetPayloadActivationStatusCommand);
+             => (command as Command);
+            _ => fail;
+        }
+    }
+
+
+    /// `fail` If the command code is unrecognized.
+    @internal
+    void? process_chassis_netfn(Command &command) {
+        match (command.id) {
+            GET_CHASSIS_CAPABILITIES => get_chassis_capabilities(command as GetChassisCapabilitiesCommand);
+            GET_CHASSIS_STATUS => get_chassis_status(command as GetChassisStatusCommand);
+            CHASSIS_CONTROL => chassis_control(command as ChassisControlCommand);
+            CHASSIS_RESET => chassis_reset(command as ChassisResetCommand);
+            CHASSIS_IDENTIFY => chassis_identify(command as ChassisIdentifyCommand);
+            SET_CHASSIS_CAPABILITIES => set_chassis_capabilities(command as SetChassisCapabilitiesCommand);
+            SET_POWER_RESTORE_POLICY => set_power_restore_policy(command as SetPowerRestorePolicyCommand);
+            GET_SYSTEM_RESTART_CAUSE => get_system_restart_cause(command as GetSystemRestartCauseCommand);
+            SET_SYSTEM_BOOT_OPTIONS => set_system_boot_options(command as SetSystemBootOptionsCommand);
+            GET_SYSTEM_BOOT_OPTIONS => get_system_boot_options(command as GetSystemBootOptionsCommand);
+            SET_FRONT_PANEL_BUTTON_ENABLES => set_front_panel_button_enables(command as SetFrontPanelButtonEnablesCommand);
+            SET_POWER_CYCLE_INTERVAL => set_power_cycle_interval(command as SetPowerCycleIntervalCommand);
+            GET_POH_COUNTER => get_poh_counter(command as GetPohCounterCommand);
+            _ => fail;
+        }
+    }
+
+
+    @internal
+    void get_poh_counter(GetPohCounterCommand &command) {
+        command.response = {
+            completion_code = OKAY;
+            minutes_per_count = 0;
+            counter_reading = 0;
+        }
+    }
+}
+
+
+interface<IpmiIpmDevice> IpmiBmc {
+
+}

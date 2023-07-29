@@ -1,0 +1,59 @@
+
+
+/// A `Parser` reads a text file and generates an AST.
+class Parser {
+    File &file;
+    u32 line;
+    u32 column;
+    StringArea token_data;
+    StringView token;
+
+
+    void assemble(File &file) {
+        do {
+            // Instruction Fetch, Decode, Execute, Writeback
+            struct strings {
+                StringView op;
+                StringView args[4];
+            }
+
+            match (strings.op) {
+                'LD' => match (strings.args[0]) {
+                    'A' => assemble(Ld-qq(op));
+                    ? => fail;
+                }
+                'PUSH' => match (strings.args[0]) {
+                    'AF' => assemble(Push-qq(op));
+                    'BC' => assemble(Push-qq(op));
+                    ? => fail;
+                }
+                'POP' => match (strings.args[0]) {
+                    'AF' => assemble(Pop-qq(op));
+                    'BC' => assemble(Pop-qq(op));
+                    ? => fail;
+                }
+                ? => fail;
+            }
+        }
+    }
+
+
+    Error parse(Program &program) {
+        ;
+    }
+
+
+    Error parse(Opcode &opcode) {
+        ;
+    }
+
+
+    Error parse(B<> &op) {
+        ;
+    }
+
+
+    Error parse(B &op) {
+        ;
+    }
+}

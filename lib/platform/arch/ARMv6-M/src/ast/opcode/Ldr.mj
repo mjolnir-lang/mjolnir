@@ -1,0 +1,14 @@
+
+
+enum LdrCond {
+    
+}
+
+class Ldr<LdrCond cond> {
+    u8 text[1];
+}
+
+
+class Ldr<LdrCond cond, LdrType type> {
+    u8 text[1];
+}

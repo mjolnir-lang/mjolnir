@@ -1,0 +1,29 @@
+//
+// Serial Peripheral Interface (SPI)
+//
+import dust.device;
+import dust.spi-config;
+
+
+interface Spi {
+    implements Device;
+
+
+    // Make an implementation specific configuration object from a SPI configuration.
+    // - spi_config_data The generated SPI configuration object
+    // - spi_config The SPI configuration
+    SpiConfigData make_config(const SpiConfig &spi_config);
+
+
+    // Configure the SPI device with a SPI configuration.
+    // - spi_config The SPI configuration
+    void config(const SpiConfig &spi_config) {
+        dev_trace("Configuring...");
+        config(make_config_data(spi_config_data, spi_config));
+    }
+
+
+    // Configure the SPI device with a precompiled SPI configuration object.
+    // - spi_config_data The SPI configuration data
+    void config(const SpiConfigData &spi_config_data);
+}

@@ -1,0 +1,21 @@
+
+
+interface Equatable<type T> {
+
+
+    /// Return true if this object is equal to the other object.
+    @pure
+    bool is_equal(safe; T other)
+
+
+    /// Return true if this object is equal to the other object.
+    @final
+    bool {==}(safe; T other) =>
+        is_equal(other)
+
+
+    /// Return true if this object is not equal to the other object.
+    @final
+    bool {!=}(safe; T other) =>
+        !is_equal(other)
+}

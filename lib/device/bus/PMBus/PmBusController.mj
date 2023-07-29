@@ -1,0 +1,6 @@
+import smbus;
+
+
+class PmBusController {
+    SmBusController &smbus_controller;
+}

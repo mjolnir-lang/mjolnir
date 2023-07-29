@@ -1,0 +1,753 @@
+
+
+@value-type
+class f16 {
+    bitfield<u32> {
+        [15:0] u32 bits;
+        [15] u8 sign;
+        [14:10] u8 biased_exponent;
+        [9:0] u32 significand;
+    }
+
+
+    f16(u8 x) {
+        
+    }
+
+
+    f16(u16 x) {
+        
+    }
+
+
+    f16(u32 x) {
+        i8 shift = softfloat_countLeadingZeros32(x) - 21;
+
+        if (0 <= shift) {
+            sign = 0;
+            biased_exponent = 0;
+            significand = 0;
+
+            if (x != 0) {
+                biased_exponent = 0x18u - shift;
+                significand = u16(x) << shift;
+            }
+
+            return;
+        }
+
+        shift += 4;
+
+        if (shift < 0) {
+            significand = x >> (-shift) | (u32(x << (shift & 31)) != 0);
+        } else {
+            significand = x << shift;
+        }
+
+        softfloat_roundPackToF16(0, 0x1Cu - shift, sig);
+    }
+
+
+    f16(u64 x) {
+        i8 shift = softfloat_countLeadingZeros64(x) - 53;
+
+        if (0 <= shift) {
+            sign = 0;
+            biased_exponent = 0;
+            significand = 0;
+
+            if (x != 0) {
+                biased_exponent = 0x18u - shift;
+                significand = x << shift;
+            }
+
+            return;
+        }
+
+        shift += 4;
+
+        if (0 < shift) {
+            significand = softfloat_shortShiftRightJam64(x, -shift);
+        } else {
+            significand = x << shift;
+        }
+
+        softfloat_roundPackToF16(0, 0x1Cu - shift, sig);
+    }
+
+
+    f16(u128 x) {
+        
+    }
+
+
+    f16(i8 x) {
+        
+    }
+
+
+    f16(i16 x) {
+        
+    }
+
+
+    f16(i32 x) {
+        
+    }
+
+
+    f16(i64 x) {
+        
+    }
+
+
+    f16(i128 x) {
+        
+    }
+
+
+    f16(f32 x) {
+        sign = x.sign;
+        biased_exponent = x.biased_exponent;
+        significand = x.significand;
+
+        if (biased_exponent == 0xFFu) {
+            if (significand != 0) {
+                this = softfloat_commonNaNToF16UI(softfloat_f32UIToCommonNaN(x));
+            } else {
+                biased_exponent = 0x1Fu;
+            }
+
+            return;
+        }
+
+        frac16 = frac >> 9 | ((frac & 0x1FF) != 0);
+
+        if ((exp | frac16) == 0) {
+            return;
+        }
+
+        if (biased_exponent == 0) {
+            if (significand == 0) {
+                return;
+            }
+
+            Exp16Sig32 normExpSig = softfloat_normSubnormalF32Sig(significand);
+            biased_exponent = normExpSig.exp - 1;
+            significand = normExpSig.sig;
+        }
+
+        //biased_exponent -= 0x71u;
+        //significand |= 0x4000u;
+        return softfloat_roundPackToF16(sign, biased_exponent - 0x71u, significand | 0x4000u);
+    }
+
+
+    f16(f64 x) {
+        
+    }
+
+
+    f16(f80 x) {
+        
+    }
+
+
+    f16(f128 x) {
+        
+    }
+
+
+    ///
+    /// Properties
+    ///
+
+
+    bool is_nan(safe) =>
+        biased_exponent == 0x1F && significand == 0x03FF;
+
+
+
+    ///
+    /// Methods
+    ///
+
+
+    /// Add
+    f16 {+}(safe; f16 other) {
+        return (
+            sign ^ other.sign ?
+            softfloat_subMagsF16 :
+            softfloat_addMagsF16
+       )(bits, other.bits);
+    }
+
+
+    /// Subtract
+    f16 {-}(safe; f16 other) {
+        return (
+            sign ^ other.sign ?
+            softfloat_addMagsF16 :
+            softfloat_subMagsF16
+       )(bits, other.bits);
+    }
+
+
+    ///
+    /// Internal
+    ///
+
+
+    @internal
+    @value-type
+    struct Components {
+        u16 biased_exponent;
+        u16 significand;
+        bool sign;
+    }
+
+
+    @internal
+    f16 roundPackToF16(bool sign, i16 exp, u16 sig) {
+        u8 roundingMode;
+        bool roundNearEven;
+        u8 roundIncrement, roundBits;
+        bool isTiny;
+        u16 uiZ;
+        union ui16_f16 uZ;
+
+        /*------------------------------------------------------------------------
+        *------------------------------------------------------------------------*/
+        roundingMode = softfloat_roundingMode;
+        roundNearEven = (roundingMode == softfloat_round_near_even);
+        roundIncrement = 0x8;
+        if (! roundNearEven && (roundingMode != softfloat_round_near_maxMag)) {
+            roundIncrement =
+                (roundingMode
+                    == (sign ? softfloat_round_min : softfloat_round_max))
+                    ? 0xF
+                    : 0;
+        }
+        roundBits = sig & 0xF;
+
+        /*------------------------------------------------------------------------
+        *------------------------------------------------------------------------*/
+        if (0x1D <= (unsigned int) exp) {
+            if (exp < 0) {
+                /*----------------------------------------------------------------
+                *----------------------------------------------------------------*/
+                isTiny =
+                    (softfloat_detectTininess == softfloat_tininess_beforeRounding)
+                        || (exp < -1) || (sig + roundIncrement < 0x8000);
+                sig = softfloat_shiftRightJam32(sig, -exp);
+                exp = 0;
+                roundBits = sig & 0xF;
+                if (isTiny && roundBits) {
+                    softfloat_raiseFlags(softfloat_flag_underflow);
+                }
+            } else if ((0x1D < exp) || (0x8000 <= sig + roundIncrement)) {
+                /*----------------------------------------------------------------
+                *----------------------------------------------------------------*/
+                softfloat_raiseFlags(
+                    softfloat_flag_overflow | softfloat_flag_inexact);
+                uiZ = packToF16UI(sign, 0x1F, 0) - ! roundIncrement;
+                goto uiZ;
+            }
+        }
+        /*------------------------------------------------------------------------
+        *------------------------------------------------------------------------*/
+        sig = (sig + roundIncrement)>>4;
+        if (roundBits) {
+            softfloat_exceptionFlags |= softfloat_flag_inexact;
+    #ifdef SOFTFLOAT_ROUND_ODD
+            if (roundingMode == softfloat_round_odd) {
+                sig |= 1;
+                goto packReturn;
+            }
+    #endif
+        }
+        sig &= ~(u16) (! (roundBits ^ 8) & roundNearEven);
+        if (! sig) exp = 0;
+        /*------------------------------------------------------------------------
+        *------------------------------------------------------------------------*/
+    packReturn:
+        uiZ = packToF16UI(sign, exp, sig);
+    uiZ:
+        uZ.ui = uiZ;
+        return uZ.f;
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    (f16 z) add_mags(f16 a, f16 b) {
+        u16 sigX, sigY;
+        i8 shiftDist;
+        u32 sig32Z;
+        i8 roundingMode;
+
+        i8 expDiff = a.biased_exponent - b.biased_exponent;
+
+        if (expDiff == 0) {
+            if (!a.biased_exponent) {
+                return a.bits + b.significand;
+            }
+
+            if (a.biased_exponent == 0x1Fu) {
+                if (a.significand | b.significand) goto propagateNaN;
+                return a;
+            }
+
+            z.sign = a.sign;
+            z.biased_exponent = a.biased_exponent;
+            z.significand = 0x0800u + a.significand + b.significand;
+
+            if (!(z.significand & 1) && (z.biased_exponent < 0x1Eu)) {
+                z.significand >>= 1;
+                goto pack;
+            }
+
+            z.significand <<= 3;
+        } else {
+            z.sign = a.sign;
+
+            if (expDiff < 0) {
+                if (b.biased_exponent == 0x1Fu) {
+                    if (b.significand != 0) {
+                        goto propagateNaN;
+                    }
+
+                    z.biased_exponent = 0x1Fu;
+                    return;
+                }
+
+                if (expDiff <= -13) {
+                    z.biased_exponent = b.biased_exponent;
+                    z.significand = b.significand;
+
+                    if (a.biased_exponent | a.significand) {
+                        goto addEpsilon;
+                    }
+
+                    return;
+                }
+
+                z.biased_exponent = b.biased_exponent;
+                sigX = b.significand | 0x0400;
+                sigY = a.significand + (a.biased_exponent ? 0x0400u : a.significand);
+                shiftDist = 19 + expDiff;
+            } else {
+                z = a;
+
+                if (a.biased_exponent == 0x1Fu) {
+                    if (a.significand) goto propagateNaN;
+                    goto uiZ;
+                }
+                if (13 <= expDiff) {
+                    if (b.biased_exponent | b.significand) {
+                        goto addEpsilon;
+                    }
+
+                    goto uiZ;
+                }
+
+                z.biased_exponent = a.biased_exponent;
+                sigX = a.significand | 0x0400u;
+                sigY = b.significand + (b.biased_exponent ? 0x0400u : b.significand);
+                shiftDist = 19 - expDiff;
+            }
+
+            sig32Z = (u32(sigX) << 19) + (u32(sigY) << shiftDist);
+
+            if (sig32Z < 0x40000000u) {
+                --z.biased_exponent;
+                sig32Z <<= 1;
+            }
+
+            z.significand = sig32Z >> 16;
+
+            if (sig32Z & 0xFFFFu) {
+                z.significand |= 1;
+            } else {
+                if (! (z.significand & 0xFu) && (z.biased_exponent < 0x1Eu)) {
+                    z.significand >>= 4;
+                    goto pack;
+                }
+            }
+        }
+
+        return softfloat_roundPackToF16(z.sign, z.biased_exponent, z.significand);
+        /*------------------------------------------------------------------------
+        *------------------------------------------------------------------------*/
+    propagateNaN:
+        uiZ = softfloat_propagateNaNF16UI(uiA, uiB);
+        goto uiZ;
+        /*------------------------------------------------------------------------
+        *------------------------------------------------------------------------*/
+    addEpsilon:
+        roundingMode = softfloat_roundingMode;
+        if (roundingMode != softfloat_round_near_even) {
+            if (
+                roundingMode
+                    == (signF16UI(uiZ) ? softfloat_round_min
+                            : softfloat_round_max)
+           ) {
+                ++uiZ;
+                if ((uint16_t) (uiZ<<1) == 0xF800) {
+                    softfloat_raiseFlags(
+                        softfloat_flag_overflow | softfloat_flag_inexact);
+                }
+            }
+    #ifdef SOFTFLOAT_ROUND_ODD
+            else if (roundingMode == softfloat_round_odd) {
+                uiZ |= 1;
+            }
+    #endif
+        }
+        softfloat_exceptionFlags |= softfloat_flag_inexact;
+        goto uiZ;
+        /*------------------------------------------------------------------------
+        *------------------------------------------------------------------------*/
+    pack:
+        uiZ = packToF16UI(z.sign, z.biased_exponent, z.significand);
+    uiZ:
+        uZ.ui = uiZ;
+        return uZ.f;
+
+    }
+
+
+
+
+
+
+
+    f16 sub_mags(f16 a, f16 b) {
+        i8 expDiff;
+        i16 sigDiff;
+        bool z.sign;
+        i8 shiftDist, z.biased_exponent;
+        u16 z.significand, sigX, sigY;
+        u32 sig32Z;
+        i8 roundingMode;
+
+        expDiff = a.biased_exponent - b.biased_exponent;
+        if (! expDiff) {
+            /*--------------------------------------------------------------------
+            *--------------------------------------------------------------------*/
+            if (a.biased_exponent == 0x1F) {
+                if (a.significand | b.significand) goto propagateNaN;
+                softfloat_raiseFlags(softfloat_flag_invalid);
+                uiZ = defaultNaNF16UI;
+                goto uiZ;
+            }
+            sigDiff = a.significand - b.significand;
+            if (! sigDiff) {
+                uiZ =
+                    packToF16UI(
+                        (softfloat_roundingMode == softfloat_round_min), 0, 0);
+                goto uiZ;
+            }
+            if (a.biased_exponent) --a.biased_exponent;
+            z.sign = signF16UI(uiA);
+            if (sigDiff < 0) {
+                z.sign = ! z.sign;
+                sigDiff = -sigDiff;
+            }
+            shiftDist = softfloat_countLeadingZeros16(sigDiff) - 5;
+            z.biased_exponent = a.biased_exponent - shiftDist;
+            if (z.biased_exponent < 0) {
+                shiftDist = a.biased_exponent;
+                z.biased_exponent = 0;
+            }
+            z.significand = sigDiff<<shiftDist;
+            goto pack;
+        } else {
+            /*--------------------------------------------------------------------
+            *--------------------------------------------------------------------*/
+            z.sign = signF16UI(uiA);
+            if (expDiff < 0) {
+                /*----------------------------------------------------------------
+                *----------------------------------------------------------------*/
+                z.sign = ! z.sign;
+                if (b.biased_exponent == 0x1F) {
+                    if (b.significand) goto propagateNaN;
+                    uiZ = packToF16UI(z.sign, 0x1F, 0);
+                    goto uiZ;
+                }
+                if (expDiff <= -13) {
+                    uiZ = packToF16UI(z.sign, b.biased_exponent, b.significand);
+                    if (a.biased_exponent | a.significand) goto subEpsilon;
+                    goto uiZ;
+                }
+                z.biased_exponent = a.biased_exponent + 19;
+                sigX = b.significand | 0x0400;
+                sigY = a.significand + (a.biased_exponent ? 0x0400 : a.significand);
+                expDiff = -expDiff;
+            } else {
+                /*----------------------------------------------------------------
+                *----------------------------------------------------------------*/
+                uiZ = uiA;
+                if (a.biased_exponent == 0x1F) {
+                    if (a.significand) goto propagateNaN;
+                    goto uiZ;
+                }
+                if (13 <= expDiff) {
+                    if (b.biased_exponent | b.significand) goto subEpsilon;
+                    goto uiZ;
+                }
+                z.biased_exponent = b.biased_exponent + 19;
+                sigX = a.significand | 0x0400;
+                sigY = b.significand + (b.biased_exponent ? 0x0400 : b.significand);
+            }
+            sig32Z = ((u32) sigX<<expDiff) - sigY;
+            shiftDist = softfloat_countLeadingZeros32(sig32Z) - 1;
+            sig32Z <<= shiftDist;
+            z.biased_exponent -= shiftDist;
+            z.significand = sig32Z>>16;
+            if (sig32Z & 0xFFFF) {
+                z.significand |= 1;
+            } else {
+                if (! (z.significand & 0xF) && ((unsigned int) z.biased_exponent < 0x1E)) {
+                    z.significand >>= 4;
+                    goto pack;
+                }
+            }
+            return softfloat_roundPackToF16(z.sign, z.biased_exponent, z.significand);
+        }
+        /*------------------------------------------------------------------------
+        *------------------------------------------------------------------------*/
+    propagateNaN:
+        uiZ = softfloat_propagateNaNF16UI(uiA, uiB);
+        goto uiZ;
+        /*------------------------------------------------------------------------
+        *------------------------------------------------------------------------*/
+    subEpsilon:
+        roundingMode = softfloat_roundingMode;
+        if (roundingMode != softfloat_round_near_even) {
+            if (
+                (roundingMode == softfloat_round_minMag)
+                    || (roundingMode
+                            == (signF16UI(uiZ) ? softfloat_round_max
+                                    : softfloat_round_min))
+           ) {
+                --uiZ;
+            }
+    #ifdef SOFTFLOAT_ROUND_ODD
+            else if (roundingMode == softfloat_round_odd) {
+                uiZ = (uiZ - 1) | 1;
+            }
+    #endif
+        }
+        softfloat_exceptionFlags |= softfloat_flag_inexact;
+        goto uiZ;
+        /*------------------------------------------------------------------------
+        *------------------------------------------------------------------------*/
+    pack:
+        uiZ = packToF16UI(z.sign, z.biased_exponent, z.significand);
+    uiZ:
+        uZ.ui = uiZ;
+        return uZ.f;
+
+    }
+
+
+
+
+
+    f16 mul_add(f16 a, f16 b, f16 c, u8 op) {
+        bool signProd;
+        u16 magBits, uiZ;
+        struct exp8_sig16 normExpSig;
+        i8 expProd;
+        u32 sigProd;
+        bool z.sign;
+        i8 z.biased_exponent;
+        u16 z.significand;
+        i8 expDiff;
+        u32 sig32Z, sig32C;
+        i8 shiftDist;
+        union ui16_f16 uZ;
+
+        /*------------------------------------------------------------------------
+        *------------------------------------------------------------------------*/
+        a.sign = signF16UI(uiA);
+        a.biased_exponent  = expF16UI(uiA);
+        a.significand  = fracF16UI(uiA);
+        b.sign = signF16UI(uiB);
+        b.biased_exponent  = expF16UI(uiB);
+        b.significand  = fracF16UI(uiB);
+        c.sign = signF16UI(uiC) ^ (op == softfloat_mulAdd_subC);
+        c.biased_exponent  = expF16UI(uiC);
+        c.significand  = fracF16UI(uiC);
+        signProd = a.sign ^ b.sign ^ (op == softfloat_mulAdd_subProd);
+        /*------------------------------------------------------------------------
+        *------------------------------------------------------------------------*/
+        if (a.biased_exponent == 0x1F) {
+            if (a.significand || ((b.biased_exponent == 0x1F) && b.significand)) goto propagateNaN_ABC;
+            magBits = b.biased_exponent | b.significand;
+            goto infProdArg;
+        }
+        if (b.biased_exponent == 0x1F) {
+            if (b.significand) goto propagateNaN_ABC;
+            magBits = a.biased_exponent | a.significand;
+            goto infProdArg;
+        }
+        if (c.biased_exponent == 0x1F) {
+            if (c.significand) {
+                uiZ = 0;
+                goto propagateNaN_ZC;
+            }
+            uiZ = uiC;
+            goto uiZ;
+        }
+        /*------------------------------------------------------------------------
+        *------------------------------------------------------------------------*/
+        if (! a.biased_exponent) {
+            if (! a.significand) goto zeroProd;
+            normExpSig = softfloat_normSubnormalF16Sig(a.significand);
+            a.biased_exponent = normExpSig.exp;
+            a.significand = normExpSig.sig;
+        }
+        if (! b.biased_exponent) {
+            if (! b.significand) goto zeroProd;
+            normExpSig = softfloat_normSubnormalF16Sig(b.significand);
+            b.biased_exponent = normExpSig.exp;
+            b.significand = normExpSig.sig;
+        }
+        /*------------------------------------------------------------------------
+        *------------------------------------------------------------------------*/
+        expProd = a.biased_exponent + b.biased_exponent - 0xE;
+        a.significand = (a.significand | 0x0400)<<4;
+        b.significand = (b.significand | 0x0400)<<4;
+        sigProd = u32(a.significand) * b.significand;
+        if (sigProd < 0x20000000) {
+            --expProd;
+            sigProd <<= 1;
+        }
+        z.sign = signProd;
+        if (! c.biased_exponent) {
+            if (! c.significand) {
+                z.biased_exponent = expProd - 1;
+                z.significand = sigProd>>15 | ((sigProd & 0x7FFF) != 0);
+                goto roundPack;
+            }
+            normExpSig = softfloat_normSubnormalF16Sig(c.significand);
+            c.biased_exponent = normExpSig.exp;
+            c.significand = normExpSig.sig;
+        }
+        c.significand = (c.significand | 0x0400)<<3;
+        /*------------------------------------------------------------------------
+        *------------------------------------------------------------------------*/
+        expDiff = expProd - c.biased_exponent;
+        if (signProd == c.sign) {
+            /*--------------------------------------------------------------------
+            *--------------------------------------------------------------------*/
+            if (expDiff <= 0) {
+                z.biased_exponent = c.biased_exponent;
+                z.significand = c.significand + softfloat_shiftRightJam32(sigProd, 16 - expDiff);
+            } else {
+                z.biased_exponent = expProd;
+                sig32Z =
+                    sigProd
+                        + softfloat_shiftRightJam32(
+                            (u32) c.significand<<16, expDiff);
+                z.significand = sig32Z>>16 | ((sig32Z & 0xFFFF) != 0);
+            }
+            if (z.significand < 0x4000) {
+                --z.biased_exponent;
+                z.significand <<= 1;
+            }
+        } else {
+            /*--------------------------------------------------------------------
+            *--------------------------------------------------------------------*/
+            sig32C = u32 (c.significand) << 16;
+            if (expDiff < 0) {
+                z.sign = c.sign;
+                z.biased_exponent = c.biased_exponent;
+                sig32Z = sig32C - softfloat_shiftRightJam32(sigProd, -expDiff);
+            } else if (! expDiff) {
+                z.biased_exponent = expProd;
+                sig32Z = sigProd - sig32C;
+                if (! sig32Z) goto completeCancellation;
+                if (sig32Z & 0x80000000) {
+                    z.sign = ! z.sign;
+                    sig32Z = -sig32Z;
+                }
+            } else {
+                z.biased_exponent = expProd;
+                sig32Z = sigProd - softfloat_shiftRightJam32(sig32C, expDiff);
+            }
+            shiftDist = softfloat_countLeadingZeros32(sig32Z) - 1;
+            z.biased_exponent -= shiftDist;
+            shiftDist -= 16;
+            if (shiftDist < 0) {
+                z.significand =
+                    sig32Z>>(-shiftDist)
+                        | ((uint32_t) (sig32Z<<(shiftDist & 31)) != 0);
+            } else {
+                z.significand = (u16) sig32Z<<shiftDist;
+            }
+        }
+    roundPack:
+        return softfloat_roundPackToF16(z.sign, z.biased_exponent, z.significand);
+        /*------------------------------------------------------------------------
+        *------------------------------------------------------------------------*/
+    propagateNaN_ABC:
+        uiZ = softfloat_propagateNaNF16UI(uiA, uiB);
+        goto propagateNaN_ZC;
+        /*------------------------------------------------------------------------
+        *------------------------------------------------------------------------*/
+    infProdArg:
+        if (magBits) {
+            uiZ = packToF16UI(signProd, 0x1F, 0);
+            if (c.biased_exponent != 0x1F) goto uiZ;
+            if (c.significand) goto propagateNaN_ZC;
+            if (signProd == c.sign) goto uiZ;
+        }
+        softfloat_raiseFlags(softfloat_flag_invalid);
+        uiZ = defaultNaNF16UI;
+    propagateNaN_ZC:
+        uiZ = softfloat_propagateNaNF16UI(uiZ, uiC);
+        goto uiZ;
+        /*------------------------------------------------------------------------
+        *------------------------------------------------------------------------*/
+    zeroProd:
+        uiZ = uiC;
+        if (! (c.biased_exponent | c.significand) && (signProd != c.sign)) {
+    completeCancellation:
+            uiZ =
+                packToF16UI(
+                    (softfloat_roundingMode == softfloat_round_min), 0, 0);
+        }
+    uiZ:
+        uZ.ui = uiZ;
+        return uZ.f;
+
+    }
+
+
+}

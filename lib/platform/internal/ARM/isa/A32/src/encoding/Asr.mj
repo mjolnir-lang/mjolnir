@@ -1,0 +1,44 @@
+
+
+/// ASR (immediate) [A1]
+bitfield<u32> AsrImmediateA1 {
+    [31:28] Cond cond;
+    [27:16] = 0b000110100000u;
+    [15:12] u8 rd;
+    [11:7] u8 imm5;
+    [6:4] = 0b100u;
+    [3:0] u8 rm;
+}
+
+
+/// ASR (register) [A1]
+bitfield<u32> AsrRegisterA1 {
+    [31:28] Cond cond;
+    [27:16] = 0b000110100000u;
+    [15:12] u8 rd;
+    [11:8] u8 rs;
+    [7:4] = 0b0101u;
+    [3:0] u8 rm;
+}
+
+
+/// ASRS (immediate) [A1]
+bitfield<u32> AsrsImmediateA1 {
+    [31:28] Cond cond;
+    [27:16] = 0b000110110000u;
+    [15:12] u8 rd;
+    [11:7] u8 imm5;
+    [6:4] = 0b100u;
+    [3:0] u8 rm;
+}
+
+
+/// ASRS (register) [A1]
+bitfield<u32> AsrsRegisterA1 {
+    [31:28] Cond cond;
+    [27:16] = 0b000110110000u;
+    [15:12] u8 rd;
+    [11:8] u8 rs;
+    [7:4] = 0b0101u;
+    [3:0] u8 rm;
+}

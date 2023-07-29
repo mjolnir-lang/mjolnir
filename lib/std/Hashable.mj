@@ -1,0 +1,18 @@
+
+
+/// An Hashable object provides a hash function.
+interface Hashable {
+
+
+    /// Return the hash code.
+    @pure
+    u32 hash(safe) {
+        u32 hash = 5381
+
+        for (u32 i = 0; i < sizeof(this); i++) {
+            hash = (33 * hash) + (const u8 *: &this)[i]
+        }
+
+        return hash
+    }
+}

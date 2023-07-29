@@ -1,0 +1,287 @@
+
+
+class Vm {
+    Memory &mem;
+    Registers reg;
+
+
+    Vm(Memory &'memory) {
+        mem = memory;
+    }
+
+
+    void reset() {
+        mem.reset();
+        reg.reset();
+    }
+
+
+    void execute() {
+        do {
+            // Monitor signals
+            if (io.event()) {
+                ;
+            }
+
+            // The CPU execution is broken up into Instruction Fetch and Instruction Decode
+            // while Execute, Memory Access, and Writeback are done in instruction handlers
+            u16 op = mem.load(reg.pc);
+
+            if (
+                op[15:11] == 0b1'1101u ||
+                op[15:11] == 0b1'1110u ||
+                op[15:11] == 0b1'1111u
+            ) {
+                op = op << 16 | mem.load(reg.pc);
+            }
+
+            if (op[15:6] == 0b00'0000'0000u) {
+                execute(Mov-r(op));
+            } else if (op[15:11] == 0b0'0000u) {
+                execute(Lsl(op));
+            } else if (op[15:11] == 0b0'0001u) {
+                execute(Lsr(op));
+            } else if (op[15:11] == 0b0'0010u) {
+                execute(Asr(op));
+            } else if (op[15:11] == 0b0'0011u) {
+                match (op[12:11]) {
+                    0b00u => execute(Add-r(op));
+                    0b01u => execute(Sub-r(op));
+                    0b10u => execute(Add-imm3(op));
+                    0b11u => execute(Sub-imm3(op));
+                }
+            } else if (op[15:13] == 0b001u) {
+                match (op[12:11]) {
+                    0b00u => execute(Mov-imm8(op));
+                    0b01u => execute(Cmp(op));
+                    0b10u => execute(Add-imm8(op));
+                    0b11u => execute(Sub-imm8(op));
+                }
+            } else if (op[15:10] == 0b01'0000u) {
+                match (op[9:6]) {
+                    0b0000u => execute(And(op));
+                    0b0001u => execute(Eor(op));
+                    0b0010u => execute(Lsl(op));
+                    0b0011u => execute(Lsr(op));
+                    0b0100u => execute(Asr(op));
+                    0b0101u => execute(Adc(op));
+                    0b0110u => execute(Sbc(op));
+                    0b0111u => execute(Ror(op));
+                    0b1000u => execute(Tst(op));
+                    0b1001u => execute(Rsb(op));
+                    0b1010u => execute(Cmp(op));
+                    0b1011u => execute(Cmn(op));
+                    0b1100u => execute(Orr(op));
+                    0b1101u => execute(Mul(op));
+                    0b1110u => execute(Bic(op));
+                    0b1111u => execute(Mvn(op));
+                }
+            } else if (op[15:10] == 0b01'0001u) {
+                if (op[9:8] == 0b00u) {
+                    execute(Add(op));
+                } else if (op[9:6] == 0b01u) {
+                    execute(Cmp(op));
+                } else if (op[9:7] == 0b10u) {
+                    execute(Mov(op));
+                } else if (op[9:6] == 0b110u) {
+                    execute(Bx(op));
+                } else if (op[9:6] == 0b111u) {
+                    execute(Blx(op));
+                }
+            } else if (op[15:11] == 0b0'1001u) {
+                execute(Ldr(op));
+            } else if (op[15:12] == 0b0101u) {
+                match (op[11:9]) {
+                    0b011u => execute(Ldrsb(op));
+                    0b100u => execute(Ldr(op));
+                    0b101u => execute(Ldrh(op));
+                    0b110u => execute(Ldrb(op));
+                    0b111u => execute(Ldrsh(op));
+                    0b000u => execute(Str(op));
+                    0b001u => execute(Strh(op));
+                    0b010u => execute(Strb(op));
+                }
+            } else if (op[15:13] == 0b011u) {
+                match (op[12:11]) {
+                    0b00 => execute(Str(op));
+                    0b01 => execute(Ldr(op));
+                    0b10 => execute(Strb(op));
+                    0b11 => execute(Ldrb(op));
+                }
+            } else if (op[15:13] == 0b100u) {
+                match (op[12:11]) {
+                    0b00 => execute(Strh(op));
+                    0b01 => execute(Ldrh(op));
+                    0b10 => execute(Str(op));
+                    0b11 => execute(Ldr(op));
+                }
+            } else if (op[15:11] == 0b1'0100u) {
+                execute(Adr(op));
+            } else if (op[15:11] == 0b1'0101u) {
+                execute(Add(op));
+            } else if (op[15:12] == 0b1011u) {
+                if (op[11:7] == 0b0'0000u) {
+                    execute(Add(op));
+                } else if (op[11:7] == 0b0'0001u) {
+                    execute(Sub(op));
+                } else if (op[11:6] == 0b00'1000u) {
+                    execute(Sxth(op));
+                } else if (op[11:6] == 0b00'1001u) {
+                    execute(Sxtb(op));
+                } else if (op[11:6] == 0b00'1010u) {
+                    execute(Uxth(op));
+                } else if (op[11:6] == 0b00'1011u) {
+                    execute(Uxtb(op));
+                } else if (op[11:9] == 0b010u) {
+                    execute(Push(op));
+                } else if (op[11:6] == 0b10'1000u) {
+                    execute(Rev(op));
+                } else if (op[11:6] == 0b10'1001u) {
+                    execute(Rev16(op));
+                } else if (op[11:6] == 0b10'1011u) {
+                    execute(Revsh(op));
+                } else if (op[11:9] == 0b110u) {
+                    execute(Pop(op));
+                } else if (op[11:8] == 0b1110u) {
+                    execute(Bkpt(op));
+                } else if (op[11:8] == 0b1111u) {
+                    match (op[7:0]) {
+                        0b0000'0000u => execute(Nop(op));
+                        0b0001'0000u => execute(Yield(op));
+                        0b0010'0000u => execute(Wfe(op));
+                        0b0011'0000u => execute(Wfi(op));
+                        0b0100'0000u => execute(Sev(op));
+                        _ => fail;
+                    }
+                } else {
+                    fail;
+                }
+            } else if (op[15:11] == 0b1'1000u) {
+                execute(Stm(op));
+            } else if (op[15:11] == 0b1'1001u) {
+                execute(Ldm(op));
+            } else if (op[15:12] == 0b1101u) {
+                match (op[11:8]) {
+                    0b1110u => execute(UDF(op));
+                    0b1111u => execute(SVC(op));
+                    _ => execute(B(op));
+                }
+            } else if (op[15:11] == 0b1'1100u) {
+                execute(B(op));
+            } else if (op[15:11] == 0b1'1110u) {
+                ///          BL
+                /// 011100   MSR (register)
+                /// 011111   MSR
+                /// 1111111  UDF [T2]
+            } else if (op == 0xF3BFu) {
+                /// DMB
+                /// DSB
+                /// ISB
+            }
+        }
+    }
+
+
+    @internal
+    void execute(Ld-dd-nn &op) {
+        match (op.dd) {
+            0b00 => reg.bc = op.nn;
+            0b01 => reg.de = op.nn;
+            0b10 => reg.hl = op.nn;
+            0b11 => reg.sp = op.nn;
+        }
+    }
+
+
+    @internal
+    void execute(Ld-ix-nn &op) {
+        reg.ix = op.nn;
+    }
+
+
+    @internal
+    void execute(Ld-iy-nn &op) {
+        reg.iy = op.nn;
+    }
+
+
+    @internal
+    void execute(Ld-hl-nn &op) {
+        reg.l = mem.load(op.nn);
+        reg.h = mem.load(op.nn);
+    }
+
+
+    @internal
+    void execute(Ld-dd-nn &op) {
+        u16 val;
+        mem.load(&val[7:0], reg.sp++);
+        mem.load(&val[15:8], reg.sp++);
+
+        match (op.qq) {
+            0b00 => val = reg.bc;
+            0b01 => val = reg.de;
+            0b10 => val = reg.hl;
+            0b11 => val = reg.af;
+        }
+    }
+
+
+    @internal
+    void execute(Push-qq &op) {
+        u16 val;
+
+        match (op.qq) {
+            0b00 => val = reg.bc;
+            0b01 => val = reg.de;
+            0b10 => val = reg.hl;
+            0b11 => val = reg.af;
+        }
+
+        mem.store(val[15:8], --reg.sp);
+        mem.store(val[7:0], --reg.sp);
+    }
+
+
+    @internal
+    void execute(Push-ix &op) {
+        mem.store(reg.ixh, --reg.sp);
+        mem.store(reg.ixl, --reg.sp);
+    }
+
+
+    @internal
+    void execute(Push-iy &op) {
+        mem.store(reg.iyh, --reg.sp);
+        mem.store(reg.iyl, --reg.sp);
+    }
+
+
+    @internal
+    void execute(Pop-qq &op) {
+        u16 val;
+        mem.load(&val[7:0], reg.sp++);
+        mem.load(&val[15:8], reg.sp++);
+
+        match (op.qq) {
+            0b00 => val = reg.bc;
+            0b01 => val = reg.de;
+            0b10 => val = reg.hl;
+            0b11 => val = reg.af;
+        }
+    }
+
+
+    @internal
+    void execute(Pop-ix &op) {
+        mem.load(&reg.ixl, reg.sp++);
+        mem.load(&reg.ixh, reg.sp++);
+    }
+
+
+    @internal
+    void execute(Pop-iy &op) {
+        mem.load(&reg.iyl, reg.sp++);
+        mem.load(&reg.iyh, reg.sp++);
+    }
+}

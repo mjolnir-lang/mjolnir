@@ -1,0 +1,80 @@
+
+
+/// An `ArrayType` is a contiguous array of the base type whose size is the
+/// product of the base type size and the array size.
+class ArrayType {
+    Expression array_size;
+    const Type &base_type;
+    u32 size;
+    u32 alignment;
+    bool is_const;
+    bool is_volatile;
+
+
+    ArrayType(
+        const Type &base_type,
+        Expression array_size,
+        u32 size,
+        u32 alignment,
+        bool is_const,
+        bool is_volatile
+    ) {
+        .array_size = array_size;
+        .base_type = base_type;
+        .size = size;
+        .alignment = alignment;
+        .is_const = is_const;
+        .is_volatile = is_volatile;
+    }
+}
+
+
+impl<DerivedType> ArrayType {
+
+
+    /// Return the size of the type in bytes.
+    u32 size(safe) {
+        return size;
+    }
+
+
+    /// Return the size of the type in bytes.
+    const Expression &array_size(safe) {
+        return array_size;
+    }
+
+
+    /// Return the alignment of the type in bytes.
+    u32 alignment(safe) {
+        return alignment;
+    }
+
+
+    /// Return true if the type is 'const' qualified.
+    bool is_const(safe) {
+        return is_const;
+    }
+
+
+    /// Return true if the type is 'volatile' qualified.
+    bool is_volatile(safe) {
+        return is_volatile;
+    }
+
+
+    const Method &destructor(safe) {
+        return ;
+    }
+
+
+    /// Return the 'const' qualified derivation of the type.
+    const Type &const_qualified_derivation(safe) {
+        return;
+    }
+
+
+    /// Return the 'volatile' qualified derivation of the type.
+    const Type &volatile_qualified_derivation(safe) {
+        return;
+    }
+}

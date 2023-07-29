@@ -1,0 +1,26 @@
+
+
+/// Remote Access Boot control
+///
+/// The BMC allows a remote console application to optionally direct the boot
+/// process following a command to reset, power-up, or power-cycle the system.
+/// The remote console sets Boot Option flags prior to issuing a command to
+/// reset, power up, or power-cycle the system. The system BIOS can then read
+/// these flags after the system restarts and perform the requested boot
+/// operation. This will typically be used to direct the system to boot to an
+/// alternative partition or source in order to perform emergency remote
+/// recovery operations.
+///
+/// The Boot Option parameter definitions follow the set of Boot Option
+/// parameters defined by the DMTF Pre-OS Working Group.
+///
+/// Implementing Remote Access Boot control is optional.
+class RemoteAccessBootControlCommand {
+    struct Request request {
+    }
+    struct Response response {
+
+        /// Completion Code
+        CompletionCode completion_code;
+    }
+}

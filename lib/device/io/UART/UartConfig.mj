@@ -1,0 +1,39 @@
+
+
+enum<u8> SerialParity {
+    StringView name;
+
+    /// No parity bit.
+    NONE  = {"NONE"};
+
+    /// The parity bit is set such that the total number of 1's is even.
+    EVEN  = {"EVEN"};
+
+    /// The parity bit is set such that the total number of 1's is odd.
+    ODD   = {"ODD"};
+
+    /// The parity bit is always 0.
+    SPACE = {"SPACE"};
+
+    /// The parity bit is always 1.
+    MARK  = {"MARK"};
+}
+
+
+struct UartConfig {
+
+    /// The rate of transmission in bits per second.
+    u32<b/s> baudrate;
+
+    // The number of data bits.
+    u8 data_bits;
+
+    // The data parity.
+    SerialParity parity_bits;
+
+    // 1 or 2.
+    u8 stop_bits;
+
+    // full or half.
+    u8 full_half_duplex;
+}

@@ -1,0 +1,195 @@
+
+
+/// 3.3 Attribute-List Declarations
+///
+/// Attributes are used to associate name-value pairs with elements. Attribute specifications MUST NOT appear outside of start-tags and empty-element tags; thus, the productions used to recognize them appear in 3.1 Start-Tags, End-Tags, and Empty-Element Tags. Attribute-list declarations may be used:
+///
+/// - To define the set of attributes pertaining to a given element type.
+/// - To establish type constraints for these attributes.
+/// - To provide default values for attributes.
+///
+/// [Definition: Attribute-list declarations specify the name, data type, and default value (if any) of each attribute associated with a given element type:]
+/// Attribute-list Declaration
+/// [52]   	AttlistDecl	   ::=   	'<!ATTLIST' S Name AttDef* S? '>'
+/// [53]   	AttDef	   ::=   	S Name S AttType S DefaultDecl
+///
+/// The Name in the AttlistDecl rule is the type of an element. At user option, an XML processor MAY issue a warning if attributes are declared for an element type not itself declared, but this is not an error. The Name in the AttDef rule is the name of the attribute.
+///
+/// When more than one AttlistDecl is provided for a given element type, the contents of all those provided are merged. When more than one definition is provided for the same attribute of a given element type, the first declaration is binding and later declarations are ignored. For interoperability, writers of DTDs may choose to provide at most one attribute-list declaration for a given element type, at most one attribute definition for a given attribute name in an attribute-list declaration, and at least one attribute definition in each attribute-list declaration. For interoperability, an XML processor MAY at user option issue a warning when more than one attribute-list declaration is provided for a given element type, or more than one attribute definition is provided for a given attribute, but this is not an error.
+/// 3.3.1 Attribute Types
+///
+/// XML attribute types are of three kinds: a string type, a set of tokenized types, and enumerated types. The string type may take any literal string as a value; the tokenized types are more constrained. The validity constraints noted in the grammar are applied after the attribute value has been normalized as described in 3.3.3 Attribute-Value Normalization.
+/// Attribute Types
+/// [54]   	AttType	   ::=   	StringType | TokenizedType | EnumeratedType
+/// [55]   	StringType	   ::=   	'CDATA'
+/// [56]   	TokenizedType	   ::=   	'ID'	[VC: ID]
+///                 [VC: One ID per Element Type]
+///                 [VC: ID Attribute Default]
+///             | 'IDREF'	[VC: IDREF]
+///             | 'IDREFS'	[VC: IDREF]
+///             | 'ENTITY'	[VC: Entity Name]
+///             | 'ENTITIES'	[VC: Entity Name]
+///             | 'NMTOKEN'	[VC: Name Token]
+///             | 'NMTOKENS'	[VC: Name Token]
+///
+/// # Validity constraint: ID
+///
+/// Values of type ID MUST match the Name production. A name MUST NOT appear more than once in an XML document as a value of this type; i.e., ID values MUST uniquely identify the elements which bear them.
+///
+/// # Validity constraint: One ID per Element Type
+///
+/// An element type MUST NOT have more than one ID attribute specified.
+///
+/// # Validity constraint: ID Attribute Default
+///
+/// An ID attribute MUST have a declared default of #IMPLIED or #REQUIRED.
+///
+/// # Validity constraint: IDREF
+///
+/// Values of type IDREF MUST match the Name production, and values of type IDREFS MUST match Names; each Name MUST match the value of an ID attribute on some element in the XML document; i.e. IDREF values MUST match the value of some ID attribute.
+///
+/// # Validity constraint: Entity Name
+///
+/// Values of type ENTITY MUST match the Name production, values of type ENTITIES MUST match Names; each Name MUST match the name of an unparsed entity declared in the DTD.
+///
+/// # Validity constraint: Name Token
+///
+/// Values of type NMTOKEN MUST match the Nmtoken production; values of type NMTOKENS MUST match Nmtokens.
+///
+/// [Definition: Enumerated attributes have a list of allowed values in their declaration ]. They MUST take one of those values. There are two kinds of enumerated attribute types:
+/// Enumerated Attribute Types
+/// [57]   	EnumeratedType	   ::=   	NotationType | Enumeration
+/// [58]   	NotationType	   ::=   	'NOTATION' S '(' S? Name (S? '|' S? Name)* S? ')' 	[VC: Notation Attributes]
+///                 [VC: One Notation Per Element Type]
+///                 [VC: No Notation on Empty Element]
+///                 [VC: No Duplicate Tokens]
+/// [59]   	Enumeration	   ::=   	'(' S? Nmtoken (S? '|' S? Nmtoken)* S? ')'	[VC: Enumeration]
+///                 [VC: No Duplicate Tokens]
+///
+/// A NOTATION attribute identifies a notation, declared in the DTD with associated system and/or public identifiers, to be used in interpreting the element to which the attribute is attached.
+///
+/// # Validity constraint: Notation Attributes
+///
+/// Values of this type MUST match one of the notation names included in the declaration; all notation names in the declaration MUST be declared.
+///
+/// # Validity constraint: One Notation Per Element Type
+///
+/// An element type MUST NOT have more than one NOTATION attribute specified.
+///
+/// # Validity constraint: No Notation on Empty Element
+///
+/// For compatibility, an attribute of type NOTATION MUST NOT be declared on an element declared EMPTY.
+///
+/// # Validity constraint: No Duplicate Tokens
+///
+/// The notation names in a single NotationType attribute declaration, as well as the NmTokens in a single Enumeration attribute declaration, MUST all be distinct.
+///
+/// # Validity constraint: Enumeration
+///
+/// Values of this type MUST match one of the Nmtoken tokens in the declaration.
+///
+/// For interoperability, the same Nmtoken SHOULD NOT occur more than once in the enumerated attribute types of a single element type.
+/// 3.3.2 Attribute Defaults
+///
+/// An attribute declaration provides information on whether the attribute's presence is REQUIRED, and if not, how an XML processor is to react if a declared attribute is absent in a document.
+/// Attribute Defaults
+/// [60]   	DefaultDecl	   ::=   	'#REQUIRED' | '#IMPLIED'
+///             | (('#FIXED' S)? AttValue)	[VC: Required Attribute]
+///                 [VC: Attribute Default Value Syntactically Correct]
+///                 [WFC: No < in Attribute Values]
+///                 [VC: Fixed Attribute Default]
+///                 [WFC: No External Entity References]
+///
+/// In an attribute declaration, #REQUIRED means that the attribute MUST always be provided, #IMPLIED that no default value is provided. [Definition: If the declaration is neither #REQUIRED nor #IMPLIED, then the AttValue value contains the declared default value; the #FIXED keyword states that the attribute MUST always have the default value. When an XML processor encounters an element without a specification for an attribute for which it has read a default value declaration, it MUST report the attribute with the declared default value to the application.]
+///
+/// # Validity constraint: Required Attribute
+///
+/// If the default declaration is the keyword #REQUIRED, then the attribute MUST be specified for all elements of the type in the attribute-list declaration.
+///
+/// # Validity constraint: Attribute Default Value Syntactically Correct
+///
+/// The declared default value MUST meet the syntactic constraints of the declared attribute type. That is, the default value of an attribute:
+///
+///     of type IDREF or ENTITY must match the Name production;
+///
+///     of type IDREFS or ENTITIES must match the Names production;
+///
+///     of type NMTOKEN must match the Nmtoken production;
+///
+///     of type NMTOKENS must match the Nmtokens production;
+///
+///     of an enumerated type (either a NOTATION type or an enumeration) must match one of the enumerated values.
+///
+/// Note that only the syntactic constraints of the type are required here; other constraints (e.g. that the value be the name of a declared unparsed entity, for an attribute of type ENTITY) will be reported by a validating parser only if an element without a specification for this attribute actually occurs.
+///
+/// # Validity constraint: Fixed Attribute Default
+///
+/// If an attribute has a default value declared with the #FIXED keyword, instances of that attribute MUST match the default value.
+///
+/// Examples of attribute-list declarations:
+///
+/// ```xml
+/// <!ATTLIST termdef
+///         id      ID      #REQUIRED
+///         name    CDATA   #IMPLIED>
+/// <!ATTLIST list
+///         type    (bullets|ordered|glossary)  "ordered">
+/// <!ATTLIST form
+///         method  CDATA   #FIXED "POST">
+/// ```
+///
+/// 3.3.3 Attribute-Value Normalization
+///
+/// Before the value of an attribute is passed to the application or checked for validity, the XML processor MUST normalize the attribute value by applying the algorithm below, or by using some other method such that the value passed to the application is the same as that produced by the algorithm.
+///
+///     All line breaks MUST have been normalized on input to #xA as described in 2.11 End-of-Line Handling, so the rest of this algorithm operates on text normalized in this way.
+///
+///     Begin with a normalized value consisting of the empty string.
+///
+///     For each character, entity reference, or character reference in the unnormalized attribute value, beginning with the first and continuing to the last, do the following:
+///
+///         For a character reference, append the referenced character to the normalized value.
+///
+///         For an entity reference, recursively apply step 3 of this algorithm to the replacement text of the entity.
+///
+///         For a white space character (#x20, #xD, #xA, #x9), append a space character (#x20) to the normalized value.
+///
+///         For another character, append the character to the normalized value.
+///
+/// If the attribute type is not CDATA, then the XML processor MUST further process the normalized attribute value by discarding any leading and trailing space (#x20) characters, and by replacing sequences of space (#x20) characters by a single space (#x20) character.
+///
+/// Note that if the unnormalized attribute value contains a character reference to a white space character other than space (#x20), the normalized value contains the referenced character itself (#xD, #xA or #x9). This contrasts with the case where the unnormalized value contains a white space character (not a reference), which is replaced with a space character (#x20) in the normalized value and also contrasts with the case where the unnormalized value contains an entity reference whose replacement text contains a white space character; being recursively processed, the white space character is replaced with a space character (#x20) in the normalized value.
+///
+/// All attributes for which no declaration has been read SHOULD be treated by a non-validating processor as if declared CDATA.
+///
+/// It is an error if an attribute value contains a reference to an entity for which no declaration has been read.
+///
+/// Following are examples of attribute normalization. Given the following declarations:
+///
+/// ```xml
+/// <!ENTITY d "&#xD;">
+/// <!ENTITY a "&#xA;">
+/// <!ENTITY da "&#xD;&#xA;">
+/// ```
+///
+/// the attribute specifications in the left column below would be normalized to the character sequences of the middle column if the attribute a is declared NMTOKENS and to those of the right columns if a is declared CDATA.
+/// Attribute specification	a is NMTOKENS	a is CDATA
+///
+/// ```xml
+/// a="
+/// xyz"
+/// x y z
+/// #x20 #x20 x y z
+/// a="&d;&d;A&a;&#x20;&a;B&da;"
+/// A #x20 B
+/// #x20 #x20 A #x20 #x20 #x20 B #x20 #x20
+/// a=
+/// "&#xd;&#xd;A&#xa;&#xa;B&#xd;&#xa;"
+/// #xD #xD A #xA #xA B #xD #xA
+/// #xD #xD A #xA #xA B #xD #xA
+/// ```
+///
+/// Note that the last example is invalid (but well-formed) if a is declared to be of type NMTOKENS.
+class XmlAttribute {
+    ;
+}

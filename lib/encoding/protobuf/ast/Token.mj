@@ -1,0 +1,36 @@
+
+
+enum<u8> TokenType {
+    COMMENT;
+    KEYWORD;
+    IDENTIFER;
+    NUMBER;
+    OPERATOR;
+}
+
+
+struct Token {
+    String string;
+
+
+    shared {
+
+        /// Fundamental Types
+        Token DOUBLE = Token();
+        Token FLOAT = Token();
+        Token STRING = Token();
+        Token INT32 = Token();
+
+
+        /// Keywords (Field Rules)
+        Token SINGULAR = Token();
+        Token OPTIONAL = Token();
+        Token REQUIRED = Token();
+        Token REPEATED = Token();
+        Token MAP = Token();
+        Token RESERVED = Token();
+
+        /// Keywords
+        Token MESSAGE = Token();
+    }
+}

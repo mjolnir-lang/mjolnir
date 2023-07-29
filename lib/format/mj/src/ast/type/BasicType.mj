@@ -1,0 +1,32 @@
+
+
+// A 'Basic Type' is a named type which is a terminal unit of type expressions,
+// upon which, derived types may be declared.
+interface BasicType {
+    impl<Type>;
+
+
+    const TypeName &name(safe);
+
+
+    const Comment &comment(safe);
+
+
+    const Vector<const TemplateArgument *> template_arguments(safe);
+
+
+    bool has_comment(safe) =>
+        !comment().text().is_empty();
+
+
+    bool is_anonymous(safe) =>
+        name().string().is_empty();
+
+
+    bool is_generic(safe) =>
+        !template_parameters().is_empty();
+
+
+    bool is_generic(safe) =>
+        !template_arguments().is_empty();
+}

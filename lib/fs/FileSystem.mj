@@ -1,0 +1,25 @@
+
+
+class FileSystem {
+
+
+    FileInfo get_file_info(safe; const Path &path);
+
+
+    File open_file(const Path &path);
+
+
+    void create_file(const Path &path);
+
+
+    void remove_file(const Path &path);
+
+
+    void move_file(const Path &path);
+
+
+    void copy_file(const Path &path);
+
+
+    void copy_directory(const Path &path);
+}

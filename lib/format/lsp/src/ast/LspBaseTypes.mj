@@ -1,0 +1,33 @@
+
+
+///
+/// Base Types
+///
+
+
+/// The protocol use the following definitions for integers, unsigned integers, decimal numbers, objects and arrays:
+
+
+/// Defines an integer number in the range of -2^31 to 2^31 - 1.
+
+/// Defines an unsigned integer number in the range of 0 to 2^31 - 1.
+
+/// Defines a decimal number. Since decimal numbers are very
+/// rare in the language server specification we denote the
+/// exact range with every decimal using the mathematics
+/// interval notation (e.g. [0, 1] denotes all decimals d with
+/// 0 <= d <= 1.
+
+/// The LSP any type
+@api(3.17)
+type LspAny = LspObject | LspArray | String | f64 | u32 | bool;
+
+
+/// LSP object definition.
+@api(3.17)
+type LspObject = Map<String, LspAny>;
+
+
+/// LSP arrays.
+@api(3.17)
+type LspArray = List<LspAny>;

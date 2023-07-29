@@ -1,0 +1,6 @@
+
+
+/// The SEL Device is the logical management device that provides the interface to the System Event Log for the system. The SEL Device provides a set of commands for managing the System Event Log.
+interface IpmiSelDevice {
+
+}

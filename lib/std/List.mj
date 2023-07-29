@@ -1,0 +1,129 @@
+
+
+class ListIterator<type T> {
+    T **ptr
+    T **end
+
+
+    ListIterator(safe; safe List<T> &list) {
+        ptr = list[0]
+        end = list[list.size() - 1]
+    }
+}
+
+
+impl<Iterator<T>> ListIterator<type T> {
+
+
+    bool is_empty() {
+        return ptr == end
+    }
+
+
+    T &next() {
+        return *ptr++
+    }
+}
+
+
+/// A list of objects with O(1) access time
+class List<type T, u32 PAGE_SIZE = 32> {
+    Vector<T[PAGE_SIZE]> data
+    Vector<T *> ptrs
+
+
+    List() {
+    }
+
+
+    List(InitializerList<T> values) {
+        Memory::allocate(values.size() * sizeof(T))
+    }
+
+
+    List(const List &list) {
+    }
+
+
+    List(const List &list, u32 size) {
+    }
+
+
+    u32 size(safe) {
+        return data.size()
+    }
+
+
+    u32 capacity(safe) {
+        return data.capacity()
+    }
+
+
+    void clear() {
+        for (T &value : *this) {
+            value.~T()
+        }
+
+        // TODO: Reorder pointers?
+    }
+
+
+    void reserve(u32 size) {
+        data.reserve(size)
+    }
+
+
+    void append(const T &value) {
+        data.append(value)
+    }
+
+
+    void append(T value) {
+        data.append(value)
+    }
+
+
+    /// Append a new element to the vector in place.
+    T &append_new(...) {
+        return data.append_new(...)
+    }
+
+
+    void insert(u32 index, const T &value) {
+        data.append(value)
+    }
+
+
+    void insert(u32 index, T value) {
+        data.append(value)
+    }
+
+
+    void remove(u32 index) {
+        ptrs[index]->~T()
+    }
+
+
+    void remove_all(const T &value) {
+        
+    }
+
+
+    void remove_if(Function<bool(const T &)> filter) {
+        
+    }
+
+
+    safe T &{[]}(safe; u32 index) {
+        return *ptrs[index]
+    }
+}
+
+
+impl<Iterable<T>> List<type T> {
+
+
+    ListIterator<safe T> iterator(safe) {
+        return ListIterator<safe T>(this)
+    }
+}

@@ -1,0 +1,45 @@
+
+
+
+class Assembler {
+
+
+    void assemble(File &file) {
+        do {
+            struct strings {
+                StringView op;
+                StringView args[4];
+            }
+
+            match (strings.op) {
+                'LD' => match (strings.args[0]) {
+                    'A' => assemble(Ld-qq(op));
+                    'B' => assemble(Ld-qq(op));
+                    ? => fail;
+                }
+                'PUSH' => match (strings.args[0]) {
+                    'AF' => assemble(Push-qq(op));
+                    ? => fail;
+                }
+                'POP' => match (strings.args[0]) {
+                    'AF' => assemble(Pop-qq(op));
+                    ? => fail;
+                }
+                ? => fail;
+            }
+        }
+    }
+
+
+    @internal
+    StringView? assemble() {
+        StringView::print('PUSH\s+(BC|DE|HL|AF)', strings.qq));
+        match (strings.qq) {
+            'BC' => op.qq = 0b00;
+            'DE' => op.qq = 0b01;
+            'HL' => op.qq = 0b10;
+            'AF' => op.qq = 0b11;
+            ? => fail;
+        }
+    }
+}

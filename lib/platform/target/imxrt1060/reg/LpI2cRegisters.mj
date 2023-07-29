@@ -1,0 +1,1363 @@
+
+
+struct LpI2cRegisters {
+
+
+    // Version ID
+    //
+    // Contains version numbers for the module design and feature set.
+    @offset(0x00)
+    const volatile bitfield<u32> {
+
+        // Feature Specification Number
+        //
+        // Returns the feature set number. Read-only field.
+        //
+        // 2 - Master only, with standard feature set
+        // 3 - Master and slave, with standard feature set
+        [0:16] FEATURE;
+
+        // Minor Version Number
+        //
+        // Returns the minor version number for the module design specification. Read-only field.
+        [16:24] MINOR;
+
+        // Major Version Number
+        //
+        // Returns the major version number for the module design specification. Read-only field.
+        [24:32] MAJOR;
+    } VERID;
+
+
+    // Parameter
+    //
+    // Contains parameter values that were implemented in the module.
+    @offset(0x04)
+    volatile bitfield<u32> {
+
+        // Master Transmit FIFO Size
+        //
+        // Configures the number of words in the master transmit FIFO to 2^MTXFIFO
+        [0:4] MTXFIFO;
+
+        // Master Receive FIFO Size
+        //
+        // Configures the number of words in the master receive FIFO to 2^MRXFIFO
+        [8:12] MRXFIFO;
+    } PARAM;
+
+
+    // Master Control
+    //
+    // Contains resets, debug enable, and other master control settings.
+    @offset(0x10)
+    volatile bitfield<u32> {
+
+        // Master Enable
+        //
+        // Enables the Master logic
+        //
+        // 0 - Master logic is disabled
+        // 1 - Master logic is enabled
+        [0] MEN;
+
+        // Software Reset
+        //
+        // Resets all internal master logic and registers, except the Master Control (MCR) register. The bit field
+        // remains 1 until written 0 by software. The reset takes effect immediately and remains asserted until
+        // negated by software. There is no minimum delay required before clearing the software reset.
+        //
+        // 0 - Master logic is not reset
+        // 1 - Master logic is reset
+        [1] RST;
+
+        // Doze mode enable
+        //
+        // Enables or disables the master in doze mode
+        //
+        // 0 - Master is enabled in doze mode
+        // 1 - Master is disabled in doze mode
+        [2] DOZEN;
+
+        // Debug Enable
+        //
+        // Enables the Master in debug mode
+        //
+        // 0 - Master is disabled in debug mode
+        // 1 - Master is enabled in debug mode
+        [3] DBGEN;
+
+        // Reset Transmit FIFO
+        //
+        // Resets the transmit FIFO
+        //
+        // 0 - No effect
+        // 1 - Transmit FIFO is reset
+        [8] RTF;
+
+        // Reset Receive FIFO
+        //
+        // Resets the receive FIFO
+        //
+        // 0 - No effect
+        // 1 - Receive FIFO is reset
+        [9] RRF;
+    } MCR;
+
+
+    // Master Status
+    //
+    // Contains status flags for transmit and receive data, for start and stop conditions, and for bus and master busy or idle status.
+    @offset(0x14)
+    volatile bitfield<u32> {
+
+        // Transmit Data Flag
+        //
+        // Becomes 1 when the number of words in the transmit FIFO is equal or less than MFCR[TXWATER].
+        //
+        // 0 - Transmit data is not requested
+        // 1 - Transmit data is requested
+        [0] TDF;
+
+        // Receive Data Flag
+        //
+        // Becomes 1 when the number of words in the receive FIFO is greater than MFCR[RXWATER].
+        //
+        // 0 - Receive data is not ready
+        // 1 - Receive data is ready
+        [1] RDF;
+
+        // End Packet Flag
+        //
+        // Becomes 1 when the LPI2C master generates either a repeated START condition or a STOP condition.
+        // Does not write 1 when the master first generates a START condition.
+        //
+        // 0 - Master has not generated a STOP or Repeated START condition
+        // 1 - Master has generated a STOP or Repeated START condition
+        [8] EPF;
+
+        // STOP Detect Flag
+        //
+        // Becomes 1 when the LPI2C master generates a STOP condition.
+        //
+        // 0 - Master has not generated a STOP condition
+        // 1 - Master has generated a STOP condition
+        [9] SDF;
+
+        // NACK Detect Flag
+        //
+        // Becomes 1 if the LPI2C master detects a NACK it was not expecting when transmitting an address or
+        // data. When 1, the master does not initiate a new START condition until NDF has been written 0. If a
+        // NACK is expected for a given address (as configured by the command word), then the NDF is 1 if a
+        // NACK is not generated.
+        // When NDF is 1, the LPI2C master automatically transmits a STOP condition if MCFGR1[AUTOSTOP] =
+        // 1, or the transmit FIFO is not empty.
+        //
+        // 0 - Unexpected NACK was not detected
+        // 1 - Unexpected NACK was detected
+        [10] NDF;
+
+        // Arbitration Lost Flag
+        //
+        // Becomes 1 if either of these conditions exist:
+        // • The LPI2C master transmits a logic 1 and detects a logic 0 on the I2C bus
+        // • The LPI2C master detects a START or STOP condition while the LPI2C master is transmitting data
+        // When ALF becomes 1, the LPI2C master releases the I2C bus (goes idle), and the LPI2C master does
+        // not initiate a new START condition until the ALF becomes 0.
+        //
+        // 0 - Master has not lost arbitration
+        // 1 - Master has lost arbitration
+        [11] ALF;
+
+        // FIFO Error Flag
+        //
+        // Detects an attempt to send or receive data without first generating a (repeated) START condition. This
+        // error can occur if the transmit FIFO underflows when MCFGR1[AUTOSTOP] = 1. When FEF is 1, the
+        // LPI2C master sends a STOP condition (if busy), and does not initiate a new START condition until FEF is
+        // 0.
+        //
+        // 0 - No error
+        // 1 - Master sending or receiving data without a START condition
+        [12] FEF;
+
+        // Pin Low Timeout Flag
+        //
+        // Becomes 1 when the SCL and/or SDA input is low for more than PINLOW cycles (Pin Low Timeout,
+        // MCFGR3[PINLOW]), even when the LPI2C master is idle.
+        // • Software is responsible for resolving the pin low condition.
+        // • PLTF cannot become 0 as long as the pin low timeout continues.
+        // • Before the LPI2C can initiate a START condition, the PLTF must be written 0.
+        // See MCFGR1[TIMECFG] for the SCL and/or SDA timeout settings.
+        //
+        // 0 - Pin low timeout has not occurred or is disabled
+        // 1 - Pin low timeout has occurred
+        [13] PLTF;
+
+        // Data Match Flag
+        //
+        // Indicates that the received data has matched the MDMR[MATCH0] and/or MDMR[MATCH1] fields (as
+        // configured by MCFGR1[MATCFG]. Received data discarded due to CMD field does not cause DMF to
+        // become 1.
+        //
+        // 0 - Have not received matching data
+        // 1 - Have received matching data
+        [14] DMF;
+
+        // Master Busy Flag
+        //
+        // Indicates that the I2C Master is busy.
+        //
+        // 0 - I2C Master is idle
+        // 1 - I2C Master is busy
+        [24] MBF;
+
+        // Bus Busy Flag
+        //
+        // Indicates that the I2C bus is busy.
+        //
+        // 0 - I2C Bus is idle
+        // 1 - I2C Bus is busy
+        [25] BBF;
+    } MSR;
+
+
+    // Master Interrupt Enable
+    //
+    // Contains:
+    // - Transmit and receive data interrupt enables
+    // - START, STOP, and NACK detect interrupt enables
+    // - DMA interrupt enables
+    @offset(0x18)
+    volatile bitfield<u32> {
+
+        // Transmit Data Interrupt Enable
+        //
+        // Enables interrupt for transmit data.
+        //
+        // 0 - Disabled
+        // 1 - Enabled
+        [0] TDIE;
+
+        // Receive Data Interrupt Enable
+        //
+        // Enables interrupt for receive data.
+        //
+        // 0 - Disabled
+        // 1 - Enabled
+        [1] RDIE;
+
+        // End Packet Interrupt Enable
+        //
+        // EPIE Enables interrupt for end packet.
+        //
+        // 0 - Disabled
+        // 1 - Enabled
+        [8] EPIE;
+
+        // STOP Detect Interrupt Enable
+        //
+        // Enables interrupt for STOP detection.
+        //
+        // 0 - Disabled
+        // 1 - Enabled
+        [9] SDIE;
+
+        // NACK Detect Interrupt Enable
+        //
+        // Enables interrupt for NACK detection.
+        //
+        // 0 - Disabled
+        // 1 - Enabled
+        [10] NDIE;
+
+        // Arbitration Lost Interrupt Enable
+        //
+        // Enables interrupt for arbitration lost.
+        //
+        // 0 - Disabled
+        // 1 - Enabled
+        [11] ALIE;
+
+        // FIFO Error Interrupt Enable
+        //
+        // Enables interrupt for FIFO error.
+        //
+        // 0 - Disabled
+        // 1 - Enabled
+        [12] FEIE;
+
+        // Pin Low Timeout Interrupt Enable
+        //
+        // Enables interrupt for pin-low timeout.
+        //
+        // 0 - Disabled
+        // 1 - Enabled
+        [13] PLTIE;
+
+        // Data Match Interrupt Enable
+        //
+        // Enables interrupt for data match.
+        //
+        // 0 - Disabled
+        // 1 - Enabled
+        [14] DMIE;
+    } MIER;
+
+
+    // Master DMA Enable
+    //
+    // Contains DMA transmit, request, and receive enables.
+    @offset(0x1C)
+    volatile bitfield<u32> {
+
+        // Transmit Data DMA Enable
+        //
+        // Enables DMA transmit data.
+        //
+        // 0 - DMA request is disabled
+        // 1 - DMA request is enabled
+        [0] TDDE;
+
+        // Receive Data DMA Enable
+        //
+        // Enables DMA receive data.
+        //
+        // 0 - DMA request is disabled
+        // 1 - DMA request is enabled
+        [1] RDDE;
+    } MDER;
+
+    // Master Configuration 0
+    //
+    // Contains host settings and other receive and transfer settings.
+    @offset(0x20)
+    volatile bitfield<u32> {
+
+        // Host request enable
+        //
+        // When enabled, the LPI2C master only initiates a START condition if the host request input is asserted
+        // and the bus is idle. A repeated START is not affected by the host request.
+        //
+        // 0 - Host request input is disabled
+        // 1 - Host request input is enabled
+        [0] HREN;
+
+        // Host request polarity
+        //
+        // Configures the polarity of the host request input. When host request is enabled, this bit should not
+        // change.
+        //
+        // 0 - Active low
+        // 1 - Active high
+        [1] HRPOL;
+
+        // Host request select
+        //
+        // Selects the source of the host request input. When host request is enabled, this bit should not change.
+        //
+        // 0 - Host request input is pin HREQ
+        // 1 - Host request input is input trigger
+        [2] HRSEL;
+
+        // Circular FIFO enable
+        //
+        // When enabled, the transmit FIFO read pointer is saved to a temporary register. The transmit FIFO
+        // empties as normal, but after the LPI2C master is idle and the transmit FIFO is empty, then the read
+        // pointer value will be restored from the temporary register. This setting causes the contents of the transmit
+        // FIFO to be cycled through repeatedly. If MCFGR1[AUTOSTOP] is 1, then a STOP condition is sent
+        // whenever the transmit FIFO is empty and the read pointer is restored.
+        //
+        // 0 - Circular FIFO is disabled
+        // 1 - Circular FIFO is enabled
+        [8] CIRFIFO;
+
+        // Receive data match only
+        //
+        // When enabled, all received data that does not cause the Data Match Flag (MSR[DMF]) to become 1 is
+        // discarded. After MSR[DMF] is 1, the RDMO configuration is ignored. When disabling RDMO, write 0 to
+        // this bit before writing 0 to MSR[DMF], to ensure that no receive data is lost.
+        //
+        // 0 - Received data is stored in the receive FIFO
+        // 1 - Received data is discarded unless the Data Match Flag (MSR[DMF]) is 1.
+        [9] RDMO;
+    } MCFGR0;
+
+
+    // Master Configuration 1
+    //
+    // Should only be written when the I2C Master is disabled.
+    @offset(0x24)
+    volatile bitfield<u32> {
+
+        // Prescaler
+        //
+        // Configures the clock prescaler used for all LPI2C master logic, except for the digital glitch filters.
+        //
+        // 0 - Divide by 1
+        // 1 - Divide by 2
+        // 2 - Divide by 4
+        // 3 - Divide by 8
+        // 4 - Divide by 16
+        // 5 - Divide by 32
+        // 6 - Divide by 64
+        // 7 - Divide by 128
+        [0:3] PRESCALE;
+
+        // Automatic STOP Generation
+        //
+        // When enabled, a STOP condition is generated whenever the LPI2C master is busy and the transmit FIFO
+        // is empty. The STOP condition can also be generated using a transmit FIFO command.
+        //
+        // 0 - No effect
+        // 1 - STOP condition is automatically generated when the transmit FIFO is empty and the LPI2C master is busy
+        [8] AUTOSTOP;
+
+        // Ignore NACK
+        //
+        // When 1, the received NACK field is ignored and assumed to be ACK. Required to be 1 in Ultra-Fast Mode.
+        //
+        // 0 - No effect
+        // 1 - LPI2C Master treats a received NACK as if it (NACK) was an ACK
+        [9] IGNACK;
+
+        // Timeout Configuration
+        //
+        // Configures the timeout settings for the Pin Low Timeout Flag field (MSR[PLTF]).
+        //
+        // 0 - MSR[PLTF] becomes 1 if SCL is low for longer than the configured timeout.
+        // 1 - MSR[PLTF] becomes 1 if either SCL or SDA is low for longer than the configured timeout.
+        [10] TIMECFG;
+
+        // Match Configuration
+        //
+        // Configures the condition that causes MSR[DMF] to become 1. See Master Data Match (MDMR).
+        //
+        // 0 - Match is disabled
+        // 1 - Reserved
+        // 2 - Match is enabled (first data word equals MDMR[MATCH0] OR MDMR[MATCH1])
+        // 3 - Match is enabled (any data word equals MDMR[MATCH0] OR MDMR[MATCH1])
+        // 4 - Match is enabled (first data word equals MDMR[MATCH0] AND 2nd data word equals MDMR[MATCH1)
+        // 5 - Match is enabled (any data word equals MDMR[MATCH0] AND next data word equals MDMR[MATCH1)
+        // 6 - Match is enabled (first data word AND MDMR[MATCH1] equals MDMR[MATCH0] AND MDMR[MATCH1])
+        // 7 - Match is enabled (any data word AND MDMR[MATCH1] equals MDMR[MATCH0] AND MDMR[MATCH1])
+        [16:19] MATCGF;
+
+        // Pin Configuration
+        //
+        // Configures the pin mode for LPI2C.
+        //
+        // Two-pin / Four-pin configurations for masters and slaves
+        //
+        // | PINCFG | SCL/SDA pins | SCLS/SDAS pins |
+        // | ------ | ------------ | -------------- |
+        // | 0 | Bidirectional open drain for master and slave                 | Not used |
+        // | 1 | Output-only (ultra-fast mode) open drain for master and slave | Not used |
+        // | 2 | Bi-directional push-pull for master and slave                 | Not used |
+        // | 3 | Input only for master and slave                               | Output-only push-pull for master and slave |
+        // | 4 | Bidirectional open drain for master                           | Bidirectional open drain for slave |
+        // | 5 | Output-only (ultra-fast mode) open drain for master           | Output-only open drain for slave |
+        // | 6 | Bidirectional push-pull for master                            | Bidirectional push-pull for slave |
+        // | 7 | Input only for master and slave                               | Inverted output-only push-pull for master and slave |
+        //
+        // 0 - Two-pin open drain mode
+        // 1 - Two-pin output only mode (ultra-fast mode)
+        // 2 - Two-pin push-pull mode
+        // 3 - Four-pin push-pull mode
+        // 4 - Two-pin open drain mode with separate LPI2C slave
+        // 5 - Two-pin output only mode (ultra-fast mode) with separate LPI2C slave
+        // 6 - Two-pin push-pull mode with separate LPI2C slave
+        // 7 - Four-pin push-pull mode (inverted outputs)
+        [24:27] PINCFG;
+    } MCFGR1;
+
+
+    // Master Configuration 2
+    //
+    // Should only be written when the I2C Master is disabled.
+    @offset(0x28)
+    volatile bitfield<u32> {
+
+        // Bus Idle Timeout
+        //
+        // Configures the bus idle timeout period in clock cycles.
+        //
+        // - If both SCL and SDA are high for longer than BUSIDLE cycles, then the I2C bus is assumed to be
+        // idle and the master can generate a START condition
+        // - When Bus Idle Timeout is written 0, the Bus Idle Timeout is disabled
+        [0:12] BUSIDLE;
+
+        // Glitch Filter SCL
+        //
+        // Configures the I2C master digital glitch filters for SCL input.
+        //
+        // - A configuration of 0 disables the glitch filter.
+        // - Glitches equal to or less than FILTSCL cycles long are filtered out and ignored. The FILTSCL cycles are based on the functional clock.
+        // - The latency through the glitch filter is equal to FILTSCL cycles, and must be configured to be less than the minimum SCL low or high period.
+        // - The glitch filter cycle count is not affected by MCFGR1[PRESCALE], and is automatically bypassed in high-speed mode.
+        [16:20] FILTSCL;
+
+        // Glitch Filter SDA
+        // Configures the I2C master digital glitch filters for SDA input.
+        // - A configuration of 0 disables the glitch filter.
+        // - Glitches equal to or less than FILTSDA cycles long are filtered out and ignored.
+        // - The latency through the glitch filter is equal to FILTSDA cycles, and must be configured to be less than the minimum SCL low or high period.
+        // - The glitch filter cycle count is not affected by MCFGR1[PRESCALE], and is automatically bypassed in high-speed mode.
+        [24:28] FILTSDA;
+    } MCFGR2;
+
+
+    // Master Configuration 3
+    //
+    // Should only be written when the I2C Master is disabled.
+    @offset(0x2C)
+    volatile MasterConfiguration3 MCFGR3;
+    bitfield<u32> MasterConfiguration3 {
+
+        // Pin low timeout
+        //
+        // Configures the pin low timeout flag in clock cycles.
+        //
+        // - If SCL or, either SCL or SDA (selected by MCFGR1[TIMECFG]) is low for longer than (PINLOW * 256) cycles, then MSR[PLTF] becomes 1.
+        // - When 0, the pin low timeout feature is disabled
+        [8:20] PINLOW;
+    }
+
+
+    // Master Data Match
+    //
+    // Should only be written when the I2C Master is disabled or idle.
+    @offset(0x40)
+    volatile MasterDataMatch MDMR;
+    bitfield<u32> MasterDataMatch {
+
+        // Match 0 Value
+        //
+        // Compared against the received data when receive data match is enabled.
+        [0:8] MATCH0;
+
+        // Match 1 Value
+        //
+        // Compared against the received data when receive data match is enabled.
+        [16:24] MATCH1;
+    }
+
+
+    // Master Clock Configuration 0
+    //
+    // Cannot be changed when the I2C master is enabled and is used for standard, fast, fast-mode plus and ultra-fast transfers.
+    @offset(0x48)
+    volatile MasterClockConfiguration0 MCCR0;
+    bitfield<u32> MasterClockConfiguration0 {
+
+        // Clock Low Period
+        //
+        // Minimum number of cycles (minus one) that the SCL clock is driven low by the master. The Clock Low
+        // Period value is also used for the minimum bus free time between a STOP and a START condition. This
+        // period is extended by the time it takes to detect a rising edge on the external SCL pin. Ignoring any
+        // additional board delay due to external loading, this time is equal to (2 + FILTSCL) / 2^PRESCALE cycles.
+        [0:6] CLKLO;
+
+        // Clock High Period
+        //
+        // Minimum number of cycles (minus one) that the SCL clock is driven high by the master. The SCL high
+        // time is extended by the time it takes to detect a rising edge on the external SCL pin. Ignoring any
+        // additional board delay due to external loading, this time is equal to (2 + FILTSCL) / 2^PRESCALE cycles.
+        [8:14] CLKHI;
+
+        // Setup Hold Delay
+        //
+        // Minimum number of cycles (minus one) that is used by the master for these conditions:
+        //
+        // - Hold time for a START
+        // - Setup and hold time for a repeated START
+        // - Setup time for a STOP
+        //
+        // The setup time is extended by the time it takes to detect a rising edge on the external SCL pin. Ignoring
+        // any additional board delay due to external loading, this time is equal to (2 + FILTSCL) / 2^PRESCALE
+        // cycles.
+        [16:22] SETHOLD;
+
+        // Data Valid Delay
+        //
+        // Minimum number of cycles (minus one) that is used as the data hold time for SDA. Must be configured
+        // less than the minimum SCL low period.
+        [24:30] DATAVD;
+    }
+
+
+    // Master Clock Configuration 1
+    //
+    // Cannot be changed when the I2C master is enabled and is used for high-speed-mode
+    // transfers. The separate clock configuration for high-speed mode allows arbitration to take
+    // place in Fast mode (with timing configured by Master Clock Configuration 0 (MCCR0)),
+    // before switching to high-speed mode (with timing configured by MCCR1).
+    @offset(0x50)
+    volatile MasterClockConfiguration1 MCCR1;
+    bitfield<u32> MasterClockConfiguration1 {
+        
+        // Clock Low Period
+        //
+        // Minimum number of cycles (minus one) that the SCL clock is driven low by the master. The CLKLO value
+        // is also used for the minimum bus free time between a STOP and a START condition. This period is
+        // extended by the time it takes to detect a rising edge on the external SCL pin. Ignoring any additional
+        // board delay due to external loading, this time is equal to (2 + FILTSCL) / 2^PRESCALE cycles.
+        [0:6] CLKLO;
+
+        // Clock High Period
+        //
+        // Minimum number of cycles (minus one) that the SCL clock is driven high by the master. The SCL high
+        // time is extended by the time it takes to detect a rising edge on the external SCL pin. Ignoring any
+        // additional board delay due to external loading, this time is equal to (2 + FILTSCL) / 2^PRESCALE cycles.
+        [8:14] CLKHI;
+
+        // Setup Hold Delay
+        //
+        // Minimum number of cycles (minus one) that is used by the master for these conditions:
+        //
+        // - Hold time for a START
+        // - Setup and hold time for a repeated START
+        // - Setup time for a STOP
+        //
+        // The setup time is extended by the time it takes to detect a rising edge on the external SCL pin. Ignoring
+        // any additional board delay due to external loading, this time is equal to (2 + FILTSCL) / 2^PRESCALE
+        // cycles.
+        [16:22] SETHOLD;
+
+        // Data Valid Delay
+        //
+        // Minimum number of cycles (minus one) that is used as the data hold time for SDA. Must be configured
+        // less than the minimum SCL low period.
+        [24:30] DATAVD;
+    }
+
+
+    // Master FIFO Control
+    //
+    // The Master FIFO control register is only used in stop mode when the MFCR register is static (that is, the MFCR register is not changing).
+    @offset(0x58)
+    volatile MasterFifoControl MFCR;
+    bitfield<u32> {
+
+        // Transmit FIFO Watermark
+        //
+        // The Transmit Data Flag (SSR[TDF]) becomes 1 when the number of words in the transmit FIFO is equal
+        // or less than TXWATER. Writing a value equal to or greater than the FIFO size truncates the value.
+        [0:2] TXWATER;
+
+        // Receive FIFO Watermark
+        //
+        // The Receive Data Flag (SSR[RDF]) becomes 1 whenever the number of words in the receive FIFO is
+        // greater than RXWATER. Writing a value equal to or greater than the FIFO size truncates the value.
+        [16:18] RXWATER;
+    }
+
+
+    // Master FIFO Status
+    //
+    // Gives the number of words in the transmit and receive FIFO.
+    @offset(0x5C)
+    const volatile MasterFifoStatus MFSR;
+    bitfield<u32> MasterFifoStatus {
+
+        // Transmit FIFO Count
+        //
+        // Returns the number of words in the transmit FIFO.
+        [0:3] TXCOUNT;
+
+        // Receive FIFO Count
+        //
+        // Returns the number of words in the receive FIFO.
+        [16:19] RXCOUNT;
+    }
+
+
+    // Master Transmit Data
+    //
+    // - An 8-bit write to the CMD field is ignored and does not increment the FIFO write pointer.
+    // - An 8-bit write to the DATA field zero-extends the CMD field and increments the FIFO write pointer.
+    // - A 16-bit or 32-bit writes both the CMD and DATA fields and increments the FIFO write pointer.
+    @offset(0x60)
+    volatile MasterTransmitData MTDR;
+    bitfield<u32> MasterTransmitData {
+
+        // Transmit Data
+        //
+        // Performing an 8-bit write to DATA zero-extends the CMD field.
+        [0:8] DATA;
+
+        // Command Data
+        //
+        // 0 - Transmit DATA[7:0]
+        // 1 - Receive (DATA[7:0] + 1) bytes
+        // 2 - Generate STOP condition
+        // 3 - Receive and discard (DATA[7:0] + 1) bytes
+        // 4 - Generate (repeated) START and transmit address in DATA[7:0]
+        // 5 - Generate (repeated) START and transmit address in DATA[7:0]. This transfer expects a NACK to be returned.
+        // 6 - Generate (repeated) START and transmit address in DATA[7:0] using high-speed mode
+        // 7 - Generate (repeated) START and transmit address in DATA[7:0] using high-speed mode. This transfer expects a NACK to be returned.
+        [8:11] CMD;
+    }
+
+
+    // Master Receive Data
+    //
+    // Reading the Receive Data register returns the data received by the I2C master that has not been discarded.
+    @offset(0x70)
+    const volatile MasterReceiveData MRDR;
+    bitfield<u32> MasterReceiveData {
+
+        // Receive Data
+        //
+        // Receive data can be discarded due to the CMD field, or the master can be configured to discard non-matching data.
+        [0:8] DATA;
+
+        // Receive Empty
+        //
+        // Gives the empty status of the Master receive data FIFO.
+        //
+        // 0 - Receive FIFO is not empty
+        // 1 - Receive FIFO is empty
+        [14] RXEMPTY;
+    }
+
+
+    // Slave Control
+    //
+    // Contains resets and other slave control settings.
+    @offset(0x110)
+    volatile SlaveControl SCR;
+    bitfield<u32> SlaveControl {
+
+        // Slave Enable
+        //
+        // Enables I2C Slave mode.
+        // 0 - I2C Slave mode is disabled
+        // 1 - I2C Slave mode is enabled
+        [0] SEN;
+
+        // Software reset
+        //
+        // Takes effect immediately and remains asserted until negated by software. There is no minimum delay
+        // required before clearing the software reset.
+        //
+        // 0 - Slave mode logic is not reset
+        // 1 - Slave mode logic is reset
+        [1] RST;
+
+        // Filter enable
+        //
+        // Should only be updated when the I2C Slave is disabled.
+        //
+        // 0 - Disable digital filter and output delay counter for slave mode
+        // 1 - Enable digital filter and output delay counter for slave mode
+        [4] FILTEN;
+
+        // Filter doze enable
+        //
+        // FILTDZ should only be updated when the I2C Slave is disabled.
+        //
+        // 0 - Filter remains enabled in Doze mode
+        // 1 - Filter is disabled in Doze mode
+        [5] FILTDZ;
+
+        // Reset transmit FIFO
+        //
+        // Empties the transmit FIFO.
+        //
+        // 0 - No effect
+        // 1 - Transmit Data Register is now empty.
+        [8] RTF;
+
+        // Reset Receive FIFO
+        //
+        // Empties the receive FIFO.
+        //
+        // 0 - No effect
+        // 1 - Receive Data Register is now empty.
+        [9] RRF;
+    }
+
+
+    // Slave Status
+    //
+    // Contains status flags for transmit and receive data, for error conditions, and for bus and slave busy or idle status.
+    @offset(0x114)
+    volatile SlaveStatus SSR;
+    bitfield<u32> SlaveStatus {
+
+        // Transmit data flag
+        //
+        // Becomes 0 by writing the to the Slave Transmit Data (STDR) register. When SCFGR1[TXCFG] = 0 and if
+        // a NACK or a Repeated START or STOP condition is detected, then this bit also becomes 0.
+        //
+        // 0 - Transmit data not requested
+        // 1 - Transmit data is requested
+        [0] TDF;
+
+        // Receive data flag
+        //
+        // Becomes 0 by reading the Slave Receive Data (SRDR) register. When SCFGR1[RXCFG] = 1, this bit
+        // does not become 0 when reading the Slave Receive Data (SRDR) register and if SSR[AVF] is 1.
+        //
+        // 0 - Receive data is not ready
+        // 1 - Receive data is ready
+        [1] RDF;
+
+        // Address valid flag
+        //
+        // Becomes 0 by reading the Slave Address Status (SASR) register. When SCFGR1[RXCFG] = 1,
+        // SSR[AVF] also becomes 0 by reading the Slave Receive Data (SRDR) register.
+        //
+        // 0 - Address Status Register is not valid
+        // 1 - Address Status Register is valid
+        [2] AVF;
+
+        // Transmit ACK flag
+        //
+        // Becomes 0 by writing to the Slave Transmit ACK (STAR) register.
+        //
+        // 0 - Transmit ACK/NACK is not required
+        // 1 - Transmit ACK/NACK is required
+        [3] TAF;
+
+        // Repeated start flag
+        //
+        // Becomes 1 when the LPI2C slave detects a repeated START condition and if the LPI2C slave matched
+        // the last address byte. The RSF does not become 1 when the slave first detects a START condition.
+        //
+        // 0 - Slave has not detected a Repeated START condition
+        // 1 - Slave has detected a Repeated START condition
+        [8] RSF;
+
+        // STOP detect flag
+        //
+        // Becomes 1 when the LPI2C slave detects a STOP condition and if the LPI2C slave matched the last
+        // address byte.
+        //
+        // 0 - Slave has not detected a STOP condition
+        // 1 - Slave has detected a STOP condition
+        [9] SDF;
+
+        // Bit error flag
+        //
+        // Becomes 1 if the LPI2C slave transmits a logic 1 and detects a logic 0 on the I2C bus. The slave ignores
+        // the rest of the transfer until the next (repeated) START condition.
+        //
+        // 0 - Slave has not detected a bit error
+        // 1 - Slave has detected a bit error
+        [10] BEF;
+
+        // FIFO error flag
+        //
+        // Can only become 1 when clock stretching is disabled.
+        //
+        // 0 - FIFO underflow or overflow was not detected
+        // 1 - FIFO underflow or overflow was detected
+        [11] FEF;
+
+        // Address match 0 flag
+        //
+        // Indicates that the received address has matched the ADDR0 field as configured by SCFGR1[ADDRCFG].
+        //
+        // • Becomes 0 by reading the Slave Address Status (SASR) register.
+        // • Cannot generate an asynchronous wakeup.
+        //
+        // 0 - ADDR0 matching address not received
+        // 1 - ADDR0 matching address received
+        [12] AM0F;
+
+        // Address match 1 flag
+        //
+        // Indicates that the received address has matched the ADDR1 field or ADDR0 to ADDR1 range as
+        // configured by SCFGR1[ADDRCFG].
+        //
+        // • Becomes 0 by reading the Slave Address Status (SASR) register.
+        // • Cannot generate an asynchronous wakeup.
+        //
+        // 0 - ADDR1 or ADDR0/ADDR1 range matching address not received
+        // 1 - ADDR1 or ADDR0/ADDR1 range matching address received
+        [13] AM1F;
+
+        // General call flag
+        //
+        // Indicates whether a slave has detected the General Call Address.
+        //
+        // • Becomes 0 by reading the Slave Address Status (SASR) register.
+        // • Cannot generate an asynchronous wakeup.
+        //
+        // 0 - Slave has not detected the General Call Address or the General Call Address is disabled
+        // 1 - Slave has detected the General Call Address
+        [14] GCF;
+
+        // SMBus alert response flag
+        //
+        // • Becomes 0 by reading the Slave Address Status (SASR) register.
+        // • Cannot generate an asynchronous wakeup.
+        //
+        // 0 - SMBus alert response is disabled or not detected
+        // 1 - SMBus alert response is enabled and detected
+        [15] SARF;
+
+        // Slave busy flag
+        //
+        // Indicates if an I2C slave is idle or busy.
+        //
+        // 0 - I2C Slave is idle
+        // 1 - I2C Slave is busy
+        [24] SBF;
+
+        // Bus busy flag
+        //
+        // Indicates if an I2C bus is idle or busy.
+        //
+        // 0 - I2C Bus is idle
+        // 1 - I2C Bus is busy
+        [25] BBF;
+    }
+
+
+    // Slave Interrupt Enable
+    //
+    // Contains transmit and receive data interrupt enables, start and stop detect interrupt enables, and other slave interrupt enables.
+    @offset(0x118)
+    volatile SlaveInterruptEnable SIER;
+    bitfield<u32> SlaveInterruptEnable {
+
+        // Transmit data interrupt enable
+        //
+        // Enables interrupt for transmit data.
+        //
+        // 0 - Disabled
+        // 1 - Enabled
+        [0] TDIE;
+
+        // Receive data interrupt enable
+        //
+        // Enables interrupt for receive data.
+        //
+        // 0 - Disabled
+        // 1 - Enabled
+        [1] RDIE;
+
+        // Address valid interrupt enable
+        //
+        // Enables interrupt for valid address.
+        //
+        // 0 - Disabled
+        // 1 - Enabled
+        [2] AVIE;
+
+        // Transmit ACK interrupt enable
+        //
+        // Enables interrupt for transmit ACK.
+        //
+        // 0 - Disabled
+        // 1 - Enabled
+        [3] TAIE;
+
+        // Repeated start interrupt enable
+        //
+        // Enables interrupt for repeated start.
+        //
+        // 0 - Disabled
+        // 1 - Enabled
+        [8] RSIE;
+
+        // STOP detect interrupt enable
+        //
+        // Enables interrupt for STOP detection.
+        //
+        // 0 - Disabled
+        // 1 - Enabled
+        [9] SDIE;
+
+        // Bit error interrupt enable
+        //
+        // Enables interrupt for bit error.
+        //
+        // 0 - Disabled
+        // 1 - Enabled
+        [10] BEIE;
+
+        // FIFO error interrupt enable
+        //
+        // Enables interrupt for FIFO error.
+        //
+        // 0 - Disabled
+        // 1 - Enabled
+        [11] FEIE;
+
+        // Address match 0 interrupt enable
+        //
+        // Enables interrupt for address match 0.
+        //
+        // 0 - Disabled
+        // 1 - Enabled
+        [12] AM0IE;
+
+        // Address match 1 interrupt enable
+        //
+        // Enables interrupt for address match 1.
+        //
+        // 0 - Disabled
+        // 1 - Enabled
+        [13] AM1IE;
+
+        // General call interrupt enable
+        //
+        // Enables interrupt for general call.
+        //
+        // 0 - Disabled
+        // 1 - Enabled
+        [14] GCIE;
+
+        // SMBus alert response interrupt enable
+        //
+        // Enables interrupt for SMBus alert response.
+        //
+        // 0 - Disabled
+        // 1 - Enabled
+        [15] SARIE;
+    }
+
+
+    // Slave DMA Enable
+    //
+    // Contains the transmit, request, and receive enables for DMA.
+    @offset(0x11C)
+    volatile SlaveDmaEnable SDER;
+    bitfield<u32> SlaveDmaEnable {
+
+        // Transmit data DMA enable
+        //
+        // Enables transmit data for DMA.
+        //
+        // 0 - DMA request is disabled
+        // 1 - DMA request is enabled
+        [0] TDDE;
+
+        // Receive data DMA enable
+        //
+        // Enables receive data for DMA.
+        //
+        // 0 - DMA request is disabled
+        // 1 - DMA request is enabled
+        [1] RDDE;
+
+        // Address valid DMA enable
+        //
+        // The Address Valid DMA request is shared with the Receive Data DMA request. If both Address Valid
+        // DMA request and Receive Data DMA request are enabled, then set SCFGR1[RXCFG] = 1, to allow the
+        // DMA to read the address from the Slave Receive Data (SRDR) register.
+        //
+        // 0 - DMA request is disabled
+        // 1 - DMA request is enabled
+        [2] AVDE;
+    }
+
+
+    // Slave Configuration 1
+    //
+    // Should only be written when the I2C Slave is disabled.
+    @offset(0x124)
+    volatile SlaveConfiguration1 SCFGR1;
+    bitfield<u32> SlaveConfiguration1 {
+
+        // Address SCL stall
+        //
+        // Enables SCL clock stretching when SSR[AVF] = 1. Clock stretching only occurs following the 9th bit, and
+        // is therefore compatible with high-speed mode.
+        //
+        // 0 - Clock stretching is disabled
+        // 1 - Clock stretching is enabled
+        [0] ADRSTALL;
+
+        // RX SCL stall
+        //
+        // Enables SCL clock stretching when SSR[RDF] = 1 during a slave-receive transfer. Clock stretching
+        // occurs following the 9th bit, and is therefore compatible with high-speed mode.
+        //
+        // 0 - Clock stretching is disabled
+        // 1 - Clock stretching is enabled
+        [1] RXSTALL;
+
+        // Transmit data SCL stall
+        //
+        // Enables SCL clock stretching when the SSR[TDF] = 1 during a slave-transmit transfer. Clock stretching
+        // occurs following the 9th bit, and is therefore compatible with high-speed mode.
+        //
+        // 0 - Clock stretching is disabled
+        // 1 - Clock stretching is enabled
+        [2] TXDSTALL;
+
+        // ACK SCL stall
+        //
+        // Enables SCL clock stretching during slave-transmit address byte(s) and slave-receiver address and data
+        // byte(s), to allow software to write the Slave Transmit ACK (STAR) register before the ACK or NACK is
+        // transmitted. Clock stretching occurs when transmitting the 9th bit, and is therefore not compatible with
+        // high-speed mode.
+        //
+        // When enabled, there is no need to write 1 to either RX SCL Stall (SCFGR1[RXSTALL]) or Address SCL
+        // Stall (SCFGR1[ADRSTALL]).
+        //
+        // 0 - Clock stretching is disabled
+        // 1 - Clock stretching is enabled
+        [3] ACKSTALL;
+
+        // General call enable
+        //
+        // Enables a general call address.
+        //
+        // 0 - General Call address is disabled
+        // 1 - General Call address is enabled
+        [8] GCEN;
+
+        // SMBus alert enable
+        //
+        // Enables a match on an SMBus alert.
+        //
+        // 0 - Disables match on SMBus Alert
+        // 1 - Enables match on SMBus Alert
+        [9] SAEN;
+
+        // Transmit flag configuration
+        //
+        // Always becomes 1 before a NACK is detected at the end of a slave-transmit transfer. This change can
+        // cause an extra word to be written to the transmit data FIFO.
+        //
+        // - When 0, the Transmit Data register is automatically emptied when a slave-transmit transfer is
+        // detected. This setting causes the transmit data flag to become 1 whenever a slave-transmit transfer
+        // is detected, and causes the transmit data flag to become 0 at the end of the slave-transmit transfer.
+        // - When 1, MSR[TDF] becomes 1 whenever the Transmit Data register is empty, and MSR[TDF]
+        // becomes 0 when the Transmit Data register is full. This setting allows the Transmit Data register to
+        // be filled before a slave-transmit transfer is detected, but can cause the Transmit Data register to be
+        // written before a NACK is detected on the last byte of a slave transmit transfer.
+        //
+        // 0 - MSR[TDF] becomes 1 only during a slave-transmit transfer when the Transmit Data register is
+        // empty
+        // 1 - MSR[TDF] becomes 1 whenever the Transmit Data register is empty
+        [10] TXCFG;
+
+        // Receive Data Configuration
+        //
+        // 0 - Reading the Receive Data register returns received data and writes 0 to the Receive Data flag. See MSR[RDF].
+        // 1 - Reading the Receive Data register when the Address Valid flag (SSR[AVF]) is 1, returns the
+        // Address Status register and writes 0 to SSR[AVF]. Reading the Receive Data register when
+        // SSR[AVF] is 0, returns received data and writes 0 to the Receive Data flag (MSR[RDF]). See
+        // SSR[AVF] and MSR[RDF].
+        [11] RXCFG;
+
+        // Ignore NACK
+        //
+        // When Ignore NACK is 1, the LPI2C slave continues transfers after a NACK is detected. Ignore NACK bit
+        // is required to be 1 in Ultra-Fast mode.
+        //
+        // 0 - Slave ends transfer when NACK is detected
+        // 1 - Slave does not end transfer when NACK detected
+        [12] IGNACK;
+
+        // High-speed mode enable
+        //
+        // Enables detection of the high-speed mode master code of slave address 0000_1XX, but does not cause
+        // an address match on this code. When 1 and any high-speed mode master code is detected,
+        // SCR[FILTEN] and SCFGR1[ACKSTALL] bits are ignored until the next STOP condition is detected.
+        //
+        // 0 - Disables detection of high-speed mode master code
+        // 1 - Enables detection of high-speed mode master code
+        [13] HSMEN;
+
+        // Address configuration
+        //
+        // Configures the condition that causes an address to match.
+        //
+        // 0 - Address match 0 (7-bit)
+        // 1 - Address match 0 (10-bit)
+        // 2 - Address match 0 (7-bit) or Address match 1 (7-bit)
+        // 3 - Address match 0 (10-bit) or Address match 1 (10-bit)
+        // 4 - Address match 0 (7-bit) or Address match 1 (10-bit)
+        // 5 - Address match 0 (10-bit) or Address match 1 (7-bit)
+        // 6 - From Address match 0 (7-bit) to Address match 1 (7-bit)
+        // 7 - From Address match 0 (10-bit) to Address match 1 (10-bit)
+        [16:19] ADDRCFG;
+    }
+
+
+    // Slave Configuration 2
+    //
+    // Should only be written when the I2C Slave is disabled.
+    @offset(0x128)
+    volatile SlaveConfiguration2 SCFGR2;
+    bitfield<u32> SlaveConfiguration2 {
+
+        // Clock hold time
+        //
+        // Configures the minimum clock hold time for the I2C slave, when clock stretching is enabled.
+        //
+        // - The minimum hold time is equal to CLKHOLD+3 cycles.
+        // - The I2C slave clock hold time is not affected by MCFGR1[PRESCALE], and the I2C slave clock hold time is disabled in high-speed mode.
+        [0:4] CLKHOLD;
+
+        // Data valid delay
+        //
+        // Configures the SDA data valid delay time for the I2C slave, which is equal to FILTSCL+DATAVD+3
+        // cycles.
+        //
+        // - The data valid delay must be configured to be less than the minimum SCL low period.
+        // - The I2C slave data valid delay time is not affected by MCFGR1[PRESCALE], and the I2C slave data valid delay time is disabled in high-speed mode.
+        [8:14] DATAVD;
+
+        // Glitch filter SCL
+        //
+        // Configures the I2C slave digital glitch filters for SCL input.
+        //
+        // - A configuration of 0 disables the glitch filter.
+        // - Glitches equal to or less than FILTSCL cycles long are filtered out and ignored.
+        // - The latency through the glitch filter is equal to FILTSCL+3 cycles, and must be configured to be less than the minimum SCL low or high period.
+        // - The glitch filter cycle count is not affected by MCFGR1[PRESCALE], and the glitch filter cycle count is disabled in high-speed mode.
+        [16:20] FILTSCL;
+
+        // Glitch filter SDA
+        //
+        // Configures the I2C slave digital glitch filters for SDA input.
+        //
+        // - A configuration of 0 disables the glitch filter.
+        // - Glitches equal to or less than FILTSDA cycles long are filtered out and ignored.
+        // - The latency through the glitch filter is equal to FILTSDA+3 cycles, and must be configured to be less than the minimum SCL low or high period.
+        // - The glitch filter cycle count is not affected by MCFGR1[PRESCALE], and the glitch filter cycle count is disabled in high-speed mode.
+        [24:28] FILTSDA;
+    }
+
+
+    // Slave Address Match
+    //
+    // Should only be written when the I2C Slave is disabled.
+    @offset(0x140)
+    volatile SlaveAddressMatch SAMR;
+    bitfield<u32> SlaveAddressMatch {
+
+        // Address 0 value
+        //
+        // Compared against the received address to detect the Slave Address.
+        //
+        // - In 10-bit mode, the first address byte is compared to { 11110, ADDR0[10:9] } and the second
+        // address byte is compared to ADDR0[8:1].
+        // - In 7-bit mode, the address is compared to ADDR0[7:1].
+        [1:11] ADDR0;
+
+        // Address 1 value
+        //
+        // Compared against the received address to detect the Slave Address.
+        //
+        // - In 10-bit mode, the first address byte is compared to { 11110, ADDR1[26:25] } and the second
+        // address byte is compared to ADDR1[24:17].
+        // - In 7-bit mode, the address is compared to ADDR1[23:17].
+        [17:27] ADDR1;
+    }
+
+
+    // Slave Address Status
+    //
+    // Contains the read-only RADDR and ANV fields.
+    @offset(0x150)
+    const volatile SlaveAddressStatus SASR;
+    bitfield<u32> SlaveAddressStatus {
+
+        // Received Address
+        //
+        // Updates whenever SSR[AM0F] or SSR[AM1F] becomes 1. SSR[AM0F] or SSR[AM1F] become 0 by reading the Slave Address Status register.
+        //
+        // - In 7-bit mode, the address byte is stored in RADDR[7:0].
+        // - In 10-bit mode, the first address byte is { 11110, RADDR[10:9], RADDR[0] } and the second address byte is RADDR[8:1]. The R/W bit is therefore always stored in RADDR[0].
+        [0:11] RADDR;
+
+        // Address not valid
+        //
+        // 0 - Received Address (RADDR) is valid
+        // 1 - Received Address (RADDR) is not valid
+        [14] ANV;
+    }
+
+
+    // Slave Transmit ACK
+    //
+    // Can only be written when the ACK SCL Stall bit (SCFGR1[ACKSTALL]) is 1.
+    //
+    // - SCFGR1[ACKSTALL] enables clock stretching during the ACK/NACK bit slot, and during this time, the STAR register can be written by software.
+    // - The logic ensures that the clock stretching continues for at least one bus clock cycle after the STAR register is updated.
+    // - This clock stretching time can be extended using the Clock Hold Time field (SCFGR2[CLKHOLD]).
+    @offset(0x154)
+    volatile SlaveTransmitAck STAR;
+    bitfield<u32> SlaveTransmitAck {
+
+        // Transmit NACK
+        //
+        // After receiving each word, software can transmit either an ACK (logic 0) or a NACK (logic 1). This bit field
+        // selects which to use: ACK or NACK.
+        //
+        // - When SCFGR1[ACKSTALL] is 1, a Transmit NACK must be written once for each matching
+        // address byte and each received word. ACKSTALL must be 1, because that setting stalls the data
+        // transfer until software reads the received word (and decides whether to respond with an ACK or
+        // NACK).
+        // - To configure the default ACK/NACK, Transmit NACK can also be written when LPI2C Slave is
+        // disabled or idle.
+        // 0 - Write a Transmit ACK for each received word
+        // 1 - Write a Transmit NACK for each received word
+        [0] TXNACK;
+    }
+
+
+    // Slave Transmit Data
+    //
+    // Clock stretching (enabled or disabled) affects when the transmit data is transferred. The
+    // SCFGR1[TXDSTALL] bit enables clock stretching during the 1st data bit of a slave-
+    // transmit transfer.
+    //
+    // - If clock stretching is enabled (SCFGR1[TXDSTALL] = 1), then the transmit data
+    // transfer is stalled until the STDR is updated. Clock stretching is extended by at least
+    // 1 bus clock cycle after STDR is updated, and clock stretching can be delayed even
+    // more using the Clock Hold Time field (SCFGR2[CLKHOLD].
+    // - If clock stretching is disabled (SCFGR1[TXDSTALL] = 0), then the transmit data
+    // should be written before the start of the slave-transmit transfer. If the transmit data is
+    // not written before the start of the slave-transmit transfer, the FIFO Error Flag
+    // (SSR[FEF]) becomes 1.
+    @offset(0x160)
+    volatile SlaveTransmitData STDR;
+    bitfield<u32> SlaveTransmitData {
+
+        // Transmit data
+        //
+        // Writing to the Slave Transmit Data Register (STDR) stores I2C slave transmit data in the Slave Transmit Data Register
+        [0:8] DATA;
+    }
+
+
+    // Slave Receive Data
+    //
+    // Reading the Slave Receive Data Register returns the data received by the I2C slave.
+    @offset(0x170)
+    const volatile SlaveReceiveData SRDR;
+    bitfield<u32> SlaveReceiveData {
+
+        // Receive data
+        //
+        // Contains data received by the I2C slave. When both SCFGR1[RXCFG] and SSR[AVF] are 1, the Address
+        // Status Register (SASR[RADDR]) bits [7:0] are returned.
+        [0:8] DATA;
+
+        // Receive empty
+        //
+        // Gives the empty status of the receive data register.
+        //
+        // 0 - The Receive Data Register is not empty
+        // 1 - The Receive Data Register is empty
+        [14] RXEMPTY;
+
+        // Start of frame
+        //
+        // Indicates whether this data word is the first data word.
+        //
+        // 0 - Not the first data word since a (repeated) START or STOP condition
+        // 1 - Is the first data word since a (repeated) START or STOP condition
+        [15] SOF;
+    }
+}
